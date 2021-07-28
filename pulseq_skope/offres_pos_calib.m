@@ -3,7 +3,7 @@
 % (c) 2021 Skope Magnetic Resonance Technologies AG
 
 close all; clc; clear all;
-addpath(genpath('C:\develop\pulseq\')); % Pulseq path
+addpath(genpath('..\pulseq\')); % Pulseq path
 
 %% Scanner specs
 seq_name = "local_offres_calib";          
