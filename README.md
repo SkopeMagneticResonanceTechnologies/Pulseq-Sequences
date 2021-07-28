@@ -5,6 +5,8 @@ Includes sequences:
  - Off-resonance and position calibration
  - Local eddy current calibration
 
+Please visit https://github.com/pulseq/pulseq for further information about Pulseq.
+
 ## Getting started
 
 ### Clone this repositiory 
