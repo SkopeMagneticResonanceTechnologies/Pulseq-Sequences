@@ -11,7 +11,7 @@ Please visit https://github.com/pulseq/pulseq for further information about Puls
 
 ### Clone this repositiory 
 
-    git clone https://github.com/SkopeMagneticResonanceTechnologies/Pulseq-LocalEddyCurrentCalibration.git
+    git clone https://github.com/SkopeMagneticResonanceTechnologies/Pulseq-Sequences.git
 
 Add Pulseq as a submodule
 
