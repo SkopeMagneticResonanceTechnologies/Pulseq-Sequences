@@ -9,7 +9,7 @@ Please visit https://github.com/pulseq/pulseq for further information about Puls
 
 ## Getting started
 
-### Clone this repositiory 
+### Clone this repository  
 
     git clone https://github.com/SkopeMagneticResonanceTechnologies/Pulseq-Sequences.git
 
@@ -22,6 +22,6 @@ Add Pulseq as a submodule
 
  - Open MATLAB 
  - Run offres_pos_calib.m to create the sequence file for the off-resonance and position calibration
- - Run local_ec_calib.m o create the sequence file for local eddy current calibration
+ - Run local_ec_calib.m to create the sequence file for the local eddy current calibration
 
 Note that the polarity of the x-axis has been reversed to be played out correctly on Siemens scanners.
