@@ -1,4 +1,4 @@
-# Pulseq-Sequences for field-monitoring
+# Pulseq sequences for field-monitoring
 
 Includes sequences:
 
