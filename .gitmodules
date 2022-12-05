@@ -1,0 +1,3 @@
+[submodule "pulseq"]
+	path = pulseq
+	url = https://github.com/pulseq/pulseq
