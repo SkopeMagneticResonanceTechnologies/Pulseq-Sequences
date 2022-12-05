@@ -27,11 +27,11 @@ Add Pulseq as a submodule
 
 ### NOTES
 - The Siemens Pulseq interpreter (1.4.0) flips the polarity of the x-axis. The polarity of the x-gradients for the sequences in this repository has been reversed to deal with this bug. Set the property _signFlip_ to _1_ in PulseqBase.m if you do not wish to flip the sign of the x-gradients.
-- If the sequences do not run on the scanner, try closing the protocol and open it again.
+- If the sequences do not run on the scanner, try closing the protocol and opening it again.
 
 ## Acquisition parameters for field-monitoring
 
-The sequence defines the timing of all events for the scanner. Some timing information also needs to be transferred to the Camera Acquisition System. The required values have been added as DEFINITIONS to the header of the Pulseq file. The following tables relates the values in the Pulseq file to the parameters on the graphical user interface of skope-fx. 
+The sequence defines the timing of all events for the scanner. Some timing information also needs to be transferred to the Camera Acquisition System. The required values have been added as DEFINITIONS to the header of the Pulseq files. The following tables relates the values in the Pulseq file to the parameters on the graphical user interface of skope-fx. 
 
 | Parameter on GUI of skope-fx | Pulseq definition    | Explanation |
 |------------------------------|----------------------|-------------|
@@ -47,7 +47,7 @@ Note that the time unit is seconds in the Pulseq file and milliseconds on the gr
 
 Some additional timing values are required to merge camera and scanner data and to perform image reconstruction. 
 
-Aa rough estimate of the delay between the start of the trigger and the first scanner ADC sample is needed for the synchronization of the camera and scanner data. This value has been added to the DEFINITIONS structure of the Pulseq file.
+A rough estimate of the delay between the start of the trigger and the first scanner ADC sample is needed for the synchronization of the camera and scanner data. This value has been added to the DEFINITIONS structure of the Pulseq file.
 
     TriggerToScannerAcqDelay
 
@@ -83,9 +83,9 @@ Please do not change the timing or the number of blips used by this sequence. Th
 
 ### 2D gradient echo (GRE) sequence
 
-The implemented sequence acquires two mono-polar echoes for five slices. The data is acquired in an interleaved fashion meaning that the most inner loop of the sequence is the slice index. A repetition time (TR) of 25 ms has been selected as the default value. With an interleave TR of 124.5 ms, four triggers will be skipped and every fifth scanner acquisition will be monitored. Hence, the first slice will be fully monitored. The k-space trajectories for the other slices could be deduced from the data of the first slice.
+The implemented sequence acquires two mono-polar echoes for five slices. The data is acquired in an interleaved fashion meaning that the innermost loop of the sequence is the slice index. A repetition time (TR) of 25 ms has been selected as default value. With an interleave TR of 124.5 ms, four triggers will be skipped and every fifth scanner acquisition will be monitored. Hence, the first slice will be fully monitored. The k-space trajectories for the other slices could be deduced from the data of the first slice.
 
-The figure below shows the kernel for the GRE sequence. It is repeated 640 (= 128 [lines] * 5 [slices]) times to acquire the entire image. 
+The figure below shows the kernel of the GRE sequence. It is repeated 640 (= 128 [lines] * 5 [slices]) times to acquire the entire image. 
 
 The same kernel is repeated 10 times without RF at the start of the scan to acquire synchronization data. During this pre-scan, the Camera Acquisition System transmits amplitude-modulated pulses at the proton frequency. The data can be used to calculate the delay between scanner and camera data. A pause of 4s separates the synchronization pre-scan from the actual imaging experiment.
 
@@ -99,7 +99,7 @@ Set the following values on the Camera Acquisition System:
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 10
 
-Due to trigger skipping, the Camera Acquisition System will not acquire all 640 dynamics but it will register them. Press *Stop Scan* on the graphical user interface of skope-fx once the scanner has finished. 
+Due to trigger skipping, the Camera Acquisition System will not acquire all 640 dynamics but it will still register them. Press *Stop Scan* on the graphical user interface of skope-fx once the scanner has finished. 
 
 <img src="docs/triggerSkipping.svg" alt="Trigger skipping" width="50%">
 
