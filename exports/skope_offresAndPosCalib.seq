@@ -36,7 +36,7 @@ RadiofrequencyRasterTime 1e-06
 # id amplitude amp_shape_id time_shape_id delay
 # ..      Hz/m       ..         ..          us
 [GRADIENTS]
-4            1 1 2 0
+4            0 1 2 0
 
 # Format of trapezoid gradients:
 # id amplitude rise flat fall delay
@@ -63,8 +63,8 @@ extension TRIGGERS 1
 
 shape_id 1
 num_samples 2
-1
-1
+0
+0
 
 shape_id 2
 num_samples 2
@@ -77,4 +77,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 0e56b83064dbb75b6d49743a63e98ec0
+Hash 45a9d4909ba3e5f86e66d4eb5c58c39d

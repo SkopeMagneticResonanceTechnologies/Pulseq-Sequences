@@ -190,7 +190,7 @@ classdef (Abstract) PulseqBase < handle
         function dummy = makeDummy()
             % Prepare a gradient with 0 amplitude
             % to create a [SHAPES] paragraph required by PulSeq IDEA
-            dummyWaveForm = ones(2, 1);
+            dummyWaveForm = [0 0];
             dummy = mr.makeArbitraryGrad('x', dummyWaveForm);      
         end
     end
