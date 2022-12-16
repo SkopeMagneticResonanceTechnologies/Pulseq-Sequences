@@ -1,9 +1,14 @@
 # Pulseq sequences for field-monitoring
 
-This repository contains calibration sequences that are needed for field-monitoring and some imaging sequences for demonstration purposes:
+This repository contains sequences for calibrating field-monitoring experiments and imaging sequences for demonstration purposes:
 
- - Off-resonance and position calibration
- - Local eddy current calibration
+Calibration sequence for all users
+ - Off-resonance and position calibration - This sequence is run at the start of each scanning session and after each change of the scanner shim settings, it provides the data to determine the resonance frequency and the position of the probes within the scanner bore.
+ 
+For Clip-On Camera "Cranberry" Edition users
+ - Local eddy current calibration - This sequence provides the data needed to quantify eddy currents near individual probes as part of the Local Eddy Current correction provided in the Clip-On Camera "Cranberry" Edition.
+
+Imaging sequences for demonstration
  - Mono-polar 2D dual-echo gradient-echo sequence
  - 2D echo-planar imaging sequence 
 
