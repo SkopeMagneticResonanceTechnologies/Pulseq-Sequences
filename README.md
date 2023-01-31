@@ -1,6 +1,6 @@
 # Pulseq sequences for field-monitoring
 
-This repository contains sequences for calibrating field-monitoring experiments and imaging sequences for demonstration purposes:
+This repository contains sequences for calibrating field-monitoring experiments and imaging sequences for demonstration purposes on Siemens scanners. Pulse sequences for Skope Field Camera installation and use on GE scanners can be found under https://github.com/toppeMRI/Skope.
 
 Calibration sequence for all users
  - Off-resonance and position calibration - This sequence is run at the start of each scanning session and after each change of the scanner shim settings, it provides the data to determine the resonance frequency and the position of the probes within the scanner bore.
