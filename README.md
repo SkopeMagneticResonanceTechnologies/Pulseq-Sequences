@@ -143,4 +143,4 @@ The information available in this repository, including text, graphics, images, 
 The statements made regarding the sequences *have not* been evaluated by the Food and Drug Administration or like authorities. The safety and efficacy of the sequences *has not* been confirmed by FDA-approved or likewise approved research. The sequences *are not* intended to diagnose, treat, cure or prevent any disease.
 The content of this repository can change without notice.
 
-© COPYRIGHT 2022 by Skope Magnetic Resonance Technologies AG
+© COPYRIGHT 2023 by Skope Magnetic Resonance Technologies AG
