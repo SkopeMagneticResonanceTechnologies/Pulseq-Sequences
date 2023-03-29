@@ -174,7 +174,13 @@ classdef (Abstract) PulseqBase < handle
 
         function t = roundUpToGRT(obj,t)
         % Round time to gradient raster time
-            t = ceil(t/obj.sys.gradRasterTime)*obj.sys.gradRasterTime;
+
+            % First round to microseconds to avoid errors due to number representation
+            t_us = round(t*1e6);
+            gdt_us = obj.sys.gradRasterTime*1e6;
+
+            % Round up to GRT
+            t = ceil(t_us/gdt_us)*obj.sys.gradRasterTime;
         end
     end
 

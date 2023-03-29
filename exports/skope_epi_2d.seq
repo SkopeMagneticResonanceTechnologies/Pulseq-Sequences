@@ -18,8 +18,10 @@ EchoSpacing 0.00086
 EchoTrainLength 64 
 FOV 0.256 0.256 0.02 
 GradientRasterTime 1e-05 
+Matrix 64 64 
 Name epi2d 
 RadiofrequencyRasterTime 1e-06 
+SampleTimeUs 12.2 
 TE 0.03 
 TR 0.15 
 TotalDuration 6.1588 
@@ -3709,4 +3711,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 75d478b60590b1c46700153cc20f0eaa
+Hash b7a60174d7562f0e9bb933c7239d0e29

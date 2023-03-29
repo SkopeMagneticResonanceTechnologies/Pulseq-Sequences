@@ -280,6 +280,8 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
+            obj.seq.setDefinition('SampleTimeUs', obj.adc.dwell*1e6); 
+            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
             
             %% Write to Pulseq file
             if not(isfolder('exports'))
@@ -348,8 +350,11 @@ classdef skope_gre_2d < PulseqBase
             gyPre.amplitude = -gyPre.amplitude;
         
             %% Spoiling
-            spoilBlockContents = {mr.makeDelay(obj.fillTR), obj.gxSpoil, gyPre, obj.gzSpoil};
+            spoilBlockContents = {obj.gxSpoil, gyPre, obj.gzSpoil};
             obj.seq.addBlock(spoilBlockContents{:});
+
+            %% Add delay
+            obj.seq.addBlock(mr.makeDelay(obj.fillTR));
         
         end
     end
