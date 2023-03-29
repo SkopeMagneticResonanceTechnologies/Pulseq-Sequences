@@ -381,7 +381,7 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
-            obj.seq.setDefinition('SampleTimeUs', obj.adc.dwell*1e6); 
+            obj.seq.setDefinition('ADCSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
             
             %% Write to pulseq file

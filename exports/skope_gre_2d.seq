@@ -7,6 +7,7 @@ minor 4
 revision 0
 
 [DEFINITIONS]
+ADCSampleTime 2.5e-05 
 AdcRasterTime 1e-07 
 BlockDurationRaster 1e-05 
 CameraAcqDuration 0.01275 
@@ -19,7 +20,6 @@ GradientRasterTime 1e-05
 Matrix 128 128 
 Name gre2d 
 RadiofrequencyRasterTime 1e-06 
-SampleTimeUs 25 
 TE 0.006 0.012 
 TR 0.025 
 TotalDuration 20.25 
@@ -8465,4 +8465,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash e2097a3ca2bd62c29dfc7acb02851917
+Hash 9b72c235ca059a43a43511a3a0f5859d
