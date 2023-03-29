@@ -144,7 +144,7 @@ classdef (Abstract) PulseqBase < handle
         % should be ignored by the Camera Acquisition System.
 	        
             % Default values
-            eps = 500e-6;            
+            eps = 1e-3;            
 
             %% Calculate minimal interleave TR
 	        if triggerTR < obj.minCameraTR + eps
