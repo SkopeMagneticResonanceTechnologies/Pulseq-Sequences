@@ -7,8 +7,8 @@ minor 4
 revision 0
 
 [DEFINITIONS]
-ADCSampleTime 2.5e-05 
 AdcRasterTime 1e-07 
+AdcSampleTime 2.5e-05 
 BlockDurationRaster 1e-05 
 CameraAcqDuration 0.01275 
 CameraAqDelay 0 
@@ -8465,4 +8465,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash b3f77751f229d53f684da96c86d3df09
+Hash 01f0e6ca5a7d0e4b87e19baac4dea53f

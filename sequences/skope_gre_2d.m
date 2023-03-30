@@ -280,7 +280,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
-            obj.seq.setDefinition('ADCSampleTime', obj.adc.dwell); 
+            obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
             
             %% Write to Pulseq file
