@@ -26,6 +26,9 @@ classdef (Abstract) PulseqBase < handle
         % Number of phase encoding lines
         Ny
 
+        % Number of partition encoding steps
+        Nz
+
         % Slice thickness
         thickness
 

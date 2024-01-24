@@ -18,14 +18,25 @@ addpath('sequences')
 scannerType = "Siemens Terra 7T SC72CD";
 
 %% Create a 2D monpolar dual-echo gradient-echo sequence
-gre = skope_gre_2d(scannerType);
+gre2d = skope_gre_2d(scannerType);
 
 % Plot sequence information after sync 
 timeRange = [4.23 4.4];
-gre.plot(timeRange);
+gre2d.plot(timeRange);
 
 % Test sequence
-gre.test();
+gre2d.test();
+
+%% Create a 3D monpolar dual-echo gradient-echo sequence
+close all
+gre3d = skope_gre_3d(scannerType);
+
+% Plot sequence information after sync 
+timeRange = [0 100e-3];
+gre3d.plot(timeRange);
+
+% Test sequence
+gre3d.test();
 
 %% Create a 2D echo-planar imaging sequence
 epi = skope_epi_2d(scannerType);
