@@ -22,6 +22,7 @@ GradientRasterTime 1e-05
 Matrix 64 64 
 Name epi2d 
 RadiofrequencyRasterTime 1e-06 
+SliceShifts -0.008 -0.004 0 0.004 0.008 
 TE 0.03 
 TR 0.15 
 TotalDuration 6.1588 
@@ -3711,4 +3712,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 42e2dfb82976a54dd1493fe20ff2af11
+Hash d25b1e7649320e3e888b637441d45385
