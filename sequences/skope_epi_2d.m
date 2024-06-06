@@ -340,10 +340,11 @@ classdef skope_epi_2d < PulseqBase
             end
 
             %% Actual imaging sequence
-            for slc = 1:obj.nSlices
-                avg = 1;
-                rep = 1;
-                obj = runKernel(obj, slc, avg, rep);
+            for rep=1:5
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    obj = runKernel(obj, slc, avg, rep);
+                end
             end
 
             %% Set the number of imaging triggers

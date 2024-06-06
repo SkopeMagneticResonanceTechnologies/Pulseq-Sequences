@@ -17,6 +17,16 @@ addpath('sequences')
 %% Select scanner
 scannerType = "Siemens Terra 7T SC72CD";
 
+%% Create a series of blips
+gtf = skope_gtf(scannerType);
+
+% Plot sequence information after sync 
+timeRange = [0 18*3*20e-3];
+gtf.plot(timeRange);
+
+% Test sequence
+gtf.test();
+
 %% Create a 2D monpolar dual-echo gradient-echo sequence
 gre2d = skope_gre_2d(scannerType);
 

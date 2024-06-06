@@ -341,13 +341,13 @@ classdef skope_gre_3d < PulseqBase
 
             %% First readout gradient
             obj.seq.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
-                                
+          
             %% Fly back
             obj.seq.addBlock(obj.gxFlyBack); % Fill time has been absorbed in gradient duration
         
             %% Second readout gradient   
             obj.seq.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 1), labels{:});     
-        
+                   
             %% Negative Phase encoding
             gyPre.amplitude = -gyPre.amplitude;
             gzPre.amplitude = -gzPre.amplitude;
