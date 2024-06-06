@@ -20,6 +20,7 @@ GradientRasterTime 1e-05
 Matrix 128 128 
 Name gre2d 
 RadiofrequencyRasterTime 1e-06 
+SliceShifts -0.006 -0.003 0 0.003 0.006 
 TE 0.006 0.012 
 TR 0.025 
 TotalDuration 20.25 
@@ -8465,4 +8466,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 01f0e6ca5a7d0e4b87e19baac4dea53f
+Hash 622dcd33a6328eb08419cab9d1ff4fef

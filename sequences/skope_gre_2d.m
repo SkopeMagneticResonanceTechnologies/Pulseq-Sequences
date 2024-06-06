@@ -282,7 +282,8 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            
+            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]); 
+                        
             %% Write to Pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
