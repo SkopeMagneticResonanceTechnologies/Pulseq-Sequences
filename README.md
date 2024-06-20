@@ -125,6 +125,21 @@ Set the following values on the Camera Acquisition System:
 
 Due to trigger skipping, the Camera Acquisition System will not acquire all 5 dynamics. Press *Stop Scan* on the graphical user interface of skope-fx once the scanner has finished. 
 
+### Blip sequence for gradient transfer function estimation
+
+The figure below shows the kernel for the GTF sequence. Three sets of gradient blips with different amplitudes and maximum slew rate are played out on the three physical gradient axes.
+
+![GTF sequence kernel](docs/sequenceDiagramGtf.svg "GTF sequence kernel" )
+
+Set the following values on the Camera Acquisition System:
+
+    CameraNrDynamics     240
+    CameraInterleaveTR   400 
+    CameraAcqDuration    100 ms 
+    CameraAqDelay        0  ms   
+    CameraNrSyncDynamics 0
+
+
 ## Pulseq files
 
 The Pulseq files included in this repository have been created for a 7T Siemens whole-body system.
