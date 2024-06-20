@@ -1,7 +1,7 @@
 function specs = GetMRSystemSpecs(scannerType)
 % Define scanner specs
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG  
+% (c) 2024 Skope Magnetic Resonance Technologies AG  
 
     specs = [];
     specs.maxGrad_unit = 'mT/m';

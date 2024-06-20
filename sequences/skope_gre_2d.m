@@ -1,5 +1,5 @@
 classdef skope_gre_2d < PulseqBase
-% This is a demo monopolar dual-echo gradient-echo sequence, which includes
+% This is a demo mono-polar dual-echo gradient-echo sequence, which includes
 % synchronization scans for field-monitoring with a Skope Field Camera and
 % uses the LABEL extension. The member method plot() can be used to display
 % the generated sequence. 
@@ -14,13 +14,13 @@ classdef skope_gre_2d < PulseqBase
 %   interpreter 1.4.0. 
 %
 % Example:
-%  gre = skope_gre_2d(scannerType);
+%  gre = skope_gre_2d(sequenceParams);
 %  gre.plot();
 %  gre.test();
 %
 % See also PulseqBase
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2024 Skope Magnetic Resonance Technologies AG
 
     properties (Access=private)
 
@@ -67,10 +67,15 @@ classdef skope_gre_2d < PulseqBase
 
     methods
 
-        function obj = skope_gre_2d(scannerType)
+        function obj = skope_gre_2d(seqParams)
+
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -79,54 +84,53 @@ classdef skope_gre_2d < PulseqBase
             if not(strcmpi(specs.maxSlew_unit,'T/m/s'))
                 error('Expected T/m/s for slew rate.');
             end
-
-            %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 28;
-            maxSlew = 150;
            
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             %% Create object
-            obj.sys = mr.opts(  'MaxGrad', maxGrad, ...
+            obj.sys = mr.opts(  'MaxGrad', seqParams.maxGrad, ...
                                 'GradUnit', 'mT/m', ...
-                                'MaxSlew', maxSlew, ...
+                                'MaxSlew', seqParams.maxSlew, ...
                                 'SlewUnit', 'T/m/s', ...
                                 'rfRingdownTime', 20e-6, ...
                                 'rfDeadTime', 100e-6, ...
                                 'adcDeadTime', 10e-6);  
 
             % Field of view [Unit: m]
-            obj.fov = 200e-3; 
+            obj.fov = seqParams.fov; 
 
             % Number of readout samples
-            obj.Nx = 128; 
+            obj.Nx = seqParams.Nx; 
 
             % Number of phase encoding steps
-            obj.Ny = obj.Nx; 
+            obj.Ny = seqParams.Ny; 
                        
             % Flip angle [Unit: deg]
-            obj.alpha = 7;     
+            obj.alpha = seqParams.alpha;     
             
             % Slice thickness [Unit: m]
-            obj.thickness = 3e-3; 
+            obj.thickness = seqParams.thickness; 
 
             % Number of slices
-            obj.nSlices = 5;
+            obj.nSlices = seqParams.nSlices;
             
             % Echo times [Unit: s]
-            obj.TE = [6 12] * 1e-3;
+            obj.TE = seqParams.TE;
 
             % Excitation repetition time [Unit: s]
-            obj.TR = 25e-3;                       
+            obj.TR = seqParams.TR;                       
             
             % ADC duration [Unit: s]
-            obj.readoutTime = 3.2e-3;             
+            obj.readoutTime = seqParams.readoutTime;  
+
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.signFlip = seqParams.signFlip;
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  

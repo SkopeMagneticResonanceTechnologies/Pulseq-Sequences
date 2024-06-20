@@ -1,25 +1,25 @@
 classdef skope_gtf < PulseqBase
 % Sequence for local eddy current calibration
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2024 Skope Magnetic Resonance Technologies AG
 
     properties        
-        axis = ['x', 'y', 'z']      % Axis with blips        
-        N_rep = 1                   % Number of repetitions        
+        axis = ['x', 'y', 'z']      % Axis with blips            
         relax = 0.9                 % Relax system limits
-        nBlipsPerAxis = 17          % Number of blips per axis
+        nBlipsPerAxis = 19          % Number of blips per axis
     end
 
     methods
 
-        function obj = skope_gtf(scannerType)
+        function obj = skope_gtf(seqParams)
 
-            %% Set base class properties
-            obj.TR = 5;              % Repetition time [Unit: s]
-            obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -29,22 +29,26 @@ classdef skope_gtf < PulseqBase
                 error('Expected T/m/s for slew rate.');
             end
 
-            %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 40;
-            maxSlew = 200;
+            obj.TR = seqParams.TR;   
+            obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            obj.nAve = seqParams.nAve;
+            obj.nRep = seqParams.nRep;
+            
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.signFlip = seqParams.signFlip;
 
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             % Set system limits
-            obj.sys = mr.opts('MaxGrad', maxGrad, ...
+            obj.sys = mr.opts('MaxGrad', seqParams.maxGrad, ...
                               'GradUnit','mT/m',...
-                              'MaxSlew', maxSlew, ...
+                              'MaxSlew', seqParams.maxSlew, ...
                               'SlewUnit','T/m/s',...
                               'rfRingdownTime', 30e-6, ...
                               'rfDeadtime', 100e-6,...
@@ -56,7 +60,7 @@ classdef skope_gtf < PulseqBase
             
             %% Set parameters            
             % Compliance to gradient raster time
-            dur_base_ = 6e-5; % [s]; blip duration (factor must be even)
+            dur_base_ = 2e-5; % [s]; blip duration (factor must be even)
             dur_incr_ = 2e-5; % [s]; increment to adjust blip duration (factor must be even)
             dur_base = obj.roundUpToGRT(dur_base_);
             dur_inc = obj.roundUpToGRT(dur_incr_);
@@ -89,31 +93,32 @@ classdef skope_gtf < PulseqBase
             % Required by PulSeq IDEA
             mr_dummy = PulseqBase.makeDummy(); 
 
-            %% Combines event objects to eventblocks   
-            for i=[1:obj.N_rep]
+            %% Combines event objects to event blocks   
+            for r = 1:obj.nRep
                 for ax = 1:3
                     % blip-train
                     for n=0:size(mr_blips(),2)
-    
-                        % trigger block
-                        obj.seq.addBlock(mr_trig);
-                        T_tot = mr_trig.duration;
-                        
-                        if n>0
+                        for i=1:obj.nAve
+                            % trigger block
+                            obj.seq.addBlock(mr_trig);
+                            T_tot = mr_trig.duration;
+                            
+                            if n>0
+                                % delay
+                                obj.seq.addBlock(mr_gradFreeTime);
+                                T_tot = T_tot + mr_gradFreeTime.delay;            
+                            
+                                obj.seq.addBlock(mr_blips{ax,n});
+                                T_tot = T_tot + mr.calcDuration(mr_blips{ax,n});
+                            end
+        
+                            % Delay
+                            assert(obj.TR - T_tot > 0)
+                            mr_delay = mr.makeDelay(obj.TR - T_tot);
+                    
                             % delay
-                            obj.seq.addBlock(mr_gradFreeTime);
-                            T_tot = T_tot + mr_gradFreeTime.delay;            
-                        
-                            obj.seq.addBlock(mr_blips{ax,n});
-                            T_tot = T_tot + mr.calcDuration(mr_blips{ax,n});
+                            obj.seq.addBlock(mr_delay);
                         end
-    
-                        % Delay
-                        assert(obj.TR - T_tot > 0)
-                        mr_delay = mr.makeDelay(obj.TR - T_tot);
-                
-                        % delay
-                        obj.seq.addBlock(mr_delay);
                     end
                 end
             end
@@ -121,7 +126,7 @@ classdef skope_gtf < PulseqBase
             obj.seq.addBlock(mr_dummy);
 
             %% Number of triggers
-            obj.nTrig = obj.N_rep*3*(obj.nBlipsPerAxis+1);
+            obj.nTrig = obj.nAve*obj.nRep*3*(obj.nBlipsPerAxis+1);
 
             %% Prepare sequence export
             obj.seq.setDefinition('Name', 'gtf');

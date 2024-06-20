@@ -1,7 +1,7 @@
 classdef skope_offresAndPosCalib < PulseqBase
 % Sequence for off-resonance and position calibration
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2024 Skope Magnetic Resonance Technologies AG
 
     properties        
         axis = ['x', 'y', 'z'];     % Axis with blips      
@@ -11,16 +11,24 @@ classdef skope_offresAndPosCalib < PulseqBase
 
     methods
 
-        function obj = skope_offresAndPosCalib(scannerType, varargin)
+        function obj = skope_offresAndPosCalib(seqParams, varargin)
+
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Set base class properties
-            obj.TR = 200e-3;             % Repetition time [Unit: s]
+            obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
 
             T_trig_delay = 990e-3; % trigger delay [s]
 
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.signFlip = seqParams.signFlip;
+
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -30,22 +38,18 @@ classdef skope_offresAndPosCalib < PulseqBase
                 error('Expected T/m/s for slew rate.');
             end
 
-            %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 40;
-            maxSlew = 200;
-
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             % Set system limits
-            obj.sys = mr.opts('MaxGrad', maxGrad, ...
+            obj.sys = mr.opts('MaxGrad', seqParams.maxGrad, ...
                               'GradUnit','mT/m',...
-                              'MaxSlew', maxSlew, ...
+                              'MaxSlew', seqParams.maxSlew, ...
                               'SlewUnit','T/m/s',...
                               'rfRingdownTime', 30e-6, ...
                               'rfDeadtime', 100e-6,...

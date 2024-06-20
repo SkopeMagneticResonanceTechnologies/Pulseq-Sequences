@@ -12,7 +12,7 @@ classdef skope_epi_2d < PulseqBase
 %   interpreter 1.4.0. 
 %
 % Example:
-%  epi = skope_epi_2d(scannerType);
+%  epi = skope_epi_2d(sequenceParams);
 %  epi.plot();
 %  epi.test();
 %
@@ -76,7 +76,7 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq blip gradient
         gy_blipdownup
 
-        % Pulseq slice refocussing gradient
+        % Pulseq slice refocusing gradient
         gzReph
 
         % Echo train length
@@ -89,10 +89,15 @@ classdef skope_epi_2d < PulseqBase
 
     methods
 
-        function obj = skope_epi_2d(scannerType)
+        function obj = skope_epi_2d(seqParams)
+
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -102,22 +107,18 @@ classdef skope_epi_2d < PulseqBase
                 error('Expected T/m/s for slew rate.');
             end
 
-            %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 32;
-            maxSlew = 130;
-
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             % Set system limits
-            obj.sys = mr.opts('MaxGrad', maxGrad, ...
+            obj.sys = mr.opts('MaxGrad', seqParams.maxGrad, ...
                               'GradUnit','mT/m',...
-                              'MaxSlew', maxSlew, ...
+                              'MaxSlew', seqParams.maxSlew, ...
                               'SlewUnit','T/m/s',...
                               'rfRingdownTime', 30e-6, ...
                               'rfDeadtime', 100e-6,...
@@ -125,31 +126,37 @@ classdef skope_epi_2d < PulseqBase
             );      
                      
             % Echo time
-            obj.TE = 30e-3;
+            obj.TE = seqParams.TE;
 
             % Repetition time
-            obj.TR = 150e-3;
+            obj.TR = seqParams.TR;
 
             % Duration of scanner readout event
-            obj.readoutTime = 0.8e-3;
+            obj.readoutTime = seqParams.readoutTime;
 
             % Flip angle
-            obj.alpha = 90;
+            obj.alpha = seqParams.alpha;
 
             % Field of view [Unit: m]
-            obj.fov = 256e-3;
+            obj.fov = seqParams.fov;
 
             % Numbre of readout samples
-            obj.Nx = 64;
+            obj.Nx = seqParams.Nx;
 
             % Number of phase encoding steps
-            obj.Ny = 64;
+            obj.Ny = seqParams.Ny;
 
             % Slice thickness [Unit: m]
-            obj.thickness = 4e-3;
+            obj.thickness = seqParams.thickness;
 
             % Number of slices
-            obj.nSlices = 5;
+            obj.nSlices = seqParams.nSlices;
+
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.signFlip = seqParams.signFlip;
+
+            obj.nRep = seqParams.nRep;
+            obj.nAve = seqParams.nAve;
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
@@ -220,7 +227,7 @@ classdef skope_epi_2d < PulseqBase
 
             % Calculate ADC
             % we use ramp sampling, so we have to calculate the dwell time and the
-            % number of samples, which are will be qite different from Nx and
+            % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
             adcDwellNyquist = deltak/obj.gx.amplitude/obj.ro_os;
 
@@ -307,7 +314,7 @@ classdef skope_epi_2d < PulseqBase
                                        + mr.calcDuration(obj.gxPre, obj.gyPre) ...
                                        + obj.adc.delay;         
             
-            %% Calculate required camera acquistion duration
+            %% Calculate required camera acquisition duration
             obj.cameraAcqDuration = obj.fillTE ...
                                   + mr.calcDuration(obj.gxPre, obj.gyPre) ...
                                   + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
@@ -340,7 +347,7 @@ classdef skope_epi_2d < PulseqBase
             end
 
             %% Actual imaging sequence
-            for rep=1:5
+            for rep=1:obj.nRep
                 for slc = 1:obj.nSlices
                     avg = 1;
                     obj = runKernel(obj, slc, avg, rep);

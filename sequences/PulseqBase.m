@@ -41,6 +41,12 @@ classdef (Abstract) PulseqBase < handle
         % Flip angle
         alpha = 90
 
+        % Number of repetitions
+        nRep = 1;
+
+        % Number of averages
+        nAve = 1;
+
         % Bug fix for Pulseq error in version 1.4.0.
         signFlip = -1;
         
@@ -100,7 +106,20 @@ classdef (Abstract) PulseqBase < handle
             end
 
             %% plot sequence and k-space diagrams
-            obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'lin');
+            % Check if LIN is a used label
+            labelLINPresent = false;
+            for b=1:length(obj.seq.blockEvents)
+                block = obj.seq.getBlock(b);
+                if isfield(block,'label') && any(cellfun(@(x)strcmp(x,'LIN'),{block.label.label}))
+                    labelLINPresent = true;
+                    break;
+                end
+            end
+            if labelLINPresent
+                obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'lin');
+            else
+                obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms');
+            end
 
             if false                
                 obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'eco');

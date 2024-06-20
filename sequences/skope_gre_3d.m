@@ -14,13 +14,13 @@ classdef skope_gre_3d < PulseqBase
 %   interpreter 1.4.0. 
 %
 % Example:
-%  gre = skope_gre_3d(scannerType);
+%  gre = skope_gre_3d(sequenceParams);
 %  gre.plot();
 %  gre.test();
 %
 % See also PulseqBase
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2024 Skope Magnetic Resonance Technologies AG
 
     properties (Access=private)
 
@@ -70,10 +70,15 @@ classdef skope_gre_3d < PulseqBase
 
     methods
 
-        function obj = skope_gre_3d(scannerType)
+        function obj = skope_gre_3d(seqParams)
+
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -84,31 +89,30 @@ classdef skope_gre_3d < PulseqBase
             end
 
             %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 35;
-            maxSlew = 150;
+            
            
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             %% Create object
-            obj.sys = mr.opts(  'MaxGrad', maxGrad, ...
+            obj.sys = mr.opts(  'MaxGrad', seqParams.maxGrad, ...
                                 'GradUnit', 'mT/m', ...
-                                'MaxSlew', maxSlew, ...
+                                'MaxSlew', seqParams.maxSlew, ...
                                 'SlewUnit', 'T/m/s', ...
                                 'rfRingdownTime', 20e-6, ...
                                 'rfDeadTime', 100e-6, ...
                                 'adcDeadTime', 10e-6);  
 
             % Field of view [Unit: m]
-            obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
+            obj.fov = seqParams.fov; 
             
             % % Number of readout samples
-            obj.Nx = 56; 
+            obj.Nx = seqParams.Nx; 
             
             % Number of phase encoding steps
             obj.Ny = obj.Nx; 
@@ -117,23 +121,27 @@ classdef skope_gre_3d < PulseqBase
             obj.Nz = obj.Nx; 
             
             % Flip angle [Unit: deg]
-            obj.alpha = 1;     
+            obj.alpha = seqParams.alpha;     
                        
             % Echo times [Unit: s] + one millisecond for phase estimation
-            obj.TE = [12.3 28.16] * 1e-3 + 1e-3;
+            obj.TE = seqParams.TE;
             
             % Excitation repetition time [Unit: s]
-            obj.TR = 100e-3;                       
+            obj.TR = seqParams.TR;                       
             
             % ADC duration [Unit: s]
-            obj.readoutTime = 7.84e-3;  
-            Tpre = obj.readoutTime;
+            obj.readoutTime = seqParams.readoutTime;  
+
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.signFlip = seqParams.signFlip;
+            
+            %% Sync scans
+            obj.nSyncDynamics = 0;
 
             % Number of dummy shots for steady state
             nDummy = 50;
 
-            % Sync scans
-            obj.nSyncDynamics = 0;
+            Tpre = obj.readoutTime;
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
