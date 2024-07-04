@@ -134,7 +134,7 @@ classdef skope_gtf < PulseqBase
             obj.seq.setDefinition('Name', 'gtf');
             obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
             obj.seq.setDefinition('CameraNrSyncDynamics', 0); 
-            obj.seq.setDefinition('CameraAcqDuration', 0.100);  
+            obj.seq.setDefinition('CameraAcqDuration', 0.040);  
             obj.seq.setDefinition('CameraInterleaveTR', 0.400); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             
