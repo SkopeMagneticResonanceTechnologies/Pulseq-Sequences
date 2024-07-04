@@ -61,10 +61,10 @@ classdef SequenceParams
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
                 case 'gtf'
-                    obj.TR = 2;  
+                    obj.TR = 1;  
                     obj.maxGrad = 40;
                     obj.maxSlew = 200;
-                    obj.nAve = 4;
+                    obj.nAve = 5;
                 case 'opc'
                     obj.TR = 200e-3;
                     obj.maxGrad = 40;

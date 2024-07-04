@@ -73,7 +73,7 @@ paramsGtf = SequenceParams('gtf');
 gtf = skope_gtf(paramsGtf);
 
 % Plot sequence information
-timeRange = [0 480];
+timeRange = [0 300];
 gtf.plot(timeRange);
 
 % Test sequence

@@ -1,12 +1,14 @@
 classdef skope_gtf < PulseqBase
-% Sequence for local eddy current calibration
+% Sequence for impulse response measurements using gradient blips
 
 % (c) 2024 Skope Magnetic Resonance Technologies AG
 
     properties        
         axis = ['x', 'y', 'z']      % Axis with blips            
         relax = 0.9                 % Relax system limits
-        nBlipsPerAxis = 19          % Number of blips per axis
+        nBlipsPerAxis = 19          % Number of blips per axis (one 
+                                    % measurement without a gradient blib 
+                                    % will be added per axis)
     end
 
     methods
