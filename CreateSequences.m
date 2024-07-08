@@ -33,11 +33,10 @@ gre2d.test();
 
 %% Create a 2D echo-planar imaging sequence
 paramsEpi2d = SequenceParams('epi2d');
-
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-timeRange = [5.410 5.480];
+timeRange = [5.405 5.485];
 epi2d.plot(timeRange);
 
 % Test sequence

@@ -49,7 +49,7 @@ classdef SequenceParams
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                 case 'epi2d'
-                    obj.TE = 30e-3;
+                    obj.TE = 33e-3;
                     obj.TR = 150e-3;
                     obj.readoutTime = 0.8e-3;
                     obj.alpha = 90;

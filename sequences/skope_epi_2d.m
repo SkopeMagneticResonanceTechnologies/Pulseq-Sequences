@@ -30,6 +30,9 @@ classdef skope_epi_2d < PulseqBase
 
         % Partial Fourier factor: 1: full sampling 0: start with ky=0
         partFourierFactor = 1 
+
+        % Add phase correction lines
+        addPhaseCorrLines = true;
            
     end
 
@@ -285,10 +288,18 @@ classdef skope_epi_2d < PulseqBase
             obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
 
             %% Calculate minimal TE
+            if obj.addPhaseCorrLines
+                prepareTime = mr.calcDuration(obj.gxPre) + ...
+                            3*mr.calcDuration(obj.gx) + ...
+                            mr.calcDuration(obj.gyPre);
+            else
+                prepareTime = mr.calcDuration(obj.gxPre, obj.gyPre);
+            end
+
             minTE = obj.gz.flatTime/2 ...
                   + obj.gz.fallTime ...
                   + mr.calcDuration(obj.gzReph) ...
-                  + mr.calcDuration(obj.gxPre, obj.gyPre)  ...
+                  + prepareTime  ...
                   + Ny_pre * mr.calcDuration(obj.gx) ...
                   + mr.calcDuration(obj.gx)/2;
             disp(['Minimal TE is ' num2str((minTE + obj.gradFreeTime)*1000) ' ms'])
@@ -301,8 +312,8 @@ classdef skope_epi_2d < PulseqBase
                   + mr.calcDuration(obj.gz) ...
                   + mr.calcDuration(obj.gzReph) ...
                   + obj.fillTE ...
-                  + mr.calcDuration(obj.gxPre, obj.gyPre) ...
-                  + obj.echoTrainLength * mr.calcDuration(obj.gx);
+                  + prepareTime ...
+                  + obj.echoTrainLength * mr.calcDuration(obj.gx);            
 
             disp(['Minimal TR is ' num2str(minTR*1000) ' ms'])
              
@@ -423,7 +434,50 @@ classdef skope_epi_2d < PulseqBase
             
             obj.seq.addBlock(obj.gzReph);
             obj.seq.addBlock({obj.extTrigger,mr.makeDelay(obj.fillTE)});
-            obj.seq.addBlock(obj.gxPre, obj.gyPre);
+            
+            if obj.addPhaseCorrLines
+               
+                % Start with flip gx amplitude
+                obj.gxPre.amplitude = -obj.gxPre.amplitude;   
+                obj.seq.addBlock(obj.gxPre); 
+
+                % First phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 0), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+                obj.gx.amplitude = -obj.gx.amplitude;
+                obj.seq.addBlock(obj.gx, labels{:}, obj.adc);
+
+                % Second phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 1), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+
+                obj.gx.amplitude = -obj.gx.amplitude;
+                obj.seq.addBlock(obj.gx, labels{:}, obj.adc); 
+
+                % Third phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 2), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+                obj.gx.amplitude = -obj.gx.amplitude;
+                obj.seq.addBlock(obj.gx, labels{:}, obj.adc); 
+
+                % Restore original polarity
+                obj.gx.amplitude = -obj.gx.amplitude;
+                obj.gxPre.amplitude = -obj.gxPre.amplitude; 
+
+                % Play out phase pre-winding gradient
+                obj.seq.addBlock(obj.gyPre);
+            else
+                obj.seq.addBlock(obj.gxPre, obj.gyPre);
+            end
 
             for lin = 1:obj.echoTrainLength
 
@@ -432,7 +486,8 @@ classdef skope_epi_2d < PulseqBase
                     labels = { mr.makeLabel('SET','LIN', 0), ...
                                mr.makeLabel('SET','AVG', avg-1), ...
                                mr.makeLabel('SET','REP', rep-1), ...
-                               mr.makeLabel('SET','SLC', slc-1)};
+                               mr.makeLabel('SET','SLC', slc-1), ...
+                               mr.makeLabel('SET','NAV', false)};
                 else
                     labels = {mr.makeLabel('INC','LIN', 1)};
                 end
