@@ -20,6 +20,11 @@ classdef skope_gtf < PulseqBase
                 error('Input need to be a SequenceParams object.');
             end
 
+            if not(strcmpi(seqParams.mode,'linearityCheck')) && ...
+                 not(strcmpi(seqParams.mode,'default'))
+                error('Unknown sequence mode.')
+            end
+
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
 
@@ -79,6 +84,7 @@ classdef skope_gtf < PulseqBase
             % Blips
             mr_blips = {};
             for ax = 1:3
+                index = 0;
                 for count=[0:(obj.nBlipsPerAxis-1)]
                     
                     sign = 1;
@@ -88,18 +94,33 @@ classdef skope_gtf < PulseqBase
                     mr_blip_ = obj.makeBlip(obj.axis(ax), obj.sys.maxSlew * obj.relax, dur, sign);
                     assert(dur - mr.calcDuration(mr_blip_) < 1e-15); % sanity check
                     
-                    mr_blips{ax,count+1} = mr_blip_;
+                    if strcmpi(seqParams.mode,'linearityCheck')                        
+                        % Play out same blip with half the amplitude
+                        mr_blips{ax,index+1} = mr.scaleGrad(mr_blip_,0.5);                    
+                        mr_blips{ax,index+2} = mr_blip_;
+                        index = index+2;
+                    else
+                        mr_blips{ax,index+1} = mr_blip_;
+                        index = index+1;
+                    end
                 end
             end
             
             % Required by PulSeq IDEA
             mr_dummy = PulseqBase.makeDummy(); 
 
-            %% Combines event objects to event blocks   
+            %% Combines event objects to event blocks 
+            if strcmpi(seqParams.mode,'linearityCheck') 
+                % Play out the 'blip' with zero amplitude twice as well
+                startVal = -1;
+            else
+                startVal = 0;
+            end
+
             for r = 1:obj.nRep
                 for ax = 1:3
                     % blip-train
-                    for n=0:size(mr_blips(),2)
+                    for n=startVal:size(mr_blips(),2)
                         for i=1:obj.nAve
                             % trigger block
                             obj.seq.addBlock(mr_trig);
@@ -129,9 +150,16 @@ classdef skope_gtf < PulseqBase
 
             %% Number of triggers
             obj.nTrig = obj.nAve*obj.nRep*3*(obj.nBlipsPerAxis+1);
+            if strcmpi(seqParams.mode,'linearityCheck')
+                obj.nTrig = obj.nTrig * 2;
+            end
 
             %% Prepare sequence export
-            obj.seq.setDefinition('Name', 'gtf');
+            if strcmpi(seqParams.mode,'linearityCheck')
+                obj.seq.setDefinition('Name', 'gtf_linCheck');
+            else
+                obj.seq.setDefinition('Name', 'gtf');
+            end
             obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
             obj.seq.setDefinition('CameraNrSyncDynamics', 0); 
             obj.seq.setDefinition('CameraAcqDuration', 0.040);  
@@ -142,7 +170,12 @@ classdef skope_gtf < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_gtf.seq')  
+            if strcmpi(seqParams.mode,'linearityCheck')
+                obj.seq.write('exports/skope_gtf_linearityCheck.seq')  
+            else
+                obj.seq.write('exports/skope_gtf.seq')  
+            end
+            
                      
         end
     end

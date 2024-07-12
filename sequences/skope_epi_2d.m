@@ -87,6 +87,8 @@ classdef skope_epi_2d < PulseqBase
 
         % Fat shift [Unit: ppm]
         sat_ppm = -3.45;
+
+        doPlayFatSat = false;
        
     end
 
@@ -161,6 +163,8 @@ classdef skope_epi_2d < PulseqBase
             obj.nRep = seqParams.nRep;
             obj.nAve = seqParams.nAve;
 
+            obj.doPlayFatSat = seqParams.doPlayFatSat;
+
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
             
@@ -168,22 +172,24 @@ classdef skope_epi_2d < PulseqBase
             obj.gradFreeTime = obj.roundUpToGRT(200e-6);
 
             %% Create fat-sat pulse 
-            sat_freq = obj.sat_ppm * 1e-6 * obj.sys.B0 * obj.sys.gamma;
-            obj.rf_fs = mr.makeGaussPulse(  110*pi/180, ...
-                                            'system', obj.sys, ...
-                                            'Duration', 8e-3, ...
-                                            'dwell', 10e-6,...
-                                            'bandwidth', abs(sat_freq), ...
-                                            'freqOffset', sat_freq, ...
-                                            'use', 'saturation');
-
-            % Compensate for the frequency-offset induced phase  
-            obj.rf_fs.phaseOffset = -2*pi * obj.rf_fs.freqOffset * mr.calcRfCenter(obj.rf_fs);  
-
-            % Spoil up to 0.1mm
-            obj.gz_fs = mr.makeTrapezoid('z', obj.sys, ...
-                                         'delay', mr.calcDuration(obj.rf_fs), ...
-                                         'Area', 0.1/1e-4); 
+            if obj.doPlayFatSat
+                sat_freq = obj.sat_ppm * 1e-6 * obj.sys.B0 * obj.sys.gamma;
+                obj.rf_fs = mr.makeGaussPulse(  110*pi/180, ...
+                                                'system', obj.sys, ...
+                                                'Duration', 8e-3, ...
+                                                'dwell', 10e-6,...
+                                                'bandwidth', abs(sat_freq), ...
+                                                'freqOffset', sat_freq, ...
+                                                'use', 'saturation');
+    
+                % Compensate for the frequency-offset induced phase  
+                obj.rf_fs.phaseOffset = -2*pi * obj.rf_fs.freqOffset * mr.calcRfCenter(obj.rf_fs);  
+    
+                % Spoil up to 0.1mm
+                obj.gz_fs = mr.makeTrapezoid('z', obj.sys, ...
+                                             'delay', mr.calcDuration(obj.rf_fs), ...
+                                             'Area', 0.1/1e-4); 
+            end
 
             %% Create 90 degree slice selection pulse and gradient
             [obj.rf, obj.gz, obj.gzReph] = mr.makeSincPulse(obj.alpha*pi/180, ...
@@ -308,12 +314,14 @@ classdef skope_epi_2d < PulseqBase
             assert(obj.fillTE >= obj.gradFreeTime, 'Assertion for TE failed');
 
             %% Calculate minimal TR
-            minTR = mr.calcDuration(obj.gz_fs) ...
-                  + mr.calcDuration(obj.gz) ...
+            minTR = mr.calcDuration(obj.gz) ...
                   + mr.calcDuration(obj.gzReph) ...
                   + obj.fillTE ...
                   + prepareTime ...
-                  + obj.echoTrainLength * mr.calcDuration(obj.gx);            
+                  + obj.echoTrainLength * mr.calcDuration(obj.gx);  
+            if obj.doPlayFatSat
+                minTR = minTR + mr.calcDuration(obj.gz_fs);
+            end
 
             disp(['Minimal TR is ' num2str(minTR*1000) ' ms'])
              
@@ -420,10 +428,12 @@ classdef skope_epi_2d < PulseqBase
             if not(exist('doPlayRF','var'))
                 doPlayRF = true;
             end
-        
+
             %% RF and ADC settings
             if doPlayRF
-                obj.seq.addBlock(obj.rf_fs, obj.gz_fs);
+                if obj.doPlayFatSat
+                    obj.seq.addBlock(obj.rf_fs, obj.gz_fs);
+                end
                 obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2);
                  % Compensate for the slice-offset induced phase
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 

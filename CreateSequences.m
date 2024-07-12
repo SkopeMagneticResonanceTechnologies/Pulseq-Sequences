@@ -36,7 +36,7 @@ paramsEpi2d = SequenceParams('epi2d');
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-timeRange = [5.405 5.485];
+timeRange = [5.5 5.536];
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -68,6 +68,18 @@ lec.test();
 
 %% Create a series of blips
 paramsGtf = SequenceParams('gtf');
+
+gtf = skope_gtf(paramsGtf);
+
+% Plot sequence information
+timeRange = [0 300];
+gtf.plot(timeRange);
+
+% Test sequence
+gtf.test();
+
+%% Create two interleaved series of blips with half and double amplitude
+paramsGtf = SequenceParams('gtf','linearityCheck');
 
 gtf = skope_gtf(paramsGtf);
 

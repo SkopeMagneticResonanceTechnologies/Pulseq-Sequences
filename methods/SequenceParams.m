@@ -16,14 +16,21 @@ classdef SequenceParams
         maxSlew     % Used slew rate by sequence
         
         % Defaults
-        scannerType = "Siemens Terra 7T SC72CD";
-        nRep = 1;           % Number of repetitions
-        nAve = 1;           % Number of averages  
-        signFlip = -1;      % Bug fix for Pulseq error in version 1.4.0.
+        scannerType = 'Siemens 9.4T SC72CD';
+        nRep = 1;               % Number of repetitions
+        nAve = 1;               % Number of averages  
+        signFlip = -1;          % Bug fix for Pulseq error in version 1.4.0.
+        mode = 'default';       % Allow to switch between different versions
+        doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
     end
 
     methods
-        function obj = SequenceParams(seqName)
+        function obj = SequenceParams(seqName,mode)
+
+            if not(exist('mode','var'))
+                mode = 'default';
+            end
+
             switch lower(seqName)
                 case 'gre2d'
                     obj.fov = 200e-3; 
@@ -49,9 +56,9 @@ classdef SequenceParams
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                 case 'epi2d'
-                    obj.TE = 33e-3;
+                    obj.TE = 19e-3;
                     obj.TR = 150e-3;
-                    obj.readoutTime = 0.8e-3;
+                    obj.readoutTime = 0.4e-3;
                     obj.alpha = 90;
                     obj.fov = 256e-3;
                     obj.Nx = 64;
@@ -61,10 +68,21 @@ classdef SequenceParams
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
                 case 'gtf'
-                    obj.TR = 1;  
-                    obj.maxGrad = 40;
-                    obj.maxSlew = 200;
-                    obj.nAve = 5;
+                    if strcmpi(mode,'default')
+                        obj.TR = 1;  
+                        obj.maxGrad = 40;
+                        obj.maxSlew = 200;
+                        obj.nAve = 5;
+                        obj.mode = mode;
+                    elseif strcmpi(mode,'linearityCheck')
+                        obj.TR = 1;  
+                        obj.maxGrad = 40;
+                        obj.maxSlew = 200;
+                        obj.nAve = 1;
+                        obj.mode = mode;
+                    else
+                        error('Unknown sequence mode.')
+                    end
                 case 'opc'
                     obj.TR = 200e-3;
                     obj.maxGrad = 40;
