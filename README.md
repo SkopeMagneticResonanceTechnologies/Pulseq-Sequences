@@ -135,7 +135,7 @@ Set the following values on the Camera Acquisition System:
 
     CameraNrDynamics     240
     CameraInterleaveTR   400 
-    CameraAcqDuration    100 ms 
+    CameraAcqDuration    40 ms 
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 0
 
