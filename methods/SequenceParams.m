@@ -56,14 +56,14 @@ classdef SequenceParams
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                 case 'epi2d'
-                    obj.TE = 19e-3;
+                    obj.TE = 25.5e-3;
                     obj.TR = 150e-3;
-                    obj.readoutTime = 0.4e-3;
+                    obj.readoutTime = 0.46e-3;
                     obj.alpha = 90;
-                    obj.fov = 256e-3;
-                    obj.Nx = 64;
-                    obj.Ny = 64;
-                    obj.thickness = 4e-3;
+                    obj.fov = 220e-3;
+                    obj.Nx = 80;
+                    obj.Ny = 80;
+                    obj.thickness = 3e-3;
                     obj.nSlices = 5;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;

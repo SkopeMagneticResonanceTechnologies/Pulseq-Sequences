@@ -101,3 +101,16 @@ gre3d.plot(timeRange);
 
 % Test sequence
 gre3d.test();
+
+
+%% Create off-resonance and position calibration sequence
+paramsSweep = SequenceParams('opc');
+
+sweep = skope_sweep(paramsSweep);
+
+% Plot sequence
+timeRange = [0 8];
+sweep.plot(timeRange);
+
+% Test sequence
+sweep.test();
