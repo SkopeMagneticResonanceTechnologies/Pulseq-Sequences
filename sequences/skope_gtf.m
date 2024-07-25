@@ -37,7 +37,7 @@ classdef skope_gtf < PulseqBase
             end
 
             obj.TR = seqParams.TR;   
-            obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            obj.gradFreeTime = 2e-3;   % Delay between trigger and blip [Unit: s]
             obj.nAve = seqParams.nAve;
             obj.nRep = seqParams.nRep;
             
@@ -162,7 +162,7 @@ classdef skope_gtf < PulseqBase
             end
             obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
             obj.seq.setDefinition('CameraNrSyncDynamics', 0); 
-            obj.seq.setDefinition('CameraAcqDuration', 0.040);  
+            obj.seq.setDefinition('CameraAcqDuration', 0.050);  
             obj.seq.setDefinition('CameraInterleaveTR', 0.400); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             
@@ -173,10 +173,13 @@ classdef skope_gtf < PulseqBase
             if strcmpi(seqParams.mode,'linearityCheck')
                 obj.seq.write('exports/skope_gtf_linearityCheck.seq')  
             else
-                obj.seq.write('exports/skope_gtf.seq')  
+                if obj.nAve == 1
+                    obj.seq.write('exports/skope_gtf_one_ave.seq')  
+                else
+                    obj.seq.write('exports/skope_gtf.seq')
+                end
             end
-            
-                     
+                                 
         end
     end
 

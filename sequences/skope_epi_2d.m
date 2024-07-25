@@ -339,6 +339,12 @@ classdef skope_epi_2d < PulseqBase
                                   + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe
 
+            if obj.addPhaseCorrLines
+                obj.cameraAcqDuration = obj.cameraAcqDuration + ...
+                    3*mr.calcDuration(obj.gx);
+            end
+            obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
+
             %% Determine the echo spacing
             obj.echoSpacing = mr.calcDuration(obj.gx);
                         
@@ -437,9 +443,9 @@ classdef skope_epi_2d < PulseqBase
                 obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2);
                  % Compensate for the slice-offset induced phase
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
-                obj.seq.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','NAV',false));
+                obj.seq.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
             else
-                obj.seq.addBlock(obj.gz, mr.makeLabel('SET','NAV',true));
+                obj.seq.addBlock(obj.gz, mr.makeLabel('SET','PMC',true));
             end
             
             obj.seq.addBlock(obj.gzReph);

@@ -21,7 +21,6 @@ addpath('sequences')
 %% Create a 2D mono-polar dual-echo gradient-echo sequence
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d');
-
 gre2d = skope_gre_2d(paramsGre2d);
 
 % Plot sequence information after sync 
@@ -68,7 +67,10 @@ lec.test();
 
 %% Create a series of blips
 paramsGtf = SequenceParams('gtf');
+gtf = skope_gtf(paramsGtf);
 
+% Run as well with one average for nominal gradient simulation
+paramsGtf.nAve = 1; 
 gtf = skope_gtf(paramsGtf);
 
 % Plot sequence information
@@ -104,9 +106,13 @@ gre3d.test();
 
 
 %% Create off-resonance and position calibration sequence
-paramsSweep = SequenceParams('opc');
+load('sweepWaveform.mat')
+paramsSweep = SequenceParams('sweep');
+sweep = skope_sweep(paramsSweep,sweepWaveform);
 
-sweep = skope_sweep(paramsSweep);
+% Run as well with one average for nominal gradient simulation
+paramsSweep.nAve = 1;   
+sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Plot sequence
 timeRange = [0 8];

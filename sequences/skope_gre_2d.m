@@ -220,7 +220,8 @@ classdef skope_gre_2d < PulseqBase
                                   + mr.calcDuration(obj.gxFlyBack) ...
                                   + mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe 
-
+            obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
+            
             %% Phase settings
             obj.rf_phase = 0;
             obj.rf_inc = 0;
@@ -312,11 +313,11 @@ classdef skope_gre_2d < PulseqBase
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
                 obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
-                obj.seq.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','NAV',false), mr.makeLabel('SET','AVG',avg-1));
+                obj.seq.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
             else
                 obj.rf.freqOffset = 0;
                 obj.rf.phaseOffset = 0;
-                obj.seq.addBlock(obj.gz, mr.makeLabel('SET','NAV',true), mr.makeLabel('SET','AVG',avg-1));
+                obj.seq.addBlock(obj.gz, mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
             end
             
             %% Slice refocusing gradient

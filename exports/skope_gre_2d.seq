@@ -10,7 +10,7 @@ revision 0
 AdcRasterTime 1e-07 
 AdcSampleTime 2.5e-05 
 BlockDurationRaster 1e-05 
-CameraAcqDuration 0.01275 
+CameraAcqDuration 0.013 
 CameraAqDelay 0 
 CameraInterleaveTR 0.124 
 CameraNrDynamics 640 
@@ -6787,7 +6787,7 @@ extension TRIGGERS 2
 # Extension specification for setting labels:
 # id set labelstring
 extension LABELSET 1
-1 1 NAV
+1 1 PMC
 2 0 AVG
 3 0 ECO
 4 0 LIN
@@ -6802,7 +6802,7 @@ extension LABELSET 1
 13 7 AVG
 14 8 AVG
 15 9 AVG
-16 0 NAV
+16 0 PMC
 17 1 SLC
 18 2 SLC
 19 3 SLC
@@ -8466,4 +8466,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 622dcd33a6328eb08419cab9d1ff4fef
+Hash 8012c2a10adec608545da177c0b6ea23

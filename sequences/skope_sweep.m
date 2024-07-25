@@ -11,7 +11,7 @@ classdef skope_sweep < PulseqBase
 
     methods
 
-        function obj = skope_sweep(seqParams, varargin)
+        function obj = skope_sweep(seqParams, sweepWaveform)
 
             %% Check input structure
             if not(isa(seqParams,'SequenceParams'))
@@ -19,8 +19,8 @@ classdef skope_sweep < PulseqBase
             end
 
             %% Set base class properties
-            obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            obj.nAve = seqParams.nAve;
 
             T_trig_delay = 1e-3; % trigger delay [s]
 
@@ -60,29 +60,34 @@ classdef skope_sweep < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Set parameters
-            load('inSweep.mat')
-            inSweep(end+1) = 0; 
-            inSweep = inSweep(403:end)*100;
-            amp = max(inSweep);
+            amp = max(sweepWaveform);
             grad_amp_Hzm = mr.convert(amp, 'mT/m', 'Hz/m', 'gamma', obj.sys.gamma);            
             T_inter = 2000e-3; % delay between event-blocks [s]
             
             %% Prepare event objects and combine to eventblocks
             mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
             mr_inter = mr.makeDelay(T_inter); 
-
-            nAvg = 50;
+            
             for ax = obj.axis 
-                for avg = 1:nAvg                               
+                for avg = 1:obj.nAve   
+
+                    % Add trigger
+                    obj.seq.addBlock(mr_trig); 
+
+                    % Add delay after trigger
+                    obj.seq.addBlock(mr.makeDelay(2e-3));
+
+                    % Play out waveform
                     if(ax == 'x')
-                        g = mr.makeArbitraryGrad('x',inSweep*grad_amp_Hzm);
+                        g = mr.makeArbitraryGrad('x',-sweepWaveform*grad_amp_Hzm);
                     elseif (ax == 'y')
-                        g = mr.makeArbitraryGrad('y',inSweep*grad_amp_Hzm);
+                        g = mr.makeArbitraryGrad('y',sweepWaveform*grad_amp_Hzm);
                     else
-                        g = mr.makeArbitraryGrad('z',inSweep*grad_amp_Hzm);                    
-                    end                    
-                    obj.seq.addBlock(mr_trig);                
+                        g = mr.makeArbitraryGrad('z',sweepWaveform*grad_amp_Hzm);                    
+                    end                                         
                     obj.seq.addBlock(g);
+
+                    % Wait for next waveform
                     obj.seq.addBlock(mr_inter);
                 end
             end
@@ -91,7 +96,7 @@ classdef skope_sweep < PulseqBase
             obj.seq.addBlock(PulseqBase.makeDummy);
 
             % Number of external triggers
-            obj.nTrig = 3*nAvg;
+            obj.nTrig = 3*obj.nAve;
 
             %% Prepare sequence export
             obj.seq.setDefinition('Name', 'sweep');
@@ -105,8 +110,12 @@ classdef skope_sweep < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_sweep.seq')       
-                      
+            if obj.nAve == 1
+                obj.seq.write('exports/skope_sweep_one_ave.seq')  
+            else
+                obj.seq.write('exports/skope_sweep.seq')  
+            end
+                                       
         end
     end 
 end
