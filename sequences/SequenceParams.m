@@ -67,6 +67,20 @@ classdef SequenceParams
                     obj.nSlices = 5;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
+                case 'spiral2d'
+                    % spiral-trajectory not adaptive to input params (hard coded)
+                    % don't change!
+                    obj.fov = 192e-3; 
+                    obj.Nx = 192; 
+                    obj.Ny = 16; 
+                    obj.alpha = 15;   
+                    obj.thickness = 3e-3; 
+                    obj.nSlices = 1;
+                    obj.TE = 2.5 * 1e-3;
+                    obj.TR = 140e-3;       
+                    obj.readoutTime = 8e-3;
+                    obj.maxGrad = 40;
+                    obj.maxSlew = 150;
                 case 'gtf'
                     if strcmpi(mode,'default')
                         obj.TR = 1;  
