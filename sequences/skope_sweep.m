@@ -102,7 +102,7 @@ classdef skope_sweep < PulseqBase
             obj.seq.setDefinition('Name', 'sweep');
             obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
             obj.seq.setDefinition('CameraNrSyncDynamics', 0); 
-            obj.seq.setDefinition('CameraAcqDuration', 0.1);  
+            obj.seq.setDefinition('CameraAcqDuration', 0.070);  
             obj.seq.setDefinition('CameraInterleaveTR', 0.4); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             
