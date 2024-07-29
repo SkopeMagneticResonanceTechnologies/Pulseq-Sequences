@@ -21,6 +21,7 @@ classdef skope_sweep < PulseqBase
             %% Set base class properties
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
             obj.nAve = seqParams.nAve;
+            obj.TR = seqParams.TR;
 
             T_trig_delay = 1e-3; % trigger delay [s]
 
@@ -62,11 +63,11 @@ classdef skope_sweep < PulseqBase
             %% Set parameters
             amp = max(sweepWaveform);
             grad_amp_Hzm = mr.convert(amp, 'mT/m', 'Hz/m', 'gamma', obj.sys.gamma);            
-            T_inter = 2000e-3; % delay between event-blocks [s]
             
             %% Prepare event objects and combine to eventblocks
             mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
-            mr_inter = mr.makeDelay(T_inter); 
+            
+            mr_gradfree = mr.makeDelay(2e-3);
             
             for ax = obj.axis 
                 for avg = 1:obj.nAve   
@@ -75,7 +76,7 @@ classdef skope_sweep < PulseqBase
                     obj.seq.addBlock(mr_trig); 
 
                     % Add delay after trigger
-                    obj.seq.addBlock(mr.makeDelay(2e-3));
+                    obj.seq.addBlock(mr_gradfree);
 
                     % Play out waveform
                     if(ax == 'x')
@@ -86,6 +87,12 @@ classdef skope_sweep < PulseqBase
                         g = mr.makeArbitraryGrad('z',sweepWaveform*grad_amp_Hzm);                    
                     end                                         
                     obj.seq.addBlock(g);
+
+                    totalTime = mr.calcDuration(mr_trig) + ...
+                                mr.calcDuration(mr_gradfree) + ...
+                                mr.calcDuration(g);
+
+                    mr_inter = mr.makeDelay(obj.TR - totalTime); 
 
                     % Wait for next waveform
                     obj.seq.addBlock(mr_inter);

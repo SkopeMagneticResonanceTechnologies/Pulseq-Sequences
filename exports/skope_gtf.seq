@@ -9,7 +9,7 @@ revision 0
 [DEFINITIONS]
 AdcRasterTime 1e-07 
 BlockDurationRaster 1e-05 
-CameraAcqDuration 0.05 
+CameraAcqDuration 0.07 
 CameraAqDelay 0 
 CameraInterleaveTR 0.4 
 CameraNrDynamics 300 
@@ -1274,4 +1274,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash f678d83e5dcb3e548b19536aab9df1ef
+Hash fcde5e69d69acb6c76c42f79a566d5ad

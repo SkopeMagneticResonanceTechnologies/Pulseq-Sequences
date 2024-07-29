@@ -72,6 +72,9 @@ classdef (Abstract) PulseqBase < handle
         % Duration of camera acquisition [Unit: s]
         cameraAcqDuration
 
+        % Number of trigger to skip by AQ system
+        skipFactor = 1;
+
         % Camera interleave TR or blank time [Unit: s]
         % Additional external triggers from the scanner are ignored by the
         % Camera Acquisition System during this period
@@ -166,14 +169,15 @@ classdef (Abstract) PulseqBase < handle
         % should be ignored by the Camera Acquisition System.
 	        
             % Default values
-            eps = 1e-3;            
+            eps = 2e-3;            
 
             %% Calculate minimal interleave TR
 	        if triggerTR < obj.minCameraTR + eps
-		        skipFactor = max(2, ceil(obj.minCameraTR / triggerTR));
-		         obj.cameraInterleaveTR = skipFactor * triggerTR - eps;	        
-	        else 
-		         obj.cameraInterleaveTR = triggerTR - eps;
+                obj.skipFactor = max(2, ceil(obj.minCameraTR / triggerTR));
+		        obj.cameraInterleaveTR = obj.skipFactor * triggerTR - eps;	        
+            else 
+                obj.skipFactor = 1;
+		        obj.cameraInterleaveTR = triggerTR - eps;
             end
 
 	        %% Calculate duty cycle
@@ -191,6 +195,7 @@ classdef (Abstract) PulseqBase < handle
 
 		       % Add a multiple of trigger TR
                obj.cameraInterleaveTR =  obj.cameraInterleaveTR + addTrig2Skip * triggerTR;
+               obj.skipFactor = obj.skipFactor + addTrig2Skip;
             end
         end
 

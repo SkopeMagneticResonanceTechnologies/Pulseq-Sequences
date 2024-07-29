@@ -154,7 +154,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.gzReph = mr.makeTrapezoid('z','Area',-obj.gz.area/2,'Duration',1e-3,'system',obj.sys);
 
             % Create spiral waveform
-            obj.gspiral = waveform;
+            obj.gspiral = waveform.';
             obj.gx = mr.makeArbitraryGrad('x',obj.gspiral(1,:),'Delay',mr.calcDuration(obj.gzReph));
             obj.gy = mr.makeArbitraryGrad('y',obj.gspiral(2,:),'Delay',mr.calcDuration(obj.gzReph));
             durADC = mr.calcDuration(obj.gx);
@@ -165,8 +165,8 @@ classdef skope_spiral_2d < PulseqBase
             
 
             % Compute moment
-            mx = -trapz(waveform(1,:))*obj.sys.gradRasterTime;
-            my = -trapz(waveform(2,:))*obj.sys.gradRasterTime;
+            mx = -trapz(obj.gspiral(1,:))*obj.sys.gradRasterTime;
+            my = -trapz(obj.gspiral(2,:))*obj.sys.gradRasterTime;
            
             % gradient spoiling and refocussing
             obj.gzSpoil = mr.makeTrapezoid('z','Area',4/obj.thickness,'system', obj.sys);

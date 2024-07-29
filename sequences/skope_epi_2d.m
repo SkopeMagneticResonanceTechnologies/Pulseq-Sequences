@@ -409,7 +409,7 @@ classdef skope_epi_2d < PulseqBase
 
             %% Parameters to be set on the user interface of the Field Camera            
             % The number of actually acquired dynamics depends on the cameraInterleaveTR.
-            obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
+            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
             obj.seq.setDefinition('CameraNrSyncDynamics', obj.nSyncDynamics); 
             obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
