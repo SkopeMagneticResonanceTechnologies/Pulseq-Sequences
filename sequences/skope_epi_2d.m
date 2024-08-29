@@ -331,7 +331,11 @@ classdef skope_epi_2d < PulseqBase
             %% Time from trigger to scanner acquisition
             obj.triggerToScannerAcqDelay =  obj.fillTE ...
                                        + mr.calcDuration(obj.gxPre, obj.gyPre) ...
-                                       + obj.adc.delay;         
+                                       + obj.adc.delay;  
+
+            if obj.addPhaseCorrLines
+                obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
+            end
             
             %% Calculate required camera acquisition duration
             obj.cameraAcqDuration = obj.fillTE ...

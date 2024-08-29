@@ -26,7 +26,7 @@ SliceShifts -0.006 -0.003 0 0.003 0.006
 TE 0.0255 
 TR 0.2 
 TotalDuration 7 
-TriggerToScannerAcqDelay 0.001146 
+TriggerToScannerAcqDelay 0.002706 
 
 # Format of blocks:
 # NUM DUR RF  GX  GY  GZ  ADC  EXT
@@ -3562,4 +3562,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash c8c1f9d83eaae7431acdb4afbb4ff529
+Hash 0ee4f1b5e691feec9b4de91ffaee734a
