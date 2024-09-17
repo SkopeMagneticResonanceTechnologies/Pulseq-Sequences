@@ -6256,8 +6256,8 @@ num_samples 5004
 
 shape_id 2
 num_samples 2
-0
-0
+-0
+-0
 
 shape_id 3
 num_samples 2
@@ -6270,4 +6270,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash df5510adf473bd0d1da6955c72c55a49
+Hash 39da42eb4d337594121dc91fcc7fecea
