@@ -81,7 +81,7 @@ paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-timeRange = [5.999 6.050];
+timeRange = [5.999 6.070];
 epi2d.plot(timeRange);
 
 % Test sequence

@@ -138,15 +138,15 @@ classdef skope_gre_3d < PulseqBase
             obj.sliceOrientation = seqParams.sliceOrientation;
             obj.phaseEncDir = seqParams.phaseEncDir;
 
+            % Number of dummy shots for steady state
+            obj.nDummy = seqParams.nDummy;
+
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
                 = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
             
             %% Sync scans
             obj.nSyncDynamics = 0;
-
-            % Number of dummy shots for steady state
-            nDummy = 50;
 
             Tpre = obj.readoutTime;
 
@@ -228,7 +228,7 @@ classdef skope_gre_3d < PulseqBase
             obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
     
             %% Drive magnetization to steady state
-            for i=1:nDummy
+            for i=1:obj.nDummy
                 runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
             end
                         
@@ -267,7 +267,7 @@ classdef skope_gre_3d < PulseqBase
             end
 
             % Set number of expected external triggers
-            obj.nTrig = nDummy + obj.Ny * obj.Nz;
+            obj.nTrig = obj.nDummy + obj.Ny * obj.Nz;
             
             %% check whether the timing of the sequence is correct
             [ok, error_report] = obj.seq.checkTiming;
@@ -333,8 +333,12 @@ classdef skope_gre_3d < PulseqBase
                 obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf)));
             end                      
         
-            %% External trigger and gradient-free interval a
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            %% External trigger and gradient-free interval
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            else
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            end
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...

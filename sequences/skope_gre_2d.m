@@ -63,6 +63,8 @@ classdef skope_gre_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
+        distanceFactorPercentage = 500;
+
     end
 
     methods
@@ -134,6 +136,8 @@ classdef skope_gre_2d < PulseqBase
 
             obj.sliceOrientation = seqParams.sliceOrientation;
             obj.phaseEncDir = seqParams.phaseEncDir;
+
+            obj.nDummy = seqParams.nDummy;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -289,7 +293,7 @@ classdef skope_gre_2d < PulseqBase
 
             %% Prepare sequence export
             obj.seq.setDefinition('Name', 'gre2d');
-            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices]);
+            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('TR', obj.TR);
             obj.seq.setDefinition('TE', obj.TE);            
 
@@ -305,7 +309,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]); 
+            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100));
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
@@ -329,7 +333,7 @@ classdef skope_gre_2d < PulseqBase
         
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2);
+                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
@@ -345,8 +349,12 @@ classdef skope_gre_2d < PulseqBase
             obj.addBlock(obj.gzReph);
         
             %% External trigger and gradient-free interval a
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
-        
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
+            else
+                obj.addBlock(mr.makeDelay(obj.fillTE(1)));
+            end
+
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
                     'Area', obj.phaseAreas(lin), ...

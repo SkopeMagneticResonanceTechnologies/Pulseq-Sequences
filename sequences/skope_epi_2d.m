@@ -90,6 +90,7 @@ classdef skope_epi_2d < PulseqBase
 
         doPlayFatSat = false;
 
+        distanceFactorPercentage = 500;
     end
 
     methods
@@ -244,7 +245,6 @@ classdef skope_epi_2d < PulseqBase
             obj.gx.amplitude = obj.gx.amplitude/actual_area*kWidth;
             obj.gx.area = obj.gx.amplitude*(obj.gx.flatTime + obj.gx.riseTime/2 + obj.gx.fallTime/2);
             obj.gx.flatArea = obj.gx.amplitude*obj.gx.flatTime;
-
 
             % Calculate ADC
             % we use ramp sampling, so we have to calculate the dwell time and the
@@ -422,7 +422,7 @@ classdef skope_epi_2d < PulseqBase
             end
             
             %% Prepare sequence export
-            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices]);
+            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('Name', 'epi2d');
             obj.seq.setDefinition('TE', obj.TE);
             obj.seq.setDefinition('TR', obj.TR);
@@ -441,10 +441,20 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]); 
+            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100)); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
+
+            %% Echo spacing check
+            if contains(seqParams.scannerType,'SC72CD')
+                if obj.echoSpacing>=0.63e-3 && obj.echoSpacing<=0.74e-3 || ...
+                    obj.echoSpacing>=1.2e-3 && obj.echoSpacing<=1.47e-3  
+                    error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for Siemens SC72CD gradient coil.'])
+                end
+            else
+                warning(['Echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) might be a forbidden value for your system. Please check.'])
+            end
 
             %% Write to pulseq file
             if not(isfolder('exports'))
@@ -468,7 +478,7 @@ classdef skope_epi_2d < PulseqBase
                 if obj.doPlayFatSat
                     obj.addBlock(obj.rf_fs, obj.gz_fs);
                 end
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2);
+                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
                  % Compensate for the slice-offset induced phase
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));

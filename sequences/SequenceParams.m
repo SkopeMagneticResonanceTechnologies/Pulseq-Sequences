@@ -42,13 +42,26 @@ classdef SequenceParams
                     obj.Ny = obj.Nx; 
                     obj.alpha = 7;   
                     obj.thickness = 3e-3; 
-                    obj.nSlices = 5;
+                    obj.nSlices = 15;
                     obj.TE = [6 12] * 1e-3;
                     obj.TR = 25e-3;       
                     obj.readoutTime = 3.2e-3;
                     obj.maxGrad = 28;
                     obj.maxSlew = 150;
                     obj.nDummy = 10;
+                case 'epi2d'
+                    obj.TE = 33e-3;
+                    obj.TR = 200e-3;
+                    obj.readoutTime = 0.680e-3;
+                    obj.alpha = 90;
+                    obj.fov = 200e-3;
+                    obj.Nx = 80;
+                    obj.Ny = 80;
+                    obj.thickness = 3e-3;
+                    obj.nSlices = 15;
+                    obj.maxGrad = 32;
+                    obj.maxSlew = 130;
+                    obj.nDummy = 5;                
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
@@ -60,19 +73,8 @@ classdef SequenceParams
                     obj.readoutTime = 7.84e-3;  
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
-                case 'epi2d'
-                    obj.TE = 25.5e-3;
-                    obj.TR = 200e-3;
-                    obj.readoutTime = 0.46e-3;
-                    obj.alpha = 90;
-                    obj.fov = 220e-3;
-                    obj.Nx = 80;
-                    obj.Ny = 80;
-                    obj.thickness = 3e-3;
-                    obj.nSlices = 5;
-                    obj.maxGrad = 32;
-                    obj.maxSlew = 130;
-                    obj.nDummy = 10;
+                    obj.nDummy = 50;
+
                 case 'spiral2d'
                     % spiral-trajectory not adaptive to input params (hard coded)
                     % don't change!
