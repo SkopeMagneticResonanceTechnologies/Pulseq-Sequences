@@ -25,7 +25,7 @@ classdef skope_offresAndPosCalib < PulseqBase
             T_trig_delay = 990e-3; % trigger delay [s]
 
             % Bug fix for Pulseq error in version 1.4.0.
-            obj.signFlip = seqParams.signFlip;
+            obj.doFlipXAxis = seqParams.doFlipXAxis;
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
@@ -75,10 +75,10 @@ classdef skope_offresAndPosCalib < PulseqBase
             obj.seq.addBlock(mr_inter);
         
             for ax = obj.axis                
-                if(ax == 'x')
+                if(ax == 'x') && obj.doFlipXAxis
                     % Hint by Bonn-Group: On their scanner, PulSeq flips x-axis when 
                     % transforming from physical to logical coordinate system
-                    area_flattop_ = area_flattop * (-1);
+                    area_flattop_ = -area_flattop;
                 else
                     area_flattop_ = area_flattop;
                 end

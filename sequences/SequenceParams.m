@@ -19,9 +19,13 @@ classdef SequenceParams
         scannerType = 'Siemens 9.4T SC72CD';
         nRep = 1;               % Number of repetitions
         nAve = 1;               % Number of averages  
-        signFlip = -1;          % Bug fix for Pulseq error in version 1.4.0.
+        doFlipXAxis = true;     % Bug fix for Pulseq error in version 1.4.0.
         mode = 'default';       % Allow to switch between different versions
         doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
+        nDummy = 0;             % Number of dummy pulses to reach steady state
+        
+        sliceOrientation = SliceOrientation.TRA;  % Slice orientation        
+        phaseEncDir = PhaseEncodingDirection.AP;  % Phase encoding direction
     end
 
     methods
@@ -44,6 +48,7 @@ classdef SequenceParams
                     obj.readoutTime = 3.2e-3;
                     obj.maxGrad = 28;
                     obj.maxSlew = 150;
+                    obj.nDummy = 10;
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
@@ -67,6 +72,7 @@ classdef SequenceParams
                     obj.nSlices = 5;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
+                    obj.nDummy = 10;
                 case 'spiral2d'
                     % spiral-trajectory not adaptive to input params (hard coded)
                     % don't change!

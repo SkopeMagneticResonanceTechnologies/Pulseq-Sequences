@@ -4,7 +4,7 @@
 [VERSION]
 major 1
 minor 4
-revision 0
+revision 1
 
 [DEFINITIONS]
 AdcRasterTime 1e-07 
@@ -6938,10 +6938,6 @@ extension LABELSET 1
 146 126 LIN
 147 127 LIN
 
-# Extension specification for setting labels:
-# id set labelstring
-extension LABELINC 3
-
 # Sequence Shapes
 [SHAPES]
 
@@ -8469,4 +8465,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 57dda4444e97dff957cdfc76f9966680
+Hash 83adbf46dced6c3535c818dcd55bceda

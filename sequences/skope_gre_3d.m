@@ -133,7 +133,14 @@ classdef skope_gre_3d < PulseqBase
             obj.readoutTime = seqParams.readoutTime;  
 
             % Bug fix for Pulseq error in version 1.4.0.
-            obj.signFlip = seqParams.signFlip;
+            obj.doFlipXAxis = seqParams.doFlipXAxis;
+
+            obj.sliceOrientation = seqParams.sliceOrientation;
+            obj.phaseEncDir = seqParams.phaseEncDir;
+
+            %% Axes order
+            [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
             
             %% Sync scans
             obj.nSyncDynamics = 0;
@@ -156,19 +163,19 @@ classdef skope_gre_3d < PulseqBase
           
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1./obj.fov;
-            obj.gx = mr.makeTrapezoid(  'x', ...
-                                        'FlatArea', obj.signFlip*obj.Nx*deltak(1), ...
+            obj.gx = mr.makeTrapezoid(  obj.axesOrder{1}, ...
+                                        'FlatArea', obj.Nx*deltak(1), ...
                                         'FlatTime', obj.readoutTime, ...
                                         'system',obj.sys);
             obj.adc = mr.makeAdc(obj.Nx, ...
                                 'Duration', obj.gx.flatTime, ...
                                 'Delay', obj.gx.riseTime, ...
                                 'system', obj.sys);
-            obj.gxPre = mr.makeTrapezoid('x',obj.sys,'Area',-obj.gx.area/2,'Duration',Tpre);
-            obj.gxFlyBack = mr.makeTrapezoid('x','Area',-obj.gx.area,'system',obj.sys);  
-            obj.gxSpoil = mr.makeTrapezoid('x',obj.sys,'Area',obj.gx.area,'Duration',Tpre*2);
-            obj.phaseAreaY = ((0:obj.Ny-1)-obj.Ny/2)*deltak(2);
-            obj.phaseAreaZ = ((0:obj.Nz-1)-obj.Nz/2)*deltak(3);
+            obj.gxPre = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',-obj.gx.area/2,'Duration',Tpre);
+            obj.gxFlyBack = mr.makeTrapezoid(obj.axesOrder{1},'Area',-obj.gx.area,'system',obj.sys);  
+            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',obj.gx.area,'Duration',Tpre*2);
+            obj.phaseAreaY = ([(obj.Ny-1):-1:0]-obj.Ny/2)*deltak(2);
+            obj.phaseAreaZ = ([(obj.Nz-1):-1:0]-obj.Nz/2)*deltak(3);
 
             %% Calculate minimal TEs
             % First echo
@@ -194,7 +201,7 @@ classdef skope_gre_3d < PulseqBase
 
             %% Increase duration of fly-back gradient by TE2 fill time
             if obj.fillTE(2) > 0 
-                obj.gxFlyBack = mr.makeTrapezoid('x','Area',-obj.gx.area,'system',obj.sys,'Duration',mr.calcDuration(obj.gxFlyBack) + obj.fillTE(2)); 
+                obj.gxFlyBack = mr.makeTrapezoid(obj.axesOrder{1},'Area',-obj.gx.area,'system',obj.sys,'Duration',mr.calcDuration(obj.gxFlyBack) + obj.fillTE(2)); 
                 obj.fillTE(2) = 0;
             end
 
@@ -222,7 +229,7 @@ classdef skope_gre_3d < PulseqBase
     
             %% Drive magnetization to steady state
             for i=1:nDummy
-                runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1);
+                runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
             end
                         
             %% Calculate required camera acquisition duration
@@ -246,7 +253,7 @@ classdef skope_gre_3d < PulseqBase
             %         warning('The pause between the synchronization and imaging scans should be equal or larger than 4 seconds. The current value is okay for simulation purposes.');
             %     end
             % 
-            %     obj.seq.addBlock({mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0)});
+            %     obj.addBlock({mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0)});
             % end
 
             %% Actual imaging sequence
@@ -255,7 +262,7 @@ classdef skope_gre_3d < PulseqBase
                 for lin = 1:obj.Ny      
                     % loop over slices
                     avg = 1;
-                    obj = runKernel(obj, lin, par, avg);   
+                    obj = runKernel(obj, lin, par, avg, KernelMode.Imaging);   
                 end
             end
 
@@ -294,48 +301,51 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
+            obj.seq.setDefinition('readDir_SCT', readDir_SCT);
+            obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
+            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             
             %% Write to Pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
-            end
-            obj.seq.write('exports/skope_gre_3d.seq')       
+            end 
+            obj.seq.write(strcat('exports/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));  
+            
             
         end    
     end
 
     methods (Access=private)               
-        function obj = runKernel(obj, lin, par, avg, doPlayRF)
+        function obj = runKernel(obj, lin, par, avg, mode)
 
-            %% Input check
-            if not(exist('doPlayRF','var'))
-                doPlayRF = true;
+            if not(isa(mode, 'KernelMode'))
+                error('Expected a kernel mode argument')
             end
         
             %% RF and ADC settings
-            if doPlayRF
+            if mode==KernelMode.Dummy || mode==KernelMode.Imaging
                 obj.rf.phaseOffset = mod(117*(lin^2+lin+2)*pi/180,2*pi);
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
-                obj.seq.addBlock(obj.rf);
+                obj.addBlock(obj.rf);
             else
                 obj.rf.phaseOffset = 0;
                 obj.adc.phaseOffset = 0;
-                obj.seq.addBlock(mr.makeDelay(mr.calcDuration(obj.rf)));
+                obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf)));
             end                      
         
             %% External trigger and gradient-free interval a
-            obj.seq.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
 
             %% Read-prewinding and phase encoding gradients
-            gyPre = mr.makeTrapezoid('y', ...
+            gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
                     'Area', obj.phaseAreaY(lin), ...
                     'Duration', mr.calcDuration(obj.gxPre), ...
                     'system',obj.sys);
-            gzPre = mr.makeTrapezoid('z', ...
+            gzPre = mr.makeTrapezoid(obj.axesOrder{3}, ...
                     'Area', obj.phaseAreaZ(par), ...
                     'Duration', mr.calcDuration(obj.gxPre), ...
                     'system',obj.sys);
-            obj.seq.addBlock(obj.gxPre,gyPre,gzPre);
+            obj.addBlock(obj.gxPre,gyPre,gzPre);
 
             %% All LABELS / counters an flags are automatically initialized to 0 in the beginning, no need to define initial 0's  
             % so we will just increment LIN after the ADC event (e.g. during the spoiler)         
@@ -348,13 +358,13 @@ classdef skope_gre_3d < PulseqBase
                          {mr.makeLabel('SET','AVG', avg-1)}];
 
             %% First readout gradient
-            obj.seq.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+            obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
           
             %% Fly back
-            obj.seq.addBlock(obj.gxFlyBack); % Fill time has been absorbed in gradient duration
+            obj.addBlock(obj.gxFlyBack); % Fill time has been absorbed in gradient duration
         
             %% Second readout gradient   
-            obj.seq.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 1), labels{:});     
+            obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 1), labels{:});     
                    
             %% Negative Phase encoding
             gyPre.amplitude = -gyPre.amplitude;
@@ -362,10 +372,10 @@ classdef skope_gre_3d < PulseqBase
         
             %% Spoiling
             spoilBlockContents = {obj.gxSpoil, gyPre, gzPre};
-            obj.seq.addBlock(spoilBlockContents{:});
+            obj.addBlock(spoilBlockContents{:});
 
             %% Add delay
-            obj.seq.addBlock(mr.makeDelay(obj.fillTR));
+            obj.addBlock(mr.makeDelay(obj.fillTR));
         
         end
     end

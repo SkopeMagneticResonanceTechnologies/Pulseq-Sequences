@@ -48,7 +48,23 @@ classdef (Abstract) PulseqBase < handle
         nAve = 1;
 
         % Bug fix for Pulseq error in version 1.4.0.
-        signFlip = -1;
+        doFlipXAxis = true;
+
+        % Slice orientation
+        sliceOrientation = SliceOrientation.TRA;
+
+        % Phase encoding direction
+        phaseEncDir = PhaseEncodingDirection.AP;
+
+        % Order of axes according to slice orientation and phase encoding
+        % direction
+        axesOrder;
+
+        % Sign flip of axis
+        axesSign;
+
+        % Number of dummy pulses to reach steady state
+        nDummy = 0;
         
     end
 
@@ -208,6 +224,26 @@ classdef (Abstract) PulseqBase < handle
 
             % Round up to GRT
             t = ceil(t_us/gdt_us)*obj.sys.gradRasterTime;
+        end
+
+        function obj = addBlock(obj,varargin)
+            for i=1:numel(varargin)
+                switch varargin{i}.type
+                    case {'trap','grad'}
+                        ind = find(cellfun(@(x)strcmp(x,varargin{i}.channel),obj.axesOrder));                     
+                        if isfield(varargin{i},'amplitude')
+                            varargin{i}.amplitude = obj.axesSign(ind)*varargin{i}.amplitude;
+                        elseif isfield(varargin{i},'waveform')                         
+                            varargin{i}.waveform = obj.axesSign(ind)*varargin{i}.waveform;
+                            varargin{i}.first = varargin{i}.waveform(1);
+                            varargin{i}.last = varargin{i}.waveform(end);
+                        end
+                    otherwise
+                        % Nothing to do
+                end
+                
+            end
+            obj.seq.addBlock(varargin);
         end
     end
 

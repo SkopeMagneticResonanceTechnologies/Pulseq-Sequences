@@ -42,7 +42,7 @@ classdef skope_gtf < PulseqBase
             obj.nRep = seqParams.nRep;
             
             % Bug fix for Pulseq error in version 1.4.0.
-            obj.signFlip = seqParams.signFlip;
+            obj.doFlipXAxis = seqParams.doFlipXAxis;
 
             %% Check specs
             if seqParams.maxGrad > specs.maxGrad
@@ -201,7 +201,9 @@ classdef skope_gtf < PulseqBase
             if (axis == 'x')
                 % Siemens Pulseq interpreter 1.4.0 flips x-axis when 
                 % transforming from physical to logical coordinate system
-                sign = sign * obj.signFlip;
+                if obj.doFlipXAxis
+                    sign = -sign;
+                end
             end
             
             % gradient moment

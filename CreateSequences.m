@@ -18,9 +18,32 @@ addpath('pulseq/matlab')
 addpath('methods')
 addpath('sequences')
 
-%% Create a 2D mono-polar dual-echo gradient-echo sequence
+%% Create a 2D mono-polar dual-echo gradient-echo sequence for all directions
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d');
+
+paramsGre2d.sliceOrientation = SliceOrientation.SAG;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
+gre2d = skope_gre_2d(paramsGre2d);
+
+paramsGre2d.sliceOrientation = SliceOrientation.SAG;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.HF;
+gre2d = skope_gre_2d(paramsGre2d);
+
+paramsGre2d.sliceOrientation = SliceOrientation.COR;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.RL;
+gre2d = skope_gre_2d(paramsGre2d);
+
+paramsGre2d.sliceOrientation = SliceOrientation.COR;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.HF;
+gre2d = skope_gre_2d(paramsGre2d);
+
+paramsGre2d.sliceOrientation = SliceOrientation.TRA;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.RL;
+gre2d = skope_gre_2d(paramsGre2d);
+
+paramsGre2d.sliceOrientation = SliceOrientation.TRA;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
 gre2d = skope_gre_2d(paramsGre2d);
 
 % Plot sequence information after sync 
@@ -30,8 +53,31 @@ gre2d.plot(timeRange);
 % Test sequence
 gre2d.test();
 
-%% Create a 2D echo-planar imaging sequence
+%% Create a 2D echo-planar imaging sequence for all directions
 paramsEpi2d = SequenceParams('epi2d');
+
+paramsEpi2d.sliceOrientation = SliceOrientation.SAG;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+paramsEpi2d.sliceOrientation = SliceOrientation.SAG;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.HF;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+paramsEpi2d.sliceOrientation = SliceOrientation.COR;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.RL;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+paramsEpi2d.sliceOrientation = SliceOrientation.COR;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.HF;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.RL;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information

@@ -26,7 +26,11 @@ classdef skope_sweep < PulseqBase
             T_trig_delay = 1e-3; % trigger delay [s]
 
             % Bug fix for Pulseq error in version 1.4.0.
-            obj.signFlip = seqParams.signFlip;
+            obj.doFlipXAxis = seqParams.doFlipXAxis;
+
+            %% Axes order
+            [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
@@ -73,20 +77,14 @@ classdef skope_sweep < PulseqBase
                 for avg = 1:obj.nAve   
 
                     % Add trigger
-                    obj.seq.addBlock(mr_trig); 
+                    obj.addBlock(mr_trig); 
 
                     % Add delay after trigger
-                    obj.seq.addBlock(mr_gradfree);
+                    obj.addBlock(mr_gradfree);
 
                     % Play out waveform
-                    if(ax == 'x')
-                        g = mr.makeArbitraryGrad('x',-sweepWaveform*grad_amp_Hzm);
-                    elseif (ax == 'y')
-                        g = mr.makeArbitraryGrad('y',sweepWaveform*grad_amp_Hzm);
-                    else
-                        g = mr.makeArbitraryGrad('z',sweepWaveform*grad_amp_Hzm);                    
-                    end                                         
-                    obj.seq.addBlock(g);
+                    g = mr.makeArbitraryGrad(ax,sweepWaveform*grad_amp_Hzm);            
+                    obj.addBlock(g);
 
                     totalTime = mr.calcDuration(mr_trig) + ...
                                 mr.calcDuration(mr_gradfree) + ...
@@ -95,12 +93,12 @@ classdef skope_sweep < PulseqBase
                     mr_inter = mr.makeDelay(obj.TR - totalTime); 
 
                     % Wait for next waveform
-                    obj.seq.addBlock(mr_inter);
+                    obj.addBlock(mr_inter);
                 end
             end
             
             % Required by PulSeq IDEA
-            obj.seq.addBlock(PulseqBase.makeDummy);
+            obj.addBlock(PulseqBase.makeDummy);
 
             % Number of external triggers
             obj.nTrig = 3*obj.nAve;
