@@ -4,7 +4,7 @@
 [VERSION]
 major 1
 minor 4
-revision 1
+revision 0
 
 [DEFINITIONS]
 AdcRasterTime 1e-07 
@@ -17,19 +17,19 @@ CameraNrDynamics 8
 CameraNrSyncDynamics 10 
 EchoSpacing 0.00076 
 EchoTrainLength 80 
-FOV 0.2 0.2 0.27 
+FOV 0.2 0.2 0.1575 
 GradientRasterTime 1e-05 
 Matrix 80 80 
 Name epi2d 
 RadiofrequencyRasterTime 1e-06 
-SliceShifts -0.126 -0.108 -0.09 -0.072 -0.054 -0.036 -0.018 0 0.018 0.036 0.054 0.072 0.09 0.108 0.126 
+SliceShifts -0.0735 -0.063 -0.0525 -0.042 -0.0315 -0.021 -0.0105 0 0.0105 0.021 0.0315 0.042 0.0525 0.063 0.0735 
 TE 0.033 
 TR 0.2 
 TotalDuration 24 
 TriggerToScannerAcqDelay 0.001122 
 phaseDir_SCT 0 1 0 
-readDir_SCT 0 0 -1 
-sliceDir_SCT -1 0 0 
+readDir_SCT 0 0 1 
+sliceDir_SCT 1 0 0 
 
 # Format of blocks:
 # NUM DUR RF  GX  GY  GZ  ADC  EXT
@@ -8540,21 +8540,21 @@ sliceDir_SCT -1 0 0
 # id amplitude mag_id phase_id time_shape_id delay freq phase
 # ..        Hz   ....     ....          ....    us   Hz   rad
 [RF]
-1       502.45 6 7 0 130 -84000 527.788
-2       502.45 6 7 0 130 -72000 452.389
-3       502.45 6 7 0 130 -60000 376.991
-4       502.45 6 7 0 130 -48000 301.593
-5       502.45 6 7 0 130 -36000 226.195
-6       502.45 6 7 0 130 -24000 150.796
-7       502.45 6 7 0 130 -12000 75.3982
+1       502.45 6 7 0 130 -49000 307.876
+2       502.45 6 7 0 130 -42000 263.894
+3       502.45 6 7 0 130 -35000 219.911
+4       502.45 6 7 0 130 -28000 175.929
+5       502.45 6 7 0 130 -21000 131.947
+6       502.45 6 7 0 130 -14000 87.9646
+7       502.45 6 7 0 130 -7000 43.9823
 8       502.45 6 7 0 130 0 -0
-9       502.45 6 7 0 130 12000 -75.3982
-10       502.45 6 7 0 130 24000 -150.796
-11       502.45 6 7 0 130 36000 -226.195
-12       502.45 6 7 0 130 48000 -301.593
-13       502.45 6 7 0 130 60000 -376.991
-14       502.45 6 7 0 130 72000 -452.389
-15       502.45 6 7 0 130 84000 -527.788
+9       502.45 6 7 0 130 7000 -43.9823
+10       502.45 6 7 0 130 14000 -87.9646
+11       502.45 6 7 0 130 21000 -131.947
+12       502.45 6 7 0 130 28000 -175.929
+13       502.45 6 7 0 130 35000 -219.911
+14       502.45 6 7 0 130 42000 -263.894
+15       502.45 6 7 0 130 49000 -307.876
 
 # Format of arbitrary gradients:
 #   time_shape_id of 0 means default timing (stepping with grad_raster starting at 1/2 of grad_raster)
@@ -8571,10 +8571,10 @@ sliceDir_SCT -1 0 0
 [TRAP]
  1      -666667 130 2000 130   0
  2  1.33962e+06 250  280 250   0
- 3 -1.02128e+06 200    0 200   0
+ 3  1.02128e+06 200    0 200   0
  4       267123  50  680  50   0
- 5       638298 120  520 120   0
- 7      -638298 120  520 120   0
+ 5      -638298 120  520 120   0
+ 7       638298 120  520 120   0
 
 # Format of ADC events:
 # id num dwell delay freq phase
@@ -8664,7 +8664,7 @@ extension LABELSET 1
 29 13 SLC
 30 14 SLC
 
-# Extension specification for increasing labels:
+# Extension specification for setting labels:
 # id set labelstring
 extension LABELINC 3
 1 1 LIN
@@ -10732,4 +10732,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 41fb6ffd770e76785892d199cfc64fbd
+Hash ac0bbb4a97a6249e1d095289729373ec
