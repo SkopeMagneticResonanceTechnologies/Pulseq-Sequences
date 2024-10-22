@@ -9,8 +9,8 @@ For Clip-On Camera "Cranberry" Edition users
  - Local eddy current calibration - This sequence provides the data needed to quantify eddy currents near individual probes as part of the Local Eddy Current correction provided in the Clip-On Camera "Cranberry" Edition.
 
 Imaging sequences for demonstration
- - Mono-polar 2D dual-echo gradient-echo sequence
- - 2D echo-planar imaging sequence 
+ - Mono-polar 2D dual-echo gradient-echo sequence in different orientations
+ - 2D echo-planar imaging sequence in different orientations
 
 Please visit https://github.com/pulseq/pulseq for further information about Pulseq and make sure to use the correct version of the Pulseq interpreter on the scanner.
 
@@ -31,7 +31,7 @@ Add Pulseq as a submodule
  - Run CreateSequences.m to create Pulseq sequence files for all sequences
 
 ### NOTES
-- The Siemens Pulseq interpreter (1.4.0) flips the polarity of the x-axis. The polarity of the x-gradients for the sequences in this repository has been reversed to deal with this bug. Set the property _signFlip_ to _1_ in PulseqBase.m if you do not wish to flip the sign of the x-gradients.
+- The Siemens Pulseq interpreter (1.4.2) flips the polarity of the x-axis. The polarity of the x-gradients for the sequences in this repository has been reversed to deal with this feature. Set the property _doFlipXAxis_ to _1_ in PulseqBase.m and SequenceParams.m if you do not wish to flip the sign of the x-gradients.
 - If the sequences do not run on the scanner, try closing the protocol and opening it again.
 
 ## Acquisition parameters for field-monitoring
@@ -58,14 +58,18 @@ A rough estimate of the delay between the start of the trigger and the first sca
 
 Additional timing information is required for data merging and image reconstruction.
 
-**GRE** 
+**General parameters** 
 
-    TE
+    SliceShifts - Slice shift in millimeter along the slice direction
+    TE - Echo time(s) in seconds
+    TR - Repetition time in seconds
+    phaseDir_SCT - Phase encoding direction in the patient coordinate system (Sag, Cor, Tra)
+    readDir_SCT - Read direction in the patient coordinate system (Sag, Cor, Tra)
+    sliceDir_SCT - Slice direction in the patient coordinate system (Sag, Cor, Tra)
 
 **EPI**
 
-    TE
-    EchoSpacing
+    EchoSpacing  - Echo time(s)
     EchoTrainLength
 
 ## Sequences
@@ -98,8 +102,8 @@ The same kernel is repeated 10 times without RF at the start of the scan to acqu
 
 Set the following values on the Camera Acquisition System:
 
-    CameraNrDynamics     640 
-    CameraInterleaveTR   124.5 ms
+    CameraNrDynamics     384 
+    CameraInterleaveTR   123 ms
     CameraAcqDuration    13 ms 
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 10
@@ -117,9 +121,9 @@ The figure below shows the kernel for the EPI sequence. It is repeated 5 times t
 
 Set the following values on the Camera Acquisition System:
 
-    CameraNrDynamics     5
-    CameraInterleaveTR   299.5 ms 
-    CameraAcqDuration    58 ms 
+    CameraNrDynamics     8
+    CameraInterleaveTR   398 ms 
+    CameraAcqDuration    63 ms 
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 10
 
@@ -142,7 +146,7 @@ Set the following values on the Camera Acquisition System:
 
 ## Pulseq files
 
-The Pulseq files included in this repository have been created for a 7T Siemens whole-body system.
+The Pulseq files included in this repository have been created for a 7T Siemens whole-body system. **Please check that the selected echo-spacings do not fall within the forbidden frequencies of your gradient system.**
 
 ## Warranties
 
