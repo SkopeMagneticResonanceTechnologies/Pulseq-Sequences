@@ -26,6 +26,9 @@ classdef (Abstract) PulseqBase < handle
         % Number of phase encoding lines
         Ny
 
+        % Number of partition encoding steps
+        Nz
+
         % Slice thickness
         thickness
 
@@ -38,8 +41,30 @@ classdef (Abstract) PulseqBase < handle
         % Flip angle
         alpha = 90
 
+        % Number of repetitions
+        nRep = 1;
+
+        % Number of averages
+        nAve = 1;
+
         % Bug fix for Pulseq error in version 1.4.0.
-        signFlip = -1;
+        doFlipXAxis = true;
+
+        % Slice orientation
+        sliceOrientation = SliceOrientation.TRA;
+
+        % Phase encoding direction
+        phaseEncDir = PhaseEncodingDirection.AP;
+
+        % Order of axes according to slice orientation and phase encoding
+        % direction
+        axesOrder;
+
+        % Sign flip of axis
+        axesSign;
+
+        % Number of dummy pulses to reach steady state
+        nDummy = 0;
         
     end
 
@@ -62,6 +87,9 @@ classdef (Abstract) PulseqBase < handle
 
         % Duration of camera acquisition [Unit: s]
         cameraAcqDuration
+
+        % Number of trigger to skip by AQ system
+        skipFactor = 1;
 
         % Camera interleave TR or blank time [Unit: s]
         % Additional external triggers from the scanner are ignored by the
@@ -97,7 +125,20 @@ classdef (Abstract) PulseqBase < handle
             end
 
             %% plot sequence and k-space diagrams
-            obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'lin');
+            % Check if LIN is a used label
+            labelLINPresent = false;
+            for b=1:length(obj.seq.blockEvents)
+                block = obj.seq.getBlock(b);
+                if isfield(block,'label') && any(cellfun(@(x)strcmp(x,'LIN'),{block.label.label}))
+                    labelLINPresent = true;
+                    break;
+                end
+            end
+            if labelLINPresent
+                obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'lin');
+            else
+                obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms');
+            end
 
             if false                
                 obj.seq.plot('timeRange', timeRange, 'TimeDisp', 'ms', 'label', 'eco');
@@ -144,14 +185,15 @@ classdef (Abstract) PulseqBase < handle
         % should be ignored by the Camera Acquisition System.
 	        
             % Default values
-            eps = 1e-3;            
+            eps = 2e-3;            
 
             %% Calculate minimal interleave TR
 	        if triggerTR < obj.minCameraTR + eps
-		        skipFactor = max(2, ceil(obj.minCameraTR / triggerTR));
-		         obj.cameraInterleaveTR = skipFactor * triggerTR - eps;	        
-	        else 
-		         obj.cameraInterleaveTR = triggerTR - eps;
+                obj.skipFactor = max(2, ceil(obj.minCameraTR / triggerTR));
+		        obj.cameraInterleaveTR = obj.skipFactor * triggerTR - eps;	        
+            else 
+                obj.skipFactor = 1;
+		        obj.cameraInterleaveTR = triggerTR - eps;
             end
 
 	        %% Calculate duty cycle
@@ -169,6 +211,7 @@ classdef (Abstract) PulseqBase < handle
 
 		       % Add a multiple of trigger TR
                obj.cameraInterleaveTR =  obj.cameraInterleaveTR + addTrig2Skip * triggerTR;
+               obj.skipFactor = obj.skipFactor + addTrig2Skip;
             end
         end
 
@@ -181,6 +224,26 @@ classdef (Abstract) PulseqBase < handle
 
             % Round up to GRT
             t = ceil(t_us/gdt_us)*obj.sys.gradRasterTime;
+        end
+
+        function obj = addBlock(obj,varargin)
+            for i=1:numel(varargin)
+                switch varargin{i}.type
+                    case {'trap','grad'}
+                        ind = find(cellfun(@(x)strcmp(x,varargin{i}.channel),obj.axesOrder));                     
+                        if isfield(varargin{i},'amplitude')
+                            varargin{i}.amplitude = obj.axesSign(ind)*varargin{i}.amplitude;
+                        elseif isfield(varargin{i},'waveform')                         
+                            varargin{i}.waveform = obj.axesSign(ind)*varargin{i}.waveform;
+                            varargin{i}.first = varargin{i}.waveform(1);
+                            varargin{i}.last = varargin{i}.waveform(end);
+                        end
+                    otherwise
+                        % Nothing to do
+                end
+                
+            end
+            obj.seq.addBlock(varargin);
         end
     end
 

@@ -12,7 +12,7 @@ classdef skope_epi_2d < PulseqBase
 %   interpreter 1.4.0. 
 %
 % Example:
-%  epi = skope_epi_2d(scannerType);
+%  epi = skope_epi_2d(sequenceParams);
 %  epi.plot();
 %  epi.test();
 %
@@ -30,6 +30,9 @@ classdef skope_epi_2d < PulseqBase
 
         % Partial Fourier factor: 1: full sampling 0: start with ky=0
         partFourierFactor = 1 
+
+        % Add phase correction lines
+        addPhaseCorrLines = false;
            
     end
 
@@ -76,7 +79,7 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq blip gradient
         gy_blipdownup
 
-        % Pulseq slice refocussing gradient
+        % Pulseq slice refocusing gradient
         gzReph
 
         % Echo train length
@@ -84,15 +87,23 @@ classdef skope_epi_2d < PulseqBase
 
         % Fat shift [Unit: ppm]
         sat_ppm = -3.45;
-       
+
+        doPlayFatSat = false;
+
+        distanceFactorPercentage = 500;
     end
 
     methods
 
-        function obj = skope_epi_2d(scannerType)
+        function obj = skope_epi_2d(seqParams)
+
+            %% Check input structure
+            if not(isa(seqParams,'SequenceParams'))
+                error('Input need to be a SequenceParams object.');
+            end
 
             %% Get system limits
-            specs = GetMRSystemSpecs(scannerType); 
+            specs = GetMRSystemSpecs(seqParams.scannerType); 
 
             if not(strcmpi(specs.maxGrad_unit,'mT/m'))
                 error('Expected mT/m for maximum gradient.');
@@ -102,22 +113,18 @@ classdef skope_epi_2d < PulseqBase
                 error('Expected T/m/s for slew rate.');
             end
 
-            %% Used gradient amplitude and slew rate by this sequence
-            maxGrad = 32;
-            maxSlew = 130;
-
             %% Check specs
-            if maxGrad > specs.maxGrad
+            if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
             end
-            if maxSlew > specs.maxSlew
+            if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
 
             % Set system limits
-            obj.sys = mr.opts('MaxGrad', maxGrad, ...
+            obj.sys = mr.opts('MaxGrad', seqParams.maxGrad, ...
                               'GradUnit','mT/m',...
-                              'MaxSlew', maxSlew, ...
+                              'MaxSlew', seqParams.maxSlew, ...
                               'SlewUnit','T/m/s',...
                               'rfRingdownTime', 30e-6, ...
                               'rfDeadtime', 100e-6,...
@@ -125,31 +132,43 @@ classdef skope_epi_2d < PulseqBase
             );      
                      
             % Echo time
-            obj.TE = 30e-3;
+            obj.TE = seqParams.TE;
 
             % Repetition time
-            obj.TR = 150e-3;
+            obj.TR = seqParams.TR;
 
             % Duration of scanner readout event
-            obj.readoutTime = 0.8e-3;
+            obj.readoutTime = seqParams.readoutTime;
 
             % Flip angle
-            obj.alpha = 90;
+            obj.alpha = seqParams.alpha;
 
             % Field of view [Unit: m]
-            obj.fov = 256e-3;
+            obj.fov = seqParams.fov;
 
             % Numbre of readout samples
-            obj.Nx = 64;
+            obj.Nx = seqParams.Nx;
 
             % Number of phase encoding steps
-            obj.Ny = 64;
+            obj.Ny = seqParams.Ny;
 
             % Slice thickness [Unit: m]
-            obj.thickness = 4e-3;
+            obj.thickness = seqParams.thickness;
 
             % Number of slices
-            obj.nSlices = 5;
+            obj.nSlices = seqParams.nSlices;
+
+            % Bug fix for Pulseq error in version 1.4.0.
+            obj.doFlipXAxis = seqParams.doFlipXAxis;
+
+            obj.nRep = seqParams.nRep;
+            obj.nAve = seqParams.nAve;
+
+            obj.nDummy = seqParams.nDummy;
+            obj.doPlayFatSat = seqParams.doPlayFatSat;
+
+            obj.sliceOrientation = seqParams.sliceOrientation;
+            obj.phaseEncDir = seqParams.phaseEncDir;
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
@@ -157,23 +176,29 @@ classdef skope_epi_2d < PulseqBase
             %% Time for probe excitation
             obj.gradFreeTime = obj.roundUpToGRT(200e-6);
 
+            %% Axes order
+            [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
+
             %% Create fat-sat pulse 
-            sat_freq = obj.sat_ppm * 1e-6 * obj.sys.B0 * obj.sys.gamma;
-            obj.rf_fs = mr.makeGaussPulse(  110*pi/180, ...
-                                            'system', obj.sys, ...
-                                            'Duration', 8e-3, ...
-                                            'dwell', 10e-6,...
-                                            'bandwidth', abs(sat_freq), ...
-                                            'freqOffset', sat_freq, ...
-                                            'use', 'saturation');
-
-            % Compensate for the frequency-offset induced phase  
-            obj.rf_fs.phaseOffset = -2*pi * obj.rf_fs.freqOffset * mr.calcRfCenter(obj.rf_fs);  
-
-            % Spoil up to 0.1mm
-            obj.gz_fs = mr.makeTrapezoid('z', obj.sys, ...
-                                         'delay', mr.calcDuration(obj.rf_fs), ...
-                                         'Area', 0.1/1e-4); 
+            if obj.doPlayFatSat
+                sat_freq = obj.sat_ppm * 1e-6 * obj.sys.B0 * obj.sys.gamma;
+                obj.rf_fs = mr.makeGaussPulse(  110*pi/180, ...
+                                                'system', obj.sys, ...
+                                                'Duration', 8e-3, ...
+                                                'dwell', 10e-6,...
+                                                'bandwidth', abs(sat_freq), ...
+                                                'freqOffset', sat_freq, ...
+                                                'use', 'saturation');
+    
+                % Compensate for the frequency-offset induced phase  
+                obj.rf_fs.phaseOffset = -2*pi * obj.rf_fs.freqOffset * mr.calcRfCenter(obj.rf_fs);  
+    
+                % Spoil up to 0.1mm
+                obj.gz_fs = mr.makeTrapezoid(obj.axesOrder{3}, obj.sys, ...
+                                             'delay', mr.calcDuration(obj.rf_fs), ...
+                                             'Area', 0.1/1e-4); 
+            end
 
             %% Create 90 degree slice selection pulse and gradient
             [obj.rf, obj.gz, obj.gzReph] = mr.makeSincPulse(obj.alpha*pi/180, ...
@@ -183,6 +208,10 @@ classdef skope_epi_2d < PulseqBase
                                                 'apodization', 0.42, ...
                                                 'timeBwProduct', 4, ...
                                                 'use','excitation');
+
+            % Set correct axis
+            obj.gz.channel =  obj.axesOrder{3};  
+            obj.gzReph.channel =  obj.axesOrder{3}; 
 
             %% Define other gradients and ADC events
             deltak = 1/obj.fov;
@@ -194,10 +223,10 @@ classdef skope_epi_2d < PulseqBase
 
             % The split code below fails if this really makes a trpezoid instead of a triangle.
             % We use negative blips to save one k-space line on our way towards the k-space center
-            obj.gy = mr.makeTrapezoid('y', obj.sys, ...
+            obj.gy = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                       'Area', -deltak, ...
                                       'Duration', blip_dur); 
-            %gy = mr.makeTrapezoid('y',lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
+            %gy = mr.makeTrapezoid(obj.axesOrder{2},lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
             
             % readout gradient is a truncated trapezoid with dead times at the beginnig
             % and at the end each equal to a half of blip_dur
@@ -206,8 +235,8 @@ classdef skope_epi_2d < PulseqBase
             % slewrate and then scale down the amlitude to fix the area 
             extra_area = blip_dur/2 * blip_dur/2 * obj.sys.maxSlew; % check unit!;
 
-            obj.gx = mr.makeTrapezoid('x', obj.sys, ...
-                                  'Area', obj.signFlip*(kWidth+extra_area), ...
+            obj.gx = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
+                                  'Area', kWidth+extra_area, ...
                                   'duration', obj.readoutTime + blip_dur);
 
             actual_area = obj.gx.area - obj.gx.amplitude/obj.gx.riseTime * blip_dur/2 * blip_dur/2/2 ...
@@ -217,10 +246,9 @@ classdef skope_epi_2d < PulseqBase
             obj.gx.area = obj.gx.amplitude*(obj.gx.flatTime + obj.gx.riseTime/2 + obj.gx.fallTime/2);
             obj.gx.flatArea = obj.gx.amplitude*obj.gx.flatTime;
 
-
             % Calculate ADC
             % we use ramp sampling, so we have to calculate the dwell time and the
-            % number of samples, which are will be qite different from Nx and
+            % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
             adcDwellNyquist = deltak/obj.gx.amplitude/obj.ro_os;
 
@@ -260,15 +288,15 @@ classdef skope_epi_2d < PulseqBase
             obj.echoTrainLength = Ny_pre + Ny_post;
             
             % Pre-phasing gradients
-            obj.gxPre = mr.makeTrapezoid('x', obj.sys, ...
+            obj.gxPre = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
                                          'Area',-obj.gx.area/2);
-            obj.gyPre = mr.makeTrapezoid('y', obj.sys, 'Area', Ny_pre*deltak);
+            obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, 'Area', Ny_pre*deltak);
 
             [obj.gxPre, obj.gyPre] = mr.align('right', obj.gxPre, ...
                                              'left', obj.gyPre);
 
             % relax the PE prepahser to reduce stimulation
-            obj.gyPre = mr.makeTrapezoid('y', obj.sys, ...
+            obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                          'Area', obj.gyPre.area, ...
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
             obj.gyPre.amplitude = obj.gyPre.amplitude*obj.pe_enable;
@@ -278,10 +306,18 @@ classdef skope_epi_2d < PulseqBase
             obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
 
             %% Calculate minimal TE
+            if obj.addPhaseCorrLines
+                prepareTime = mr.calcDuration(obj.gxPre) + ...
+                            3*mr.calcDuration(obj.gx) + ...
+                            mr.calcDuration(obj.gyPre);
+            else
+                prepareTime = mr.calcDuration(obj.gxPre, obj.gyPre);
+            end
+
             minTE = obj.gz.flatTime/2 ...
                   + obj.gz.fallTime ...
                   + mr.calcDuration(obj.gzReph) ...
-                  + mr.calcDuration(obj.gxPre, obj.gyPre)  ...
+                  + prepareTime  ...
                   + Ny_pre * mr.calcDuration(obj.gx) ...
                   + mr.calcDuration(obj.gx)/2;
             disp(['Minimal TE is ' num2str((minTE + obj.gradFreeTime)*1000) ' ms'])
@@ -290,12 +326,14 @@ classdef skope_epi_2d < PulseqBase
             assert(obj.fillTE >= obj.gradFreeTime, 'Assertion for TE failed');
 
             %% Calculate minimal TR
-            minTR = mr.calcDuration(obj.gz_fs) ...
-                  + mr.calcDuration(obj.gz) ...
+            minTR = mr.calcDuration(obj.gz) ...
                   + mr.calcDuration(obj.gzReph) ...
                   + obj.fillTE ...
-                  + mr.calcDuration(obj.gxPre, obj.gyPre) ...
-                  + obj.echoTrainLength * mr.calcDuration(obj.gx);
+                  + prepareTime ...
+                  + obj.echoTrainLength * mr.calcDuration(obj.gx);  
+            if obj.doPlayFatSat
+                minTR = minTR + mr.calcDuration(obj.gz_fs);
+            end
 
             disp(['Minimal TR is ' num2str(minTR*1000) ' ms'])
              
@@ -305,13 +343,23 @@ classdef skope_epi_2d < PulseqBase
             %% Time from trigger to scanner acquisition
             obj.triggerToScannerAcqDelay =  obj.fillTE ...
                                        + mr.calcDuration(obj.gxPre, obj.gyPre) ...
-                                       + obj.adc.delay;         
+                                       + obj.adc.delay;  
+
+            if obj.addPhaseCorrLines
+                obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
+            end
             
-            %% Calculate required camera acquistion duration
+            %% Calculate required camera acquisition duration
             obj.cameraAcqDuration = obj.fillTE ...
                                   + mr.calcDuration(obj.gxPre, obj.gyPre) ...
                                   + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe
+
+            if obj.addPhaseCorrLines
+                obj.cameraAcqDuration = obj.cameraAcqDuration + ...
+                    3*mr.calcDuration(obj.gx);
+            end
+            obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
 
             %% Determine the echo spacing
             obj.echoSpacing = mr.calcDuration(obj.gx);
@@ -321,29 +369,39 @@ classdef skope_epi_2d < PulseqBase
                       
             % Older scanners like Trio may need this dummy delay to keep up
             % with timing
-            % obj.seq.addBlock(mr.makeDelay(1)); 
+            % obj.addBlock(mr.makeDelay(1)); 
                                                         
             %% Synchronization
             if obj.nSyncDynamics > 0
                 for avg = 1:obj.nSyncDynamics
                     slc = 1;
                     rep = 1;
-                    obj = runKernel(obj, slc, avg, rep, false);
+                    obj = runKernel(obj, slc, avg, rep, KernelMode.Sync);
                 end
                 
                 %% Add pause and reset flags
                 if obj.preScanPause < 4
                     warning('The pause between the synchronization and imaging scans should be equal or larger than 4 seconds. The current value is okay for simulation purposes.');
                 end
+
+                obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0));
     
-                obj.seq.addBlock({mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0)});
+            end
+
+            %% Dummy scans
+            for rep=1:obj.nDummy
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    obj = runKernel(obj, slc, avg, rep, KernelMode.Dummy);
+                end
             end
 
             %% Actual imaging sequence
-            for slc = 1:obj.nSlices
-                avg = 1;
-                rep = 1;
-                obj = runKernel(obj, slc, avg, rep);
+            for rep=1:obj.nRep
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    obj = runKernel(obj, slc, avg, rep, KernelMode.Imaging);
+                end
             end
 
             %% Set the number of imaging triggers
@@ -364,7 +422,7 @@ classdef skope_epi_2d < PulseqBase
             end
             
             %% Prepare sequence export
-            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices]);
+            obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('Name', 'epi2d');
             obj.seq.setDefinition('TE', obj.TE);
             obj.seq.setDefinition('TR', obj.TR);
@@ -376,45 +434,124 @@ classdef skope_epi_2d < PulseqBase
 
             %% Parameters to be set on the user interface of the Field Camera            
             % The number of actually acquired dynamics depends on the cameraInterleaveTR.
-            obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
+            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
             obj.seq.setDefinition('CameraNrSyncDynamics', obj.nSyncDynamics); 
             obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            
+            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100)); 
+            obj.seq.setDefinition('readDir_SCT', readDir_SCT);
+            obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
+            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
+
+            %% Echo spacing check
+            if contains(seqParams.scannerType,'SC72CD')
+                if obj.echoSpacing>=0.63e-3 && obj.echoSpacing<=0.74e-3 || ...
+                    obj.echoSpacing>=1.2e-3 && obj.echoSpacing<=1.47e-3  
+                    error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for Siemens SC72CD gradient coil.'])
+                end
+            else
+                warning(['Echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) might be a forbidden value for your system. Please check.'])
+            end
+
             %% Write to pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_epi_2d.seq')       
+            obj.seq.write(strcat('exports/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));       
             
         end
 
     end
 
     methods (Access=private)               
-        function obj = runKernel(obj, slc, avg, rep, doPlayRF)
+        function obj = runKernel(obj, slc, avg, rep, mode)
 
-            if not(exist('doPlayRF','var'))
-                doPlayRF = true;
+            if not(isa(mode, 'KernelMode'))
+                error('Expected a kernel mode argument')
             end
-        
+
             %% RF and ADC settings
-            if doPlayRF
-                obj.seq.addBlock(obj.rf_fs, obj.gz_fs);
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2);
+            if mode==KernelMode.Dummy || mode==KernelMode.Imaging
+                if obj.doPlayFatSat
+                    obj.addBlock(obj.rf_fs, obj.gz_fs);
+                end
+                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
                  % Compensate for the slice-offset induced phase
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
-                obj.seq.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','NAV',false));
+                obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
             else
-                obj.seq.addBlock(obj.gz, mr.makeLabel('SET','NAV',true));
+                obj.addBlock(obj.gz, mr.makeLabel('SET','PMC',true));
             end
             
-            obj.seq.addBlock(obj.gzReph);
-            obj.seq.addBlock({obj.extTrigger,mr.makeDelay(obj.fillTE)});
-            obj.seq.addBlock(obj.gxPre, obj.gyPre);
+            obj.addBlock(obj.gzReph);
+
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.fillTE));
+            else
+               obj.addBlock(mr.makeDelay(obj.fillTE)); 
+            end
+            
+            if obj.addPhaseCorrLines
+               
+                % Start with flip gx amplitude
+                obj.gxPre.amplitude = -obj.gxPre.amplitude;   
+                obj.addBlock(obj.gxPre); 
+
+                % First phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 0), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+                obj.gx.amplitude = -obj.gx.amplitude;
+                
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    obj.addBlock(obj.gx, labels{:}, obj.adc);
+                else
+                    obj.addBlock(obj.gx);
+                end
+
+                % Second phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 1), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+
+                obj.gx.amplitude = -obj.gx.amplitude;
+                
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    obj.addBlock(obj.gx, labels{:}, obj.adc); 
+                else
+                    obj.addBlock(obj.gx); 
+                end
+
+                % Third phase correction line
+                labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
+                           mr.makeLabel('SET','AVG', 2), ...
+                           mr.makeLabel('SET','REP', rep-1), ...
+                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','NAV',true)};
+                obj.gx.amplitude = -obj.gx.amplitude;
+
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    obj.addBlock(obj.gx, labels{:}, obj.adc); 
+                else
+                    obj.addBlock(obj.gx); 
+                end
+
+                % Restore original polarity
+                obj.gx.amplitude = -obj.gx.amplitude;
+                obj.gxPre.amplitude = -obj.gxPre.amplitude; 
+
+                % Play out phase pre-winding gradient
+                obj.addBlock(obj.gyPre);
+            else
+                obj.addBlock(obj.gxPre, obj.gyPre);
+            end
 
             for lin = 1:obj.echoTrainLength
 
@@ -423,26 +560,39 @@ classdef skope_epi_2d < PulseqBase
                     labels = { mr.makeLabel('SET','LIN', 0), ...
                                mr.makeLabel('SET','AVG', avg-1), ...
                                mr.makeLabel('SET','REP', rep-1), ...
-                               mr.makeLabel('SET','SLC', slc-1)};
+                               mr.makeLabel('SET','SLC', slc-1), ...
+                               mr.makeLabel('SET','NAV', false)};
                 else
                     labels = {mr.makeLabel('INC','LIN', 1)};
                 end
-
+              
                 if lin == 1
                     % Read the first line of k-space with a single half-blip at the end
-                    obj.seq.addBlock(obj.gx, obj.gy_blipup, labels{:}, obj.adc); 
+                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                        obj.addBlock(obj.gx, obj.gy_blipup, labels{:}, obj.adc); 
+                    else
+                        obj.addBlock(obj.gx, obj.gy_blipup); 
+                    end
                 elseif lin==obj.echoTrainLength
                     % Read the last line of k-space with a single half-blip at the beginning
-                    obj.seq.addBlock(obj.gx, obj.gy_blipdown, labels{:}, obj.adc); 
+                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                        obj.addBlock(obj.gx, obj.gy_blipdown, labels{:}, obj.adc); 
+                    else
+                        obj.addBlock(obj.gx, obj.gy_blipdown); 
+                    end
                 else
                     % Read an intermediate line of k-space with a half-blip at the beginning and a half-blip at the end
-                    obj.seq.addBlock(obj.gx, obj.gy_blipdownup, labels{:}, obj.adc); 
+                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                        obj.addBlock(obj.gx, obj.gy_blipdownup, labels{:}, obj.adc); 
+                    else
+                        obj.addBlock(obj.gx, obj.gy_blipdownup); 
+                    end
                 end 
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
 
             %% TR filling
-            obj.seq.addBlock(mr.makeDelay(obj.fillTR));
+            obj.addBlock(mr.makeDelay(obj.fillTR));
         
         end
     end

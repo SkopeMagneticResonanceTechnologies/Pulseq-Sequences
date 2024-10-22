@@ -1,4 +1,4 @@
-classdef skope_offresAndPosCalib < PulseqBase
+classdef skope_sweep < PulseqBase
 % Sequence for off-resonance and position calibration
 
 % (c) 2024 Skope Magnetic Resonance Technologies AG
@@ -11,7 +11,7 @@ classdef skope_offresAndPosCalib < PulseqBase
 
     methods
 
-        function obj = skope_offresAndPosCalib(seqParams, varargin)
+        function obj = skope_sweep(seqParams, sweepWaveform)
 
             %% Check input structure
             if not(isa(seqParams,'SequenceParams'))
@@ -19,13 +19,18 @@ classdef skope_offresAndPosCalib < PulseqBase
             end
 
             %% Set base class properties
-            obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            obj.nAve = seqParams.nAve;
+            obj.TR = seqParams.TR;
 
-            T_trig_delay = 990e-3; % trigger delay [s]
+            T_trig_delay = 1e-3; % trigger delay [s]
 
             % Bug fix for Pulseq error in version 1.4.0.
             obj.doFlipXAxis = seqParams.doFlipXAxis;
+
+            %% Axes order
+            [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
@@ -60,45 +65,49 @@ classdef skope_offresAndPosCalib < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Set parameters
-            grad_amp_Hzm = mr.convert(obj.gradientAmplitude, 'mT/m', 'Hz/m', 'gamma', obj.sys.gamma);
-            
-            T_inter = 100e-3; % delay between event-blocks [s]
+            amp = max(sweepWaveform);
+            grad_amp_Hzm = mr.convert(amp, 'mT/m', 'Hz/m', 'gamma', obj.sys.gamma);            
             
             %% Prepare event objects and combine to eventblocks
-            area_flattop = grad_amp_Hzm * obj.flattopTime;         
             mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
-            mr_inter = mr.makeDelay(T_inter);
             
-            % no-grad
-            mr_G_ = mr.makeTrapezoid('x', 'FlatTime', obj.flattopTime, 'FlatArea', 0); % could be replaced by delay
-            obj.seq.addBlock(mr_trig, mr_G_);
-            obj.seq.addBlock(mr_inter);
-        
-            for ax = obj.axis                
-                if(ax == 'x') && obj.doFlipXAxis
-                    % Hint by Bonn-Group: On their scanner, PulSeq flips x-axis when 
-                    % transforming from physical to logical coordinate system
-                    area_flattop_ = -area_flattop;
-                else
-                    area_flattop_ = area_flattop;
+            mr_gradfree = mr.makeDelay(2e-3);
+            
+            for ax = obj.axis 
+                for avg = 1:obj.nAve   
+
+                    % Add trigger
+                    obj.addBlock(mr_trig); 
+
+                    % Add delay after trigger
+                    obj.addBlock(mr_gradfree);
+
+                    % Play out waveform
+                    g = mr.makeArbitraryGrad(ax,sweepWaveform*grad_amp_Hzm);            
+                    obj.addBlock(g);
+
+                    totalTime = mr.calcDuration(mr_trig) + ...
+                                mr.calcDuration(mr_gradfree) + ...
+                                mr.calcDuration(g);
+
+                    mr_inter = mr.makeDelay(obj.TR - totalTime); 
+
+                    % Wait for next waveform
+                    obj.addBlock(mr_inter);
                 end
-                
-                mr_G_ = mr.makeTrapezoid(ax, 'FlatTime', obj.flattopTime, 'FlatArea', area_flattop_);
-                obj.seq.addBlock(mr_trig, mr_G_);
-                obj.seq.addBlock(mr_inter)
             end
             
             % Required by PulSeq IDEA
-            obj.seq.addBlock(PulseqBase.makeDummy);
+            obj.addBlock(PulseqBase.makeDummy);
 
             % Number of external triggers
-            obj.nTrig = 4;
+            obj.nTrig = 3*obj.nAve;
 
             %% Prepare sequence export
-            obj.seq.setDefinition('Name', 'opc');
+            obj.seq.setDefinition('Name', 'sweep');
             obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
             obj.seq.setDefinition('CameraNrSyncDynamics', 0); 
-            obj.seq.setDefinition('CameraAcqDuration', 0.1);  
+            obj.seq.setDefinition('CameraAcqDuration', 0.070);  
             obj.seq.setDefinition('CameraInterleaveTR', 0.4); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             
@@ -106,8 +115,12 @@ classdef skope_offresAndPosCalib < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_offresAndPosCalib.seq')       
-                      
+            if obj.nAve == 1
+                obj.seq.write('exports/skope_sweep_one_ave.seq')  
+            else
+                obj.seq.write('exports/skope_sweep.seq')  
+            end
+                                       
         end
     end 
 end
