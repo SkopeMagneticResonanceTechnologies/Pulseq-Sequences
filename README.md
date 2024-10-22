@@ -54,7 +54,7 @@ Some additional timing values are required to merge camera and scanner data and 
 
 A rough estimate of the delay between the start of the trigger and the first scanner ADC sample is needed for the synchronization of the camera and scanner data. This value has been added to the DEFINITIONS structure of the Pulseq file.
 
-    TriggerToScannerAcqDelay
+    TriggerToScannerAcqDelay - Time from TTL trigger to first sample of ADC event
 
 Additional timing information is required for data merging and image reconstruction.
 
@@ -69,8 +69,8 @@ Additional timing information is required for data merging and image reconstruct
 
 **EPI**
 
-    EchoSpacing  - Echo time(s)
-    EchoTrainLength
+    EchoSpacing  - Echo spacing in seconds
+    EchoTrainLength - Echo train length
 
 ## Sequences
 
