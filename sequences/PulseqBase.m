@@ -47,9 +47,6 @@ classdef (Abstract) PulseqBase < handle
         % Number of averages
         nAve = 1;
 
-        % Bug fix for Pulseq error in version 1.4.0.
-        doFlipXAxis = true;
-
         % Slice orientation
         sliceOrientation = SliceOrientation.TRA;
 

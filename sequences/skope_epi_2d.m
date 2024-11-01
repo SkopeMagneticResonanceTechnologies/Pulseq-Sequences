@@ -157,10 +157,6 @@ classdef skope_epi_2d < PulseqBase
 
             % Number of slices
             obj.nSlices = seqParams.nSlices;
-
-            % Bug fix for Pulseq error in version 1.4.0.
-            obj.doFlipXAxis = seqParams.doFlipXAxis;
-
             obj.nRep = seqParams.nRep;
             obj.nAve = seqParams.nAve;
 
@@ -178,7 +174,7 @@ classdef skope_epi_2d < PulseqBase
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
-                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
 
             %% Create fat-sat pulse 
             if obj.doPlayFatSat

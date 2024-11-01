@@ -31,7 +31,7 @@ Add Pulseq as a submodule
  - Run CreateSequences.m to create Pulseq sequence files for all sequences
 
 ### NOTES
-- The Siemens Pulseq interpreter (1.4.2) flips the polarity of the x-axis. The polarity of the x-gradients for the sequences in this repository has been reversed to deal with this feature. Set the property _doFlipXAxis_ to _1_ in PulseqBase.m and SequenceParams.m if you do not wish to flip the sign of the x-gradients.
+- The Siemens Pulseq interpreter 1.4.2 must be used for these sequences.
 - If the sequences do not run on the scanner, try closing the protocol and opening it again.
 
 ## Acquisition parameters for field-monitoring

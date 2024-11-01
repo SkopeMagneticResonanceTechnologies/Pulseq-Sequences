@@ -1,4 +1,4 @@
-function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxesOrderAndSign(sliceOrientation,phaseEncDir, doFlipXAxis)
+function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxesOrderAndSign(sliceOrientation,phaseEncDir)
 % SIEMENS physical coordinate system: 
 %          X: (Your) Left -> (Your) Right   |   Y:        Down -> Up     | Z:  Rear -> Front (Towards you)  
 %
@@ -97,11 +97,6 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
                     end                    
                 otherwise
                     error('Wrong slice orientation.');
-    end
-
-    if doFlipXAxis % To correct for flipped X-axis in Pulseq
-        ind = find(cellfun(@(x)strcmp(x,'x'),axesOrder));
-        axesSign(ind) = -axesSign(ind);
-    end
+        end
 
 end

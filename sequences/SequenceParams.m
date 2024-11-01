@@ -19,7 +19,6 @@ classdef SequenceParams
         scannerType = 'Siemens 9.4T SC72CD';
         nRep = 1;               % Number of repetitions
         nAve = 1;               % Number of averages  
-        doFlipXAxis = true;     % Bug fix for Pulseq error in version 1.4.0.
         mode = 'default';       % Allow to switch between different versions
         doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
         nDummy = 0;             % Number of dummy pulses to reach steady state

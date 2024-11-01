@@ -131,9 +131,6 @@ classdef skope_gre_2d < PulseqBase
             % ADC duration [Unit: s]
             obj.readoutTime = seqParams.readoutTime;  
 
-            % Bug fix for Pulseq error in version 1.4.0.
-            obj.doFlipXAxis = seqParams.doFlipXAxis;
-
             obj.sliceOrientation = seqParams.sliceOrientation;
             obj.phaseEncDir = seqParams.phaseEncDir;
 
@@ -141,7 +138,7 @@ classdef skope_gre_2d < PulseqBase
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
-                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  

@@ -23,9 +23,6 @@ classdef skope_localEddyCalib < PulseqBase
             obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
 
-            % Bug fix for Pulseq error in version 1.4.0.
-            obj.doFlipXAxis = seqParams.doFlipXAxis;
-
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
 
@@ -176,14 +173,6 @@ classdef skope_localEddyCalib < PulseqBase
                           ' (1) decreasing number of blips per axis "nBlipsPerAxis", or ', ...
                           ' (2) decreasing duration increment "dur_incr_".'];
                 error(err_msg);
-            end
-                
-            if (axis == 'x')
-                % Siemens Pulseq interpreter 1.4.0 flips x-axis when 
-                % transforming from physical to logical coordinate system
-                if obj.doFlipXAxis
-                    sign = -sign;
-                end
             end
             
             % gradient moment
