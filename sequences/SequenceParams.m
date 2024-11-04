@@ -23,6 +23,7 @@ classdef SequenceParams
         mode = 'default';       % Allow to switch between different versions
         doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
         nDummy = 0;             % Number of dummy pulses to reach steady state
+        accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI at the moment)
         
         sliceOrientation = SliceOrientation.TRA;  % Slice orientation        
         phaseEncDir = PhaseEncodingDirection.AP;  % Phase encoding direction
@@ -61,7 +62,8 @@ classdef SequenceParams
                     obj.nSlices = 15;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
-                    obj.nDummy = 5;                
+                    obj.nDummy = 5;   
+                    obj.nRep = 10;
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
@@ -83,7 +85,7 @@ classdef SequenceParams
                     obj.Ny = 16; 
                     obj.alpha = 15;   
                     obj.thickness = 3e-3; 
-                    obj.nSlices = 1;
+                    obj.nSlices = 15;
                     obj.TE = 2.5 * 1e-3;
                     obj.TR = 140e-3;       
                     obj.readoutTime = 8e-3;

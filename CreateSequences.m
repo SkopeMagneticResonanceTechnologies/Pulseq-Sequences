@@ -47,10 +47,10 @@ paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
 gre2d = skope_gre_2d(paramsGre2d);
 
 % Plot sequence information after sync 
-timeRange = [4.23 4.4];
+timeRange = [4.25 4.27];
 gre2d.plot(timeRange);
 
-% Test sequence
+%% Test sequence
 gre2d.test();
 
 %% Create a 2D echo-planar imaging sequence for all directions
@@ -78,6 +78,38 @@ epi2d = skope_epi_2d(paramsEpi2d);
 
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence information
+timeRange = [5.999 6.070];
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% EPI with acceleration factor 2
+paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsEpi2d.accFacPE = 2;
+paramsEpi2d.TE  = 18.1e-3;
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence information
+timeRange = [5.999 6.070];
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% EPI with acceleration factor 2
+paramsEpi2d.sliceOrientation = SliceOrientation.COR;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.RL;
+paramsEpi2d.accFacPE = 2;
+paramsEpi2d.TE  = 25.1e-3;
+
+paramsEpi2d.Nx = 120;
+paramsEpi2d.Ny = 120;
+paramsEpi2d.readoutTime = 650e-6;
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
@@ -164,3 +196,16 @@ sweep.plot(timeRange);
 
 % Test sequence
 sweep.test();
+
+%% Create a 2D spiral gradient-echo sequence
+% Get default sequence parameters
+paramsSpiral2d = SequenceParams('spiral2d');
+load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
+spiral2d = skope_spiral_2d(paramsSpiral2d,spiralWaveform);
+
+% Plot sequence information after sync 
+timeRange = [5.4 5.42];
+spiral2d.plot(timeRange);
+
+% Test sequence
+spiral2d.test();

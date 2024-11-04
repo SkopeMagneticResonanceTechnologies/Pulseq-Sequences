@@ -334,11 +334,9 @@ classdef skope_gre_3d < PulseqBase
             end                      
         
             %% External trigger and gradient-free interval
-            if mode==KernelMode.Sync || mode==KernelMode.Imaging
-                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
-            else
-                obj.addBlock(mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
-            end
+            % We send the trigger here always for the dummies to get a
+            % steady state field probe signal
+            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...

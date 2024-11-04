@@ -11,9 +11,9 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
                 case SliceOrientation.TRA
                     switch phaseEncDir
                         case PhaseEncodingDirection.AP
-                            axesOrder = {'x','y','z'};
-                            axesSign = [1,1,1];
-                            readDir_SCT = [1,0,0];
+                            axesOrder = {'x','y','z'}; % Read, phase, slice
+                            axesSign = [-1,1,1];
+                            readDir_SCT = [-1,0,0];
                             phaseDir_SCT = [0,1,0];
                             sliceDir_SCT = [0,0,1];
                         case PhaseEncodingDirection.PA
@@ -24,8 +24,8 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
                             sliceDir_SCT = [0,0,1];
                         case PhaseEncodingDirection.RL
                             axesOrder = {'y','x','z'};
-                            axesSign = [1,-1,1];
-                            readDir_SCT = [0,-1,0];
+                            axesSign = [-1,-1,1];
+                            readDir_SCT = [0,1,0];
                             phaseDir_SCT = [1,0,0];
                             sliceDir_SCT = [0,0,1];
                         case PhaseEncodingDirection.LR
@@ -40,38 +40,38 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
                 case SliceOrientation.SAG   
                     switch phaseEncDir
                         case PhaseEncodingDirection.AP
-                            axesOrder = {'z','y','x'};
-                            axesSign = [1,1,1];
-                            readDir_SCT = [0,0,-1];
+                            axesOrder = {'z','y','x'}; % Read, phase, slice
+                            axesSign = [-1,1,1];
+                            readDir_SCT = [0,0,1];
                             phaseDir_SCT = [0,1,0];
-                            sliceDir_SCT = [-1,0,0];
+                            sliceDir_SCT = [1,0,0];
                         case PhaseEncodingDirection.PA
                             axesOrder = {'z','y','x'};
                             axesSign = [1,-1,1];
                             readDir_SCT = [0,0,-1];
                             phaseDir_SCT = [0,-1,0];
-                            sliceDir_SCT = [-1,0,0];
+                            sliceDir_SCT = [1,0,0];
                         case PhaseEncodingDirection.HF
                             axesOrder = {'y','z','x'};
-                            axesSign = [1,-1,1];
-                            readDir_SCT = [0,-1,0];
+                            axesSign = [-1,-1,1];
+                            readDir_SCT = [0,1,0];
                             phaseDir_SCT = [0,0,-1];
-                            sliceDir_SCT = [-1,0,0];
+                            sliceDir_SCT = [1,0,0];
                         case PhaseEncodingDirection.FH
                             axesOrder = {'y','z','x'};
                             axesSign = [1,1,1];
                             readDir_SCT = [0,-1,0];
                             phaseDir_SCT = [0,0,1];
-                            sliceDir_SCT = [-1,0,0];
+                            sliceDir_SCT = [1,0,0];
                         otherwise
                             error('Wrong phase encoding direction.');
                     end
                 case SliceOrientation.COR
                     switch phaseEncDir
                         case PhaseEncodingDirection.HF
-                            axesOrder = {'x','z','y'};
-                            axesSign = [1,-1,1];
-                            readDir_SCT = [1,0,0];
+                            axesOrder = {'x','z','y'}; % Read, phase, slice
+                            axesSign = [-1,-1,1];
+                            readDir_SCT = [-1,0,0];
                             phaseDir_SCT = [0,0,-1];
                             sliceDir_SCT = [0,1,0];
                         case PhaseEncodingDirection.FH
@@ -88,8 +88,8 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
                             sliceDir_SCT = [0,1,0];
                         case PhaseEncodingDirection.LR
                             axesOrder = {'z','x','y'};
-                            axesSign = [1,1,1];
-                            readDir_SCT = [0,0,-1];
+                            axesSign = [-1,1,1];
+                            readDir_SCT = [0,0,1];
                             phaseDir_SCT = [-1,0,0];
                             sliceDir_SCT = [0,1,0];
                         otherwise
@@ -103,5 +103,4 @@ function [axesOrder, axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] = GetAxe
         ind = find(cellfun(@(x)strcmp(x,'x'),axesOrder));
         axesSign(ind) = -axesSign(ind);
     end
-
 end

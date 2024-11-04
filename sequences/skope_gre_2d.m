@@ -63,7 +63,7 @@ classdef skope_gre_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
-        distanceFactorPercentage = 500;
+        distanceFactorPercentage = 250;
 
     end
 
