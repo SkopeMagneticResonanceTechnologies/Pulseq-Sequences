@@ -88,9 +88,14 @@ classdef skope_epi_2d < PulseqBase
         % Fat shift [Unit: ppm]
         sat_ppm = -3.45;
 
+        % Play out fat saturation pulse
         doPlayFatSat = false;
 
-        distanceFactorPercentage = 500;
+        % Slice distance factor percentage
+        distanceFactorPercentage = 250;
+
+        % Acceleration factor (Phase)
+        accFacPE
     end
 
     methods
@@ -130,41 +135,15 @@ classdef skope_epi_2d < PulseqBase
                               'rfDeadtime', 100e-6,...
                               'B0', specs.B0 ...
             );      
-                     
-            % Echo time
-            obj.TE = seqParams.TE;
 
-            % Repetition time
-            obj.TR = seqParams.TR;
-
-            % Duration of scanner readout event
-            obj.readoutTime = seqParams.readoutTime;
-
-            % Flip angle
-            obj.alpha = seqParams.alpha;
-
-            % Field of view [Unit: m]
-            obj.fov = seqParams.fov;
-
-            % Numbre of readout samples
-            obj.Nx = seqParams.Nx;
-
-            % Number of phase encoding steps
-            obj.Ny = seqParams.Ny;
-
-            % Slice thickness [Unit: m]
-            obj.thickness = seqParams.thickness;
-
-            % Number of slices
-            obj.nSlices = seqParams.nSlices;
-            obj.nRep = seqParams.nRep;
-            obj.nAve = seqParams.nAve;
-
-            obj.nDummy = seqParams.nDummy;
-            obj.doPlayFatSat = seqParams.doPlayFatSat;
-
-            obj.sliceOrientation = seqParams.sliceOrientation;
-            obj.phaseEncDir = seqParams.phaseEncDir;
+            % Copy all sequence parameters
+            fieldNames = fields(seqParams);
+            for i = 1:numel(fieldNames)
+                fieldname = fieldNames{i};
+                if isprop(obj,fieldname)
+                    obj.(fieldname) = seqParams.(fieldname);
+                end
+            end
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
@@ -210,17 +189,18 @@ classdef skope_epi_2d < PulseqBase
             obj.gzReph.channel =  obj.axesOrder{3}; 
 
             %% Define other gradients and ADC events
-            deltak = 1/obj.fov;
-            kWidth = obj.Nx * deltak;
+            deltakx = 1/obj.fov;
+            deltaky = 1/obj.fov * obj.accFacPE;
+            kWidth = obj.Nx * deltakx;
             
             % Phase blip in shortest possible time
             % We round-up the duration to 2x the gradient raster time
-            blip_dur = ceil(2*sqrt(deltak/obj.sys.maxSlew)/10e-6/2)*10e-6*2; 
+            blip_dur = ceil(2*sqrt(deltaky/obj.sys.maxSlew)/10e-6/2)*10e-6*2; 
 
             % The split code below fails if this really makes a trpezoid instead of a triangle.
             % We use negative blips to save one k-space line on our way towards the k-space center
             obj.gy = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
-                                      'Area', -deltak, ...
+                                      'Area', -deltaky, ...
                                       'Duration', blip_dur); 
             %gy = mr.makeTrapezoid(obj.axesOrder{2},lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
             
@@ -246,7 +226,7 @@ classdef skope_epi_2d < PulseqBase
             % we use ramp sampling, so we have to calculate the dwell time and the
             % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
-            adcDwellNyquist = deltak/obj.gx.amplitude/obj.ro_os;
+            adcDwellNyquist = deltakx/obj.gx.amplitude/obj.ro_os;
 
             % round-down dwell time to 100 ns
             adcDwell = floor(adcDwellNyquist*1e7)*1e-7;
@@ -277,16 +257,16 @@ classdef skope_epi_2d < PulseqBase
             
             % Phase encoding and partial Fourier         
             % PE steps prior to ky=0, excluding the central line
-            Ny_pre = round(obj.partFourierFactor*obj.Ny/2-1); 
+            Ny_pre = round(obj.partFourierFactor*obj.Ny/2/obj.accFacPE-1); 
             
             % PE lines after the k-space center including the central line
-            Ny_post = round(obj.Ny/2 + 1);
+            Ny_post = round(obj.Ny/2/obj.accFacPE + 1);
             obj.echoTrainLength = Ny_pre + Ny_post;
             
             % Pre-phasing gradients
             obj.gxPre = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
                                          'Area',-obj.gx.area/2);
-            obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, 'Area', Ny_pre*deltak);
+            obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, 'Area', Ny_pre*deltaky);
 
             [obj.gxPre, obj.gyPre] = mr.align('right', obj.gxPre, ...
                                              'left', obj.gyPre);
@@ -401,7 +381,7 @@ classdef skope_epi_2d < PulseqBase
             end
 
             %% Set the number of imaging triggers
-            obj.nTrig = obj.nSlices;
+            obj.nTrig = obj.nSlices*obj.nRep;
 
             %% Calculate Camera Interleave TR (blank time)
             obj.CalculateInterleaveTR(obj.TR);
@@ -456,8 +436,13 @@ classdef skope_epi_2d < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write(strcat('exports/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));       
-            
+
+            filename = strcat('exports/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));
+            if obj.accFacPE == 1  
+                obj.seq.write(strcat(filename,'.seq'));       
+            else
+                obj.seq.write(strcat(filename,'_R',num2str(obj.accFacPE),'.seq'));  
+            end
         end
 
     end
