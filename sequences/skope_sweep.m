@@ -25,12 +25,9 @@ classdef skope_sweep < PulseqBase
 
             T_trig_delay = 1e-3; % trigger delay [s]
 
-            % Bug fix for Pulseq error in version 1.4.0.
-            obj.doFlipXAxis = seqParams.doFlipXAxis;
-
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
-                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 

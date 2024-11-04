@@ -18885,11 +18885,11 @@ sliceDir_SCT 0 1 0
 [TRAP]
  1       888889 140 1500 140   0
  2      -847545 140  720 140   0
- 3      -344681  60  880  60   0
+ 3       344681  60  880  60   0
  4      -340426  60  880  60   0
- 5       200000  40 3200  40   0
- 6      -241791  40 2640  40   0
- 7  1.18519e+06 190  890 190   0
+ 5      -200000  40 3200  40   0
+ 6       241791  40 2640  40   0
+ 7 -1.18519e+06 190  890 190   0
  8       340426  60  880  60   0
  9  1.19048e+06 190  930 190   0
 10      -335106  60  880  60   0
@@ -22715,4 +22715,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 6ec10ffc302784ae5e54c507d661b1fb
+Hash 89df412f8732a78c3d9aac175a24abfc

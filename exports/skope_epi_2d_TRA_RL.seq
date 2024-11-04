@@ -20036,9 +20036,9 @@ sliceDir_SCT 0 0 1
 # id amplitude amp_shape_id time_shape_id delay
 # ..      Hz/m       ..         ..          us
 [GRADIENTS]
-6     -83333.3 1 2 720
-8     -83333.3 3 4 0
-9     -83333.3 5 2 0
+6      83333.3 1 2 720
+8      83333.3 3 4 0
+9      83333.3 5 2 0
 
 # Format of trapezoid gradients:
 # id amplitude rise flat fall delay
@@ -20047,7 +20047,7 @@ sliceDir_SCT 0 0 1
  1       666667 130 2000 130   0
  2 -1.33962e+06 250  280 250   0
  3  1.02128e+06 200    0 200   0
- 4       267123  50  680  50   0
+ 4      -267123  50  680  50   0
  5      -638298 120  520 120   0
  7       638298 120  520 120   0
 
@@ -22367,4 +22367,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 5598f040aadd5a52c9bf9ea71c02507f
+Hash 18c319dbe047e09675ceac121d9229e3

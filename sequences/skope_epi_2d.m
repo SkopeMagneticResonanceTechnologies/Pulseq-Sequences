@@ -153,7 +153,7 @@ classdef skope_epi_2d < PulseqBase
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
-                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir, obj.doFlipXAxis);
+                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
 
             %% Create fat-sat pulse 
             if obj.doPlayFatSat

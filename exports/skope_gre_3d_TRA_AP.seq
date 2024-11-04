@@ -25541,11 +25541,11 @@ sliceDir_SCT 0 0 1
 # id amplitude rise flat fall delay
 # ..      Hz/m   us   us   us    us
 [TRAP]
- 1      -707810 120 7600 120   0
+ 1       707810 120 7600 120   0
  2            0  10 7820  10   0
- 3   1.3559e+06 220 7840 220   0
- 4 -1.48891e+06 240 7100 240   0
- 5       701900 110 15460 110   0
+ 3  -1.3559e+06 220 7840 220   0
+ 4  1.48891e+06 240 7100 240   0
+ 5      -701900 110 15460 110   0
  6           -0  10 7820  10   0
  7       663042 110 7620 110   0
  8      -663042 110 7620 110   0
@@ -32177,4 +32177,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 84e5766419feb3da9a441fa1c58d0db7
+Hash da07ded07bdc2825705a15f3388b050f

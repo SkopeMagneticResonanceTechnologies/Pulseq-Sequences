@@ -10646,10 +10646,10 @@ sliceDir_SCT 0 0 1
 [TRAP]
  1       666667 130 2000 130   0
  2 -1.33962e+06 250  280 250   0
- 3 -1.03259e+06 200    0 200   0
+ 3  1.03259e+06 200    0 200   0
  4       260274  50  680  50   0
- 5       625815 120  540 120   0
- 7      -625815 120  540 120   0
+ 5      -625815 120  540 120   0
+ 7       625815 120  540 120   0
 
 # Format of ADC events:
 # id num dwell delay freq phase
@@ -12973,4 +12973,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash ba6c407a082dc31706ee2a6166cafa7a
+Hash 5f32b5cbf3709da14b76f52a74565cb6

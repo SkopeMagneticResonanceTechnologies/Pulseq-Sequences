@@ -41,9 +41,6 @@ classdef skope_gtf < PulseqBase
             obj.nAve = seqParams.nAve;
             obj.nRep = seqParams.nRep;
             
-            % Bug fix for Pulseq error in version 1.4.0.
-            obj.doFlipXAxis = seqParams.doFlipXAxis;
-
             %% Check specs
             if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
@@ -197,15 +194,7 @@ classdef skope_gtf < PulseqBase
                           ' (2) decreasing duration increment "dur_incr_".'];
                 error(err_msg);
             end
-                
-            if (axis == 'x')
-                % Siemens Pulseq interpreter 1.4.0 flips x-axis when 
-                % transforming from physical to logical coordinate system
-                if obj.doFlipXAxis
-                    sign = -sign;
-                end
-            end
-            
+                            
             % gradient moment
             area = sign * (grad * rise_time);
             area = round(area, 12, 'decimal'); % to prevent pulseq from strange rounding
