@@ -108,7 +108,7 @@ Set the following values on the Camera Acquisition System:
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 10
 
-Due to trigger skipping, the Camera Acquisition System will not acquire all 640 dynamics but it will still register them. Press *Stop Scan* on the graphical user interface of skope-fx once the scanner has finished. 
+Due to trigger skipping, the Camera Acquisition System will not acquire all 1920 dynamics but it will still register them. If you typed in the correct number of monitored dynamics, the AQ system should stop automatically at the end of the scan. Otherwise you need to click Stop Scan on the graphical user interface of skope-fx once the scanner has finished.
 
 <img src="docs/triggerSkipping.svg" alt="Trigger skipping" width="50%">
 
