@@ -92,7 +92,7 @@ Please do not change the timing or the number of blips used by this sequence. Th
 
 ### 2D gradient echo (GRE) sequence
 
-The implemented sequence acquires two mono-polar echoes for 15 slices. The data is acquired in an interleaved fashion meaning that the innermost loop of the sequence is the slice index. A repetition time (TR) of 25 ms has been selected as default value. With an interleave TR of 124.5 ms, four triggers will be skipped and every fifth scanner acquisition will be monitored. Hence, the first, sixth and eleventh slice will be fully monitored. The k-space trajectories for the other slices can be interpolated based on the acquired data.
+The implemented sequence acquires two mono-polar echoes for 15 slices. The data is acquired in an interleaved fashion meaning that the innermost loop of the sequence is the slice index. A repetition time (TR) of 25 ms has been selected as default value. With an interleave TR of 123 ms, four triggers will be skipped and every fifth scanner acquisition will be monitored. Hence, the first, sixth and eleventh slice will be fully monitored. The k-space trajectories for the other slices can be interpolated based on the acquired data.
 
 The figure below shows the kernel of the GRE sequence. It is repeated 1920 (= 128 [lines] * 15 [slices]) times to acquire the entire image. 
 
