@@ -110,24 +110,25 @@ Set the following values on the Camera Acquisition System:
 
 Due to trigger skipping, the Camera Acquisition System will not acquire all 1920 dynamics but it will still register them. If you typed in the correct number of monitored dynamics, the AQ system should stop automatically at the end of the scan. Otherwise you need to click Stop Scan on the graphical user interface of skope-fx once the scanner has finished.
 
-<img src="docs/triggerSkipping.svg" alt="Trigger skipping" width="50%">
+The figure below shows the effect of trigger skipping for an acquistion of 5 slices.
 
+<img src="docs/triggerSkipping.svg" alt="Trigger skipping" width="50%">
 
 ### 2D echo planar (EPI) sequence
 
-The figure below shows the kernel for the EPI sequence. It is repeated 5 times to acquire all slices. As for the GRE sequence, 10 synchronization pre-scans are played out before the actual imaging scan.
+The figure below shows the kernel for the EPI sequence. It is repeated 150 times to acquire all slices and repetitions. As for the GRE sequence, 10 synchronization pre-scans are played out before the actual imaging scan.
 
 ![EPI sequence kernel](docs/sequenceDiagramEPI2D.svg "EPI sequence kernel" )
 
 Set the following values on the Camera Acquisition System:
 
-    CameraNrDynamics     8
+    CameraNrDynamics     75
     CameraInterleaveTR   398 ms 
     CameraAcqDuration    63 ms 
     CameraAqDelay        0  ms   
     CameraNrSyncDynamics 10
 
-Due to trigger skipping, the Camera Acquisition System will not acquire all 5 dynamics. Press *Stop Scan* on the graphical user interface of skope-fx once the scanner has finished. 
+Due to trigger skipping, the Camera Acquisition System will not acquire all 150 dynamics. 
 
 ### Blip sequence for gradient transfer function estimation
 
