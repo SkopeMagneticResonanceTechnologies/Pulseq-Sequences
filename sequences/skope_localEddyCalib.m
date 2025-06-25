@@ -72,7 +72,7 @@ classdef skope_localEddyCalib < PulseqBase
 
             %% Prepare event objects
             % Trigger
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            mr_trig = mr.makeDigitalOutputPulse('osc0','duration', obj.sys.gradRasterTime);
             
             % Delay
             mr_gradFreeTime = mr.makeDelay(obj.gradFreeTime);

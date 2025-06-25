@@ -16,11 +16,11 @@ classdef SequenceParams
         maxSlew     % Used slew rate by sequence
         
         % Defaults
-        scannerType = 'Siemens 9.4T SC72CD';
+        scannerType = 'Siemens Terra 7T SC72CD';
         nRep = 1;               % Number of repetitions
         nAve = 1;               % Number of averages  
         mode = 'default';       % Allow to switch between different versions
-        doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
+        doPlayFatSat = true;    % Play out fat-saturation pulse (for EPI)
         nDummy = 0;             % Number of dummy pulses to reach steady state
         accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI at the moment)
         
@@ -42,7 +42,7 @@ classdef SequenceParams
                     obj.Ny = obj.Nx; 
                     obj.alpha = 7;   
                     obj.thickness = 3e-3; 
-                    obj.nSlices = 15;
+                    obj.nSlices = 50;
                     obj.TE = [6 12] * 1e-3;
                     obj.TR = 25e-3;       
                     obj.readoutTime = 3.2e-3;
@@ -63,19 +63,33 @@ classdef SequenceParams
                     obj.maxSlew = 130;
                     obj.nDummy = 5;   
                     obj.nRep = 10;
+                case 'epi2d_diff'
+                    obj.TE = 68e-3;
+                    obj.TR = 10; % Volume TR
+                    obj.readoutTime = 5.2e-4;
+                    obj.alpha = 90;
+                    obj.fov = 220e-3;
+                    obj.Nx = 140;
+                    obj.Ny = 140;
+                    obj.thickness = 1.5e-3;
+                    obj.nSlices = 100;
+                    obj.maxGrad = 38;
+                    obj.maxSlew = 180;
+                    obj.nDummy = 1;   
+                    obj.nRep = 1;
+                    obj.accFacPE = 3;
                 case 'gre3d'
-                    obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
-                    obj.Nx = 56; 
+                    obj.fov = [0.22 0.22 0.22]; 
+                    obj.Nx = 100; % Divisible by 4
                     obj.Ny = obj.Nx; 
                     obj.Nz = obj.Nx; 
                     obj.alpha = 1;     
-                    obj.TE = [12.3 28.16] * 1e-3 + 1e-3; % one millisecond for phase estimation
-                    obj.TR = 100e-3;   
-                    obj.readoutTime = 7.84e-3;  
+                    obj.TE = [5.2000    9.7000   14.2000   18.7000   23.2000   27.7000   32.2000   36.7000] * 1e-3;
+                    obj.TR = 50e-3;   
+                    obj.readoutTime = 14e-6*obj.Nx;  % 14us dwell time
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                     obj.nDummy = 50;
-
                 case 'spiral2d'
                     % spiral-trajectory not adaptive to input params (hard coded)
                     % don't change!

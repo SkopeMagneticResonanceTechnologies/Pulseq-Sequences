@@ -10,8 +10,6 @@ classdef skope_gre_2d < PulseqBase
 %   the slice TR.
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
-% - The x-axis is flipped because of a bug in the Siemens Pulseq 
-%   interpreter 1.4.0. 
 %
 % Example:
 %  gre = skope_gre_2d(sequenceParams);
@@ -63,7 +61,9 @@ classdef skope_gre_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
-        distanceFactorPercentage = 250;
+        distanceFactorPercentage = 0;
+
+        interleaved_freqOffset_factor
 
     end
 
@@ -205,7 +205,13 @@ classdef skope_gre_2d < PulseqBase
                         'Duration', mr.calcDuration(obj.gxFlyBack) + obj.fillTE(2), ...
                         'system', obj.sys);
             obj.fillTE(2) = 0;
-            
+
+            %% Interleaved slice locations
+            for sli=1:obj.nSlices
+                freqOffset_factor(sli) = sli-1-(obj.nSlices-1)/2*(1+obj.distanceFactorPercentage/100);
+            end
+            obj.interleaved_freqOffset_factor = freqOffset_factor([2:2:obj.nSlices 1:2:obj.nSlices]);
+
             %% Prepare trigger
             obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
 
@@ -251,7 +257,7 @@ classdef skope_gre_2d < PulseqBase
     
                 obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0));
             end
-
+       
             %% Dummies
             for lin = 1:min(obj.Ny,obj.nDummy)      
                 % loop over slices
@@ -306,7 +312,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100));
+            obj.seq.setDefinition('SliceShifts', obj.thickness*obj.interleaved_freqOffset_factor);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
@@ -330,7 +336,7 @@ classdef skope_gre_2d < PulseqBase
         
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * obj.interleaved_freqOffset_factor(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);

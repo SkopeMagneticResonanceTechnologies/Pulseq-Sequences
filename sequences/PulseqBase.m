@@ -119,6 +119,7 @@ classdef (Abstract) PulseqBase < handle
 
             if not(exist('timeRange','var'))
                 timeRange = [0 25]*obj.TR;
+                warning('No range provided for plotting. Displaying 25 TRs.')
             end
 
             %% plot sequence and k-space diagrams

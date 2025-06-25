@@ -1067,7 +1067,7 @@ RadiofrequencyRasterTime 1e-06
 # Extension specification for digital output and input triggers:
 # id type channel delay (us) duration (us)
 extension TRIGGERS 1
-1 1 3 0 10
+1 1 1 0 10
 
 # Sequence Shapes
 [SHAPES]
@@ -1088,4 +1088,4 @@ num_samples 2
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 3943a5b3e29aff0c1ab0811c84841e70
+Hash 00b80d0878ecbf88488a009b9239ba7a
