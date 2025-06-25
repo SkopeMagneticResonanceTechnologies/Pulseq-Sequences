@@ -1,7 +1,7 @@
 %% Pulseq example sequences 
 % including triggers and synchronization pre-scans for field-monitoring
 
-% (c) 2024 Skope Magnetic Resonance Technologies AG
+% (c) 2025 Skope Magnetic Resonance Technologies AG
 
 %% Clean up
 clear all
@@ -25,12 +25,12 @@ addpath('sequences')
 paramsGre3d = SequenceParams('gre3d');
 
 paramsGre3d.Nz = paramsGre3d.Nx;
-paramsGre3d.Nz = 4; % remove only for quick testing
+paramsGre3d.Nz = 4; % remove - only for quick testing
 
 gre3d = skope_gre_3d(paramsGre3d);
 
-% Plot sequence information after sync 
-timeRange = [0 100e-3] + paramsGre3d.nDummy*paramsGre3d.TR + 5 + 4;
+% Plot sequence information after 5 sync scans and 4s pause
+timeRange = [0 100e-3] + paramsGre3d.nDummy*paramsGre3d.TR + 5*(paramsGre3d.TR+1) + 4;
 gre3d.plot(timeRange);
 
 % Test sequence

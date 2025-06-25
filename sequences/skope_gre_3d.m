@@ -10,8 +10,6 @@ classdef skope_gre_3d < PulseqBase
 %   the slice TR.
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
-% - The x-axis is flipped because of a bug in the Siemens Pulseq 
-%   interpreter 1.4.0. 
 %
 % Example:
 %  gre = skope_gre_3d(sequenceParams);
