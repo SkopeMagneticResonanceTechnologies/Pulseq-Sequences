@@ -156,7 +156,7 @@ classdef skope_gre_3d < PulseqBase
             %% Time for probe excitation
             obj.gradFreeTime = obj.roundUpToGRT(200e-6);
           
-            %% Define other gradients and ADC events (Not that X gradient has been flipped here)
+            %% Define other gradients and ADC events
             deltak = 1./obj.fov;
             obj.gx = mr.makeTrapezoid(  obj.axesOrder{1}, ...
                                         'FlatArea', obj.Nx*deltak(1), ...
@@ -356,11 +356,13 @@ classdef skope_gre_3d < PulseqBase
                 obj.adc.phaseOffset = 0;
                 obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf)),mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
             end       
-        
+                   
             %% External trigger and gradient-free interval
-            % We send the trigger here always for the dummies to get a
-            % steady state field probe signal
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            else % Dummy
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            end
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...

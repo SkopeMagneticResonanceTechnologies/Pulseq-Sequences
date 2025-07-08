@@ -25,7 +25,7 @@ addpath('sequences')
 paramsGre3d = SequenceParams('gre3d');
 
 paramsGre3d.Nz = paramsGre3d.Nx;
-paramsGre3d.Nz = 4; % remove - only for quick testing
+paramsGre3d.Nz = 100; % set to 4 for quick testing
 
 gre3d = skope_gre_3d(paramsGre3d);
 
