@@ -20,7 +20,7 @@ classdef skope_gre_2d < PulseqBase
 %
 % See also PulseqBase
 
-% (c) 2024 Skope Magnetic Resonance Technologies AG
+% (c) 2026 Skope Magnetic Resonance Technologies AG
 
     properties (Access=private)
 
@@ -315,7 +315,11 @@ classdef skope_gre_2d < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write(strcat('exports/skope_gre_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));  
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+            
+            obj.seq.write(strcat('exports/',string(seqParams.scannerType),'/skope_gre_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));  
             
         end    
     end

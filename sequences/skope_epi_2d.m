@@ -18,7 +18,7 @@ classdef skope_epi_2d < PulseqBase
 %
 % See also PulseqBase
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2026 Skope Magnetic Resonance Technologies AG
 
     properties        
     
@@ -437,7 +437,12 @@ classdef skope_epi_2d < PulseqBase
                 mkdir('exports')
             end
 
-            filename = strcat('exports/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+
+
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));
             if obj.accFacPE == 1  
                 obj.seq.write(strcat(filename,'.seq'));       
             else

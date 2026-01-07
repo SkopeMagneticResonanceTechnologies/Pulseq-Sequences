@@ -20,7 +20,7 @@ classdef skope_gre_3d < PulseqBase
 %
 % See also PulseqBase
 
-% (c) 2024 Skope Magnetic Resonance Technologies AG
+% (c) 2026 Skope Magnetic Resonance Technologies AG
 
     properties (Access=private)
 
@@ -300,13 +300,17 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
-            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
-            
+            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);           
+
             %% Write to Pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
-            end 
-            obj.seq.write(strcat('exports/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));  
+            end
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+            
+            obj.seq.write(strcat('exports/',string(seqParams.scannerType),'/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));
             
             
         end    
