@@ -36,7 +36,7 @@ gre2d.plot(timeRange);
 % Plot sequence information after sync 
 timeRange = [4.25 4.27]; %s
 gre2d.plot(timeRange);
-%%
+
 % Test sequence
 gre2d.test();
 
@@ -49,7 +49,7 @@ epi2d = skope_epi_2d(paramsEpi2d);
 % Plot sequence information
 timeRange = [5.999 6.070];
 epi2d.plot(timeRange);
-
+%%
 % Test sequence
 epi2d.test();
 
