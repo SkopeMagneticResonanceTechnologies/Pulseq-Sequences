@@ -15,6 +15,10 @@ classdef SequenceParams
         maxGrad     % Used gradient amplitude by sequence
         maxSlew     % Used slew rate by sequence
         seqSpecName % String name appended to .seq file
+
+        bFactor
+        bDir
+        nbValues
         
         % Defaults
         scannerType = 'Siemens 9.4T SC72CD';
@@ -62,8 +66,28 @@ classdef SequenceParams
                     obj.nSlices = 15;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
-                    obj.nDummy = 5;   
+                    obj.nDummy = 5;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep = 10;
+                case 'se_epi2d_diff'
+                    obj.TE = 110e-3;
+                    obj.TR = 200e-3;
+                    obj.readoutTime = 0.680e-3;
+                    obj.alpha = 90;
+                    obj.fov = 200e-3;
+                    obj.Nx = 80;
+                    obj.Ny = 80;
+                    obj.thickness = 3e-3;
+                    obj.nSlices = 1;
+                    obj.maxGrad = 32;
+                    obj.maxSlew = 130;
+                    obj.nDummy = 0;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.accFacPE = 1;       % Acceleration factor [Phase] (only used for EPI at the moment)
+                    obj.doPlayFatSat = 0;
+                    obj.bFactor=[0, 1000, 1000, 1000]; %bencoding
+                    obj.bDir = [0, 1, 2, 3]; %axis
+                    obj.nbValues = length(obj.bDir);     
+                    obj.scannerType = 'Siemens 7T Terra SC72CD';
+                    obj.seqSpecName = '';
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
