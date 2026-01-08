@@ -14,6 +14,7 @@ classdef SequenceParams
         readoutTime % ADC duration [Unit: s]
         maxGrad     % Used gradient amplitude by sequence
         maxSlew     % Used slew rate by sequence
+        seqSpecName % String name appended to .seq file
         
         % Defaults
         scannerType = 'Siemens 9.4T SC72CD';

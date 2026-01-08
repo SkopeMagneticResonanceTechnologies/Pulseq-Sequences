@@ -443,12 +443,22 @@ classdef skope_epi_2d < PulseqBase
             end
 
 
-            filename = strcat('exports/',string(seqParams.scannerType),'/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));
-            if obj.accFacPE == 1  
-                obj.seq.write(strcat(filename,'.seq'));       
-            else
-                obj.seq.write(strcat(filename,'_R',num2str(obj.accFacPE),'.seq'));  
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));           
+
+            if obj.doPlayFatSat == 1
+                filename = strcat(filename, '_fs');
             end
+
+            if obj.accFacPE > 1  
+                filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+            end
+
+            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
+                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            end
+
+            obj.seq.write(strcat(filename,'.seq')); 
+
         end
 
     end

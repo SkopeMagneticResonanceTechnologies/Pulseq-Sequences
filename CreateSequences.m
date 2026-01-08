@@ -25,7 +25,6 @@ paramsGre2d = SequenceParams('gre2d');
 % Set slice orientation and encoding direction
 paramsGre2d.sliceOrientation = SliceOrientation.TRA;
 paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
-
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
@@ -44,6 +43,7 @@ gre2d.test();
 paramsEpi2d = SequenceParams('epi2d');
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+% paramsEpi2d.seqSpecName = 'test';
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information

@@ -310,8 +310,14 @@ classdef skope_gre_3d < PulseqBase
                 mkdir(strcat('exports/',string(seqParams.scannerType)))
             end
             
-            obj.seq.write(strcat('exports/',string(seqParams.scannerType),'/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq'));
-            
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq');  
+
+            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
+                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            end
+
+            obj.seq.write(strcat(filename,'.seq')); 
+
             
         end    
     end
