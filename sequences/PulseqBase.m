@@ -77,7 +77,8 @@ classdef (Abstract) PulseqBase < handle
         nTrig = 0
 
         % Maximal duty cycle of Acquisition system
-        maxDutyCycleAQSys = 0.25
+        % maxDutyCycleAQSys = 0.25 % legacy acquisition system
+        maxDutyCycleAQSys = 0.9 % NYOX
       
         % Time from rising edge of trigger to first scanner ADC sample [Unit: s]
         triggerToScannerAcqDelay
@@ -195,8 +196,16 @@ classdef (Abstract) PulseqBase < handle
 
 	        %% Calculate duty cycle
             dutyCycle = obj.cameraAcqDuration /  obj.cameraInterleaveTR;
-            if dutyCycle > obj.maxDutyCycleAQSys
 
+            fprintf('FM Camera acquisition duration = %.2f ms\n', obj.cameraAcqDuration*1e3);
+            fprintf('FM Camera trigger ignore = %.2f ms\n', obj.cameraInterleaveTR*1e3);
+            fprintf('FM Camera skip factor = %d\n', obj.skipFactor);
+            fprintf('Current Sequence duty cycle = %.1f%%\n', dutyCycle * 100);
+            fprintf('FM Camera max duty cycle = %.1f%%\n', obj.maxDutyCycleAQSys  * 100);
+            
+
+            if dutyCycle > obj.maxDutyCycleAQSys
+                fprintf('Current Sequence duty cycle IS NOT supported by the FM acquisition system')
 		        % Minimal TR that Skope AQ system will allow
 		        minTR = obj.cameraAcqDuration / obj.maxDutyCycleAQSys;
 
@@ -209,6 +218,12 @@ classdef (Abstract) PulseqBase < handle
 		       % Add a multiple of trigger TR
                obj.cameraInterleaveTR =  obj.cameraInterleaveTR + addTrig2Skip * triggerTR;
                obj.skipFactor = obj.skipFactor + addTrig2Skip;
+
+               fprintf('New FM Camera acquisition duration = %.2f ms\n', obj.cameraAcqDuration*1e3);
+               fprintf('New FM Camera trigger ignore = %.2f ms\n', obj.cameraInterleaveTR*1e3);
+               fprintf('New FM Camera skip factor = %f ms\n', obj.skipFactor);
+               fprintf('New Sequence duty cycle = %.1f%%\n', dutyCycle * 100);
+                
             end
         end
 
