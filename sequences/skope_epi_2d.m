@@ -18,7 +18,7 @@ classdef skope_epi_2d < PulseqBase
 %
 % See also PulseqBase
 
-% (c) 2022 Skope Magnetic Resonance Technologies AG
+% (c) 2026 Skope Magnetic Resonance Technologies AG
 
     properties        
     
@@ -422,14 +422,15 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
 
-            %% Echo spacing check
-            if contains(seqParams.scannerType,'SC72CD')
-                if obj.echoSpacing>=0.63e-3 && obj.echoSpacing<=0.74e-3 || ...
-                    obj.echoSpacing>=1.2e-3 && obj.echoSpacing<=1.47e-3  
-                    error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for Siemens SC72CD gradient coil.'])
-                end
+            %% Echo spacing check to comply with scanner forbidden bands
+             if isfield(specs,'forbiddenBandsEchoSpacingLimits')
+                 for i=1:1:size(specs.forbiddenBandsEchoSpacingLimits,2)
+                    if obj.echoSpacing>=specs.forbiddenBandsEchoSpacingLimits(i,1) && obj.echoSpacing<=specs.forbiddenBandsEchoSpacingLimits(i,2)
+                        error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for' seqParams.scannerType ' gradient coil.'])
+                    end
+                 end
             else
-                warning(['Echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) might be a forbidden value for your system. Please check.'])
+                error('Scanner type does not provide echo spacing limits. Echo spacing might hit scanner forbidden bands. Please provide that information.')
             end
 
             %% Write to pulseq file
@@ -437,12 +438,27 @@ classdef skope_epi_2d < PulseqBase
                 mkdir('exports')
             end
 
-            filename = strcat('exports/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));
-            if obj.accFacPE == 1  
-                obj.seq.write(strcat(filename,'.seq'));       
-            else
-                obj.seq.write(strcat(filename,'_R',num2str(obj.accFacPE),'.seq'));  
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
             end
+
+
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));           
+
+            if obj.doPlayFatSat == 1
+                filename = strcat(filename, '_fs');
+            end
+
+            if obj.accFacPE > 1  
+                filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+            end
+
+            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
+                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            end
+
+            obj.seq.write(strcat(filename,'.seq')); 
+
         end
 
     end

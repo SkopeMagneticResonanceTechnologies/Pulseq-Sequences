@@ -14,6 +14,7 @@ classdef SequenceParams
         readoutTime % ADC duration [Unit: s]
         maxGrad     % Used gradient amplitude by sequence
         maxSlew     % Used slew rate by sequence
+        seqSpecName % String name appended to .seq file
         
         % Defaults
         scannerType = 'Siemens 9.4T SC72CD';
@@ -75,7 +76,6 @@ classdef SequenceParams
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                     obj.nDummy = 50;
-
                 case 'spiral2d'
                     % spiral-trajectory not adaptive to input params (hard coded)
                     % don't change!
