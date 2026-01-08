@@ -66,7 +66,7 @@ classdef SequenceParams
                     obj.nSlices = 15;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
-                    obj.nDummy = 5;   % totalNofDummy=nDummy*nSlices (without FM trigger)
+                    obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep = 10;
                 case 'se_epi2d_diff'
                     obj.TE = 110e-3;
