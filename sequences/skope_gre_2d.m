@@ -63,13 +63,12 @@ classdef skope_gre_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
-        distanceFactorPercentage = 250;
-
-        % Perform monitoring during RF
-        doMonitoringDuringRF = true;
+        distanceFactorPercentage = 250;        
 
         % Play out trigger earlier to compensate for field measurement latency
         triggerLatency = 150e-6;
+
+        doMonitoringDuringRF;
 
     end
 
@@ -141,6 +140,9 @@ classdef skope_gre_2d < PulseqBase
             obj.phaseEncDir = seqParams.phaseEncDir;
 
             obj.nDummy = seqParams.nDummy;
+
+            % Perform monitoring during RF
+            obj.doMonitoringDuringRF = seqParams.doMonitoringDuringRF;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...

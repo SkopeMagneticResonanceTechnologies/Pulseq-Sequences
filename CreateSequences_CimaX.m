@@ -26,6 +26,28 @@ paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
 paramsGre2d.scannerType = 'Siemens 3T Cima.X';
 paramsGre2d.maxGrad = 190;
 paramsGre2d.maxSlew = 190;
+
+% paramsGre2d.doMonitoringDuringRF = 1;
+% paramsGre2d.seqSpecName = 'FMduringRF';   
+
+% Generate the sequence
+gre2d = skope_gre_2d(paramsGre2d);
+
+% Plot sequence information after sync 
+timeRange = [4.25 4.27]; %s
+gre2d.plot(timeRange);
+
+% Test sequence
+gre2d.test();
+
+%% 2D GRE with monitoring during RFs
+paramsGre2d = SequenceParams('gre2d');
+
+paramsGre2d.sliceOrientation = SliceOrientation.TRA;
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsGre2d.scannerType = 'Siemens 3T Cima.X';
+paramsGre2d.maxGrad = 190;
+paramsGre2d.maxSlew = 190;
                     
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);

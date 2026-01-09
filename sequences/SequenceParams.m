@@ -15,8 +15,10 @@ classdef SequenceParams
         maxGrad     % Used gradient amplitude by sequence
         maxSlew     % Used slew rate by sequence
         seqSpecName % String name appended to .seq file
+        doMonitoringDuringRF %boolean to enable monitoring during RFs (functionality active for GRE only)
 
-        bFactor
+        %diffusion properties
+        bFactor 
         bDir
         nbValues
         
@@ -54,6 +56,7 @@ classdef SequenceParams
                     obj.maxGrad = 28;
                     obj.maxSlew = 150;
                     obj.nDummy = 10;
+                    obj.doMonitoringDuringRF = 0;
                 case 'epi2d'
                     obj.TE = 33e-3;
                     obj.TR = 200e-3;
@@ -100,18 +103,18 @@ classdef SequenceParams
                     obj.maxGrad = 35;
                     obj.maxSlew = 150;
                     obj.nDummy = 50;
-                case 'spiral2d'
+                case 'spiral2d' %to be changed.
                     % spiral-trajectory not adaptive to input params (hard coded)
                     % don't change!
-                    obj.fov = 192e-3; 
-                    obj.Nx = 192; 
+                    obj.fov = 192e-3; %to be changed.
+                    obj.Nx = 192; %to be changed.
                     obj.Ny = 16; 
                     obj.alpha = 15;   
                     obj.thickness = 3e-3; 
                     obj.nSlices = 15;
                     obj.TE = 2.5 * 1e-3;
                     obj.TR = 140e-3;       
-                    obj.readoutTime = 8e-3;
+                    obj.readoutTime = 8e-3; %to be changed.
                     obj.mode = 'multiShot';
                     obj.maxGrad = 40;
                     obj.maxSlew = 150;
