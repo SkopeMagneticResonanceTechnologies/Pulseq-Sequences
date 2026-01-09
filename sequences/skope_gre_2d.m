@@ -65,6 +65,12 @@ classdef skope_gre_2d < PulseqBase
 
         distanceFactorPercentage = 250;
 
+        % Perform monitoring during RF
+        doMonitoringDuringRF = true;
+
+        % Play out trigger earlier to compensate for field measurement latency
+        triggerLatency = 150e-6;
+
     end
 
     methods
@@ -144,7 +150,11 @@ classdef skope_gre_2d < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(200e-6);            
+            if obj.doMonitoringDuringRF
+                obj.gradFreeTime = 0;
+            else
+                obj.gradFreeTime = obj.roundUpToGRT(200e-6);
+            end                      
 
             %% Create alpha-degree slice selection pulse and gradient
             [obj.rf, obj.gz] = mr.makeSincPulse( obj.alpha*pi/180, ...
@@ -197,8 +207,14 @@ classdef skope_gre_2d < PulseqBase
             
             %% Time from trigger to scanner acquisition
             obj.triggerToScannerAcqDelay =  obj.fillTE(1) ...
-                                       + mr.calcDuration(obj.gxPre) ...
-                                       + obj.adc.delay;
+                                           + mr.calcDuration(obj.gxPre) ...
+                                           + obj.adc.delay;
+            if obj.doMonitoringDuringRF
+                obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + ...
+                                                obj.triggerLatency + ...
+                                                obj.gz.flatTime/2 + ...
+                                                obj.gz.fallTime;
+            end
 
             %% Absorb delayTE2 in gradient
             obj.gxFlyBack = mr.makeTrapezoid(obj.axesOrder{1},'Area',-obj.gx.area, ...
@@ -207,7 +223,17 @@ classdef skope_gre_2d < PulseqBase
             obj.fillTE(2) = 0;
             
             %% Prepare trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            if obj.doMonitoringDuringRF
+                % Play out trigger event in the middle of the slice
+                % selection gradient
+                triggerDelay = obj.gz.flatTime/2 + obj.gz.riseTime - obj.triggerLatency; 
+                assert(triggerDelay>=0,'Trigger delay must be larger than zero.');
+                obj.extTrigger = mr.makeDigitalOutputPulse( 'ext1', ...
+                                                            'duration', obj.sys.gradRasterTime, ...
+                                                            'delay',triggerDelay);
+            else
+                obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            end
 
             %% Calculate minimal TR
             minTR = mr.calcDuration(obj.gz) ...
@@ -230,6 +256,14 @@ classdef skope_gre_2d < PulseqBase
                                   + mr.calcDuration(obj.gxFlyBack) ...
                                   + mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe 
+
+            if obj.doMonitoringDuringRF
+                obj.cameraAcqDuration = obj.cameraAcqDuration + ...
+                                        obj.triggerLatency + ...
+                                        obj.gz.flatTime/2 + ...
+                                        obj.gz.fallTime;
+            end
+
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
             
             %% Phase settings
@@ -310,6 +344,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
+            obj.seq.setDefinition('MonitoringDuringRF', obj.doMonitoringDuringRF);
                         
             %% Write to Pulseq file
             if not(isfolder('exports'))
@@ -338,29 +373,50 @@ classdef skope_gre_2d < PulseqBase
             end
 
         
-            %% RF and ADC settings
-            if mode==KernelMode.Dummy || mode==KernelMode.Imaging
+           %% RF and ADC settings
+            if mode==KernelMode.Dummy
                 obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
                 obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
-            else
+            elseif mode==KernelMode.Imaging
+                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf.phaseOffset = obj.rf_phase/180*pi;
+                obj.adc.phaseOffset = obj.rf_phase/180*pi;
+                obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
+                obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
+                if obj.doMonitoringDuringRF
+                    obj.addBlock(obj.rf, obj.extTrigger, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                else
+                    obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                end
+            elseif mode==KernelMode.Sync
                 obj.rf.freqOffset = 0;
                 obj.rf.phaseOffset = 0;
-                obj.addBlock(obj.gz, mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
+                if obj.doMonitoringDuringRF
+                    obj.addBlock(obj.gz, obj.extTrigger, mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
+                else
+                    obj.addBlock(obj.gz, mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
+                end
+            else
+                error('Unknown kernel mode');
             end
             
             %% Slice refocusing gradient
             obj.addBlock(obj.gzReph);
         
-            %% External trigger and gradient-free interval a
+             %% External trigger and gradient-free interval
             if mode==KernelMode.Sync || mode==KernelMode.Imaging
-                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
+                if obj.doMonitoringDuringRF
+                    obj.addBlock(mr.makeDelay(obj.fillTE(1)));
+                else
+                    obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
+                end
             else
                 obj.addBlock(mr.makeDelay(obj.fillTE(1)));
-            end
+            end          
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
