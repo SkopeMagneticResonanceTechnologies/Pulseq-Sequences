@@ -112,6 +112,7 @@ classdef SequenceParams
                     obj.TE = 2.5 * 1e-3;
                     obj.TR = 140e-3;       
                     obj.readoutTime = 8e-3;
+                    obj.mode = 'multiShot';
                     obj.maxGrad = 40;
                     obj.maxSlew = 150;
                 case 'gtf'

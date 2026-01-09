@@ -49,7 +49,7 @@ epi2d = skope_epi_2d(paramsEpi2d);
 % Plot sequence information
 timeRange = [5.999 6.070];
 epi2d.plot(timeRange);
-%%
+
 % Test sequence
 epi2d.test();
 
@@ -145,18 +145,7 @@ sweep.plot(timeRange);
 % Test sequence
 sweep.test();
 
-%% Create a 2D spiral gradient-echo sequence
-% Get default sequence parameters
-paramsSpiral2d = SequenceParams('spiral2d');
-load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
-spiral2d = skope_spiral_2d(paramsSpiral2d,spiralWaveform);
 
-% Plot sequence information after sync 
-timeRange = [5.4 5.42];
-spiral2d.plot(timeRange);
-
-% Test sequence
-spiral2d.test();
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff');

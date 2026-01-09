@@ -66,11 +66,15 @@ classdef skope_spiral_2d < PulseqBase
 
         distanceFactorPercentage = 250;
 
+        mode = 'default';
+
     end
 
     methods
 
         function obj = skope_spiral_2d(seqParams, waveform)
+
+            warning('OFF', 'mr:restoreShape')
 
             %% Check input structure
             if not(isa(seqParams,'SequenceParams'))
@@ -138,6 +142,9 @@ classdef skope_spiral_2d < PulseqBase
             obj.sliceOrientation = seqParams.sliceOrientation;
             obj.phaseEncDir = seqParams.phaseEncDir;
 
+            % Single or multi shot
+            obj.mode = seqParams.mode;
+
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
                 = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
@@ -161,7 +168,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.gzReph = mr.makeTrapezoid(obj.axesOrder{3},'Area',-obj.gz.area/2,'Duration',1e-3,'system',obj.sys);
 
             % Create spiral waveform
-            obj.gspiral = waveform.';
+            obj.gspiral = waveform.' * obj.sys.gamma / 1000;
             obj.gx = mr.makeArbitraryGrad(obj.axesOrder{1},obj.gspiral(1,:));
             obj.gy = mr.makeArbitraryGrad(obj.axesOrder{2},obj.gspiral(2,:));
             durADC = mr.calcDuration(obj.gx);
@@ -295,7 +302,18 @@ classdef skope_spiral_2d < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write(strcat('exports/skope_spiral_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'.seq')); 
+
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+            
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_spiral_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'_',string(obj.mode));  
+
+            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
+                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            end
+
+            obj.seq.write(strcat(filename,'.seq'));  
 
         end
     end
