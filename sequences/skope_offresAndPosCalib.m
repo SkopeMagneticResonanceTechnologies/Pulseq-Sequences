@@ -63,7 +63,9 @@ classdef skope_offresAndPosCalib < PulseqBase
             
             %% Prepare event objects and combine to eventblocks
             area_flattop = grad_amp_Hzm * obj.flattopTime;         
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
+            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay); %EXT_TRIGGER trigger input (DEFAULT)
+            % mr_trig = mr.makeDigitalOutputPulse('osc0','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay); %OSC0 trigger input
+
             mr_inter = mr.makeDelay(T_inter);
             
             % no-grad
@@ -95,7 +97,15 @@ classdef skope_offresAndPosCalib < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_offresAndPosCalib.seq')       
+
+            
+            filename = 'exports/skope_offresAndPosCalib';
+
+            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
+                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            end
+
+            obj.seq.write(strcat(filename,'.seq')); 
                       
         end
     end 

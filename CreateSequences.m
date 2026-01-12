@@ -72,6 +72,7 @@ epi2d.test();
 
 %% Create off-resonance and position calibration sequence
 paramsOpc = SequenceParams('opc');
+paramsOpc.seqSpecName = 'OSC0';
 opc = skope_offresAndPosCalib(paramsOpc);
 
 % Plot sequence
