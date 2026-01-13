@@ -152,11 +152,12 @@ sweep.test();
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff');
 paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
 paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
+% paramsEpi2d.nDummy = 1; %testing
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
 timeRange = [6 7];
 seepi2d.plot(timeRange);
-%%
+
 % Test sequence
 seepi2d.test();

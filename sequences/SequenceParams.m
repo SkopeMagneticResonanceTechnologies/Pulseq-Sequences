@@ -83,7 +83,7 @@ classdef SequenceParams
                     obj.nSlices = 1;
                     obj.maxGrad = 32;
                     obj.maxSlew = 130;
-                    obj.nDummy = 0;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nDummy = 5;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
                     obj.accFacPE = 1;       % Acceleration factor [Phase] (only used for EPI at the moment)
                     obj.doPlayFatSat = 0;
                     obj.bFactor=[0, 1000, 1000, 1000]; %bencoding

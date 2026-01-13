@@ -14,9 +14,9 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.type = scannerType;            
             specs.maxGrad = 200; 
             specs.maxSlew = 200; 
-            specs.B0 = 2.89;
-            specs.forbiddenBandsEchoSpacingLimits = [0.63e-3, 0.74e-3;...
-                                                    1.20e-3, 1.47e-3 ]; % placeholder
+            specs.B0 = 2.89;            
+            specs.forbiddenBandsEchoSpacingLimits = [0.68e-3, 1.30e-3;... % 1113 Hz plus/minus 344 Hz
+                                                    1.48e-3, 2.10e-3 ];% 567 Hz plus/minus 100Hz
         % 7T
         case 'Siemens 7T Terra SC72CD'
             specs.type = scannerType;            
@@ -38,3 +38,9 @@ function specs = GetMRSystemSpecs(scannerType)
     end
 
 end
+
+% 1.47e-3 , 2.11e-3
+% 0.68e-3, 1.30e-3, 
+
+%576, 100
+% 1113, 344
