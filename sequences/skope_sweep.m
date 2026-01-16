@@ -6,7 +6,8 @@ classdef skope_sweep < PulseqBase
     properties        
         axis = ['x', 'y', 'z'];     % Axis with blips      
         flattopTime = 1100e-3;      % [s]
-        gradientAmplitude = 2.5;    % [mT/m]
+        gradientAmplitude = 2.5;    % [mT/m]      
+        triggerOutput;              % Trigger output channel
     end
 
     methods
@@ -22,12 +23,12 @@ classdef skope_sweep < PulseqBase
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
             obj.nAve = seqParams.nAve;
             obj.TR = seqParams.TR;
-
+            obj.triggerOutput = seqParams.triggerOutput;
             T_trig_delay = 1e-3; % trigger delay [s]
 
             %% Axes order
-            [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
-                = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
+            obj.axesOrder = {'x','y','z'};
+            obj.axesSign = [1,1,1];
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
@@ -66,7 +67,7 @@ classdef skope_sweep < PulseqBase
             grad_amp_Hzm = mr.convert(amp, 'mT/m', 'Hz/m', 'gamma', obj.sys.gamma);            
             
             %% Prepare event objects and combine to eventblocks
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
+            mr_trig = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime, 'delay', T_trig_delay);
             
             mr_gradfree = mr.makeDelay(2e-3);
             

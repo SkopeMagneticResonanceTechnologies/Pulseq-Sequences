@@ -66,6 +66,9 @@ classdef skope_gre_3d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
+        % Trigger output channel
+        triggerOutput;
+
     end
 
     methods
@@ -88,9 +91,6 @@ classdef skope_gre_3d < PulseqBase
                 error('Expected T/m/s for slew rate.');
             end
 
-            %% Used gradient amplitude and slew rate by this sequence
-            
-           
             %% Check specs
             if seqParams.maxGrad > specs.maxGrad
                 error('Scanner does not support requested gradient amplitude.');
@@ -137,6 +137,9 @@ classdef skope_gre_3d < PulseqBase
 
             % Number of dummy shots for steady state
             obj.nDummy = seqParams.nDummy;
+
+            % Set trigger output channel
+            obj.triggerOutput = seqParams.triggerOutput;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -222,7 +225,7 @@ classdef skope_gre_3d < PulseqBase
                                            + obj.adc.delay;
 
             %% Prepare trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
     
             %% Drive magnetization to steady state
             for i=1:obj.nDummy

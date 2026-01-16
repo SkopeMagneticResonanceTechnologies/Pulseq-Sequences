@@ -18,9 +18,13 @@ addpath('pulseq/matlab')
 addpath('methods')
 addpath('sequences')
 
+%% Define scanner type
+% 'Siemens 3T Cima.X', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
+scannerType = 'Siemens 3T Cima.X';
+
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
-paramsGre2d = SequenceParams('gre2d');
+paramsGre2d = SequenceParams('gre2d',scannerType);
 
 % Set slice orientation and encoding direction
 paramsGre2d.sliceOrientation = SliceOrientation.TRA;
@@ -40,10 +44,9 @@ gre2d.plot(timeRange);
 gre2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence
-paramsEpi2d = SequenceParams('epi2d');
+paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
-% paramsEpi2d.seqSpecName = 'test';
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
@@ -57,10 +60,15 @@ epi2d.test();
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 paramsEpi2d.accFacPE = 2;
-paramsEpi2d.TE = 26e-3;
+paramsEpi2d.TE = 35e-3;
 paramsEpi2d.Nx = 120;
 paramsEpi2d.Ny = 120;
-paramsEpi2d.readoutTime = 650e-6;
+switch scannerType
+    case 'Siemens 3T Cima.X'
+        paramsEpi2d.readoutTime = 560e-6;
+    otherwise
+        paramsEpi2d.readoutTime = 680e-6;
+end
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
@@ -70,9 +78,49 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-%% Create off-resonance and position calibration sequence
-paramsOpc = SequenceParams('opc');
-paramsOpc.seqSpecName = 'OSC0';
+%% Create a 2D spin-echo EPI sequence with diffusion encoding
+paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
+paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
+paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
+paramsSeEpi2dDiff.accFacPE = 2;
+paramsSeEpi2dDiff.Nx = 120;
+paramsSeEpi2dDiff.Ny = 120;
+switch scannerType
+    case 'Siemens 3T Cima.X'
+        paramsSeEpi2dDiff.readoutTime = 560e-6;
+    otherwise
+        paramsSeEpi2dDiff.readoutTime = 680e-6;
+end
+paramsSeEpi2dDiff.maxSlew = 180;
+seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
+
+% Plot sequence information
+timeRange = [6 7];
+seepi2d.plot(timeRange);
+
+% Test sequence
+seepi2d.test();
+
+%% Create a 3D monpolar dual-echo gradient-echo sequence
+paramsGre3d = SequenceParams('gre3d',scannerType);
+gre3d = skope_gre_3d(paramsGre3d);
+
+% Plot sequence information after sync 
+timeRange = [0 100e-3];
+gre3d.plot(timeRange);
+
+% Test sequence
+gre3d.test();
+
+%% Create off-resonance and position calibration sequence for all possible trigger output channels
+paramsOpc = SequenceParams('opc',scannerType);
+paramsOpc.triggerOutput = 'ext1'; % Default optical ouput
+opc = skope_offresAndPosCalib(paramsOpc);
+
+paramsOpc.triggerOutput = 'osc0';
+opc = skope_offresAndPosCalib(paramsOpc);
+
+paramsOpc.triggerOutput = 'osc1';
 opc = skope_offresAndPosCalib(paramsOpc);
 
 % Plot sequence
@@ -83,7 +131,7 @@ opc.plot(timeRange);
 opc.test();
 
 %% Create local eddy current calibration sequence
-paramsLec = SequenceParams('lec');
+paramsLec = SequenceParams('lec','Siemens 7T Terra SC72CD');
 lec = skope_localEddyCalib(paramsLec);
 
 % Plot sequence
@@ -94,7 +142,7 @@ lec.plot(timeRange);
 lec.test();
 
 %% Create a series of blips
-paramsGtf = SequenceParams('gtf');
+paramsGtf = SequenceParams('gtf','Siemens 7T Terra SC72CD');
 gtf = skope_gtf(paramsGtf);
 
 % Run as well with one average for nominal gradient simulation
@@ -109,7 +157,7 @@ gtf.plot(timeRange);
 gtf.test();
 
 %% Create two interleaved series of blips with half and double amplitude
-paramsGtf = SequenceParams('gtf','linearityCheck');
+paramsGtf = SequenceParams('gtf','Siemens 7T Terra SC72CD','linearityCheck');
 gtf = skope_gtf(paramsGtf);
 
 % Plot sequence information
@@ -119,20 +167,9 @@ gtf.plot(timeRange);
 % Test sequence
 gtf.test();
 
-%% Create a 3D monpolar dual-echo gradient-echo sequence
-paramsGre3d = SequenceParams('gre3d');
-gre3d = skope_gre_3d(paramsGre3d);
-
-% Plot sequence information after sync 
-timeRange = [0 100e-3];
-gre3d.plot(timeRange);
-
-% Test sequence
-gre3d.test();
-
 %% Create off-resonance and position calibration sequence
 load('./waveforms/sweepWaveform.mat')
-paramsSweep = SequenceParams('sweep');
+paramsSweep = SequenceParams('sweep','Siemens 7T Terra SC72CD');
 sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Run as well with one average for nominal gradient simulation
@@ -145,19 +182,3 @@ sweep.plot(timeRange);
 
 % Test sequence
 sweep.test();
-
-
-
-%% Create a 2D spin-echo EPI sequence with diffusion encoding
-paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff');
-paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
-paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
-% paramsEpi2d.nDummy = 1; %testing
-seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
-
-% Plot sequence information
-timeRange = [6 7];
-seepi2d.plot(timeRange);
-
-% Test sequence
-seepi2d.test();

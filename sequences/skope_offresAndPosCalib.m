@@ -7,6 +7,7 @@ classdef skope_offresAndPosCalib < PulseqBase
         axis = ['x', 'y', 'z'];     % Axis with blips      
         flattopTime = 1100e-3;      % [s]
         gradientAmplitude = 2.5;    % [mT/m]
+        triggerOutput = 'ext1';     % Trigger ouput mode
     end
 
     methods
@@ -21,6 +22,7 @@ classdef skope_offresAndPosCalib < PulseqBase
             %% Set base class properties
             obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            obj.triggerOutput = seqParams.triggerOutput;
 
             T_trig_delay = 990e-3; % trigger delay [s]
             
@@ -62,9 +64,8 @@ classdef skope_offresAndPosCalib < PulseqBase
             T_inter = 100e-3; % delay between event-blocks [s]
             
             %% Prepare event objects and combine to eventblocks
-            area_flattop = grad_amp_Hzm * obj.flattopTime;         
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay); %EXT_TRIGGER trigger input (DEFAULT)
-            % mr_trig = mr.makeDigitalOutputPulse('osc0','duration', obj.sys.gradRasterTime, 'delay', T_trig_delay); %OSC0 trigger input
+            area_flattop = grad_amp_Hzm * obj.flattopTime; 
+            mr_trig = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime, 'delay', T_trig_delay); % Default trigger output
 
             mr_inter = mr.makeDelay(T_inter);
             
@@ -97,12 +98,11 @@ classdef skope_offresAndPosCalib < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-
             
             filename = 'exports/skope_offresAndPosCalib';
 
-            if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
-                filename = strcat(filename, '_', seqParams.seqSpecName);																				
+            if isprop(seqParams, 'triggerOutput') && ~isempty(seqParams.triggerOutput)
+                filename = strcat(filename, '_', seqParams.triggerOutput);																				
             end
 
             obj.seq.write(strcat(filename,'.seq')); 

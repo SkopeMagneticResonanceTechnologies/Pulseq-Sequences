@@ -32,7 +32,7 @@ classdef skope_epi_2d < PulseqBase
         partFourierFactor = 1 
 
         % Add phase correction lines
-        addPhaseCorrLines = false;
+        addPhaseCorrLines = true;
            
     end
 
@@ -96,6 +96,9 @@ classdef skope_epi_2d < PulseqBase
 
         % Acceleration factor (Phase)
         accFacPE
+
+        % Set trigger output channel
+        triggerOutput
     end
 
     methods
@@ -279,7 +282,7 @@ classdef skope_epi_2d < PulseqBase
 
   
             %% Create external trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
 
             %% Calculate minimal TE
             if obj.addPhaseCorrLines
@@ -426,7 +429,7 @@ classdef skope_epi_2d < PulseqBase
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')
                  for i=1:1:size(specs.forbiddenBandsEchoSpacingLimits,2)
                     if obj.echoSpacing>=specs.forbiddenBandsEchoSpacingLimits(i,1) && obj.echoSpacing<=specs.forbiddenBandsEchoSpacingLimits(i,2)
-                        error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for' seqParams.scannerType ' gradient coil.'])
+                        error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for ' seqParams.scannerType ' gradient coil.'])
                     end
                  end
             else
@@ -449,9 +452,9 @@ classdef skope_epi_2d < PulseqBase
                 filename = strcat(filename, '_fs');
             end
 
-            if obj.accFacPE > 1  
-                filename = strcat(filename, '_R', num2str(obj.accFacPE));  
-            end
+       
+            filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+
 
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				

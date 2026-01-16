@@ -9,6 +9,8 @@ classdef skope_gtf < PulseqBase
         nBlipsPerAxis = 19          % Number of blips per axis (one 
                                     % measurement without a gradient blib 
                                     % will be added per axis)
+        % Trigger output channel
+        triggerOutput;
     end
 
     methods
@@ -40,6 +42,9 @@ classdef skope_gtf < PulseqBase
             obj.gradFreeTime = 2e-3;   % Delay between trigger and blip [Unit: s]
             obj.nAve = seqParams.nAve;
             obj.nRep = seqParams.nRep;
+
+            % Set trigger output channel
+            obj.triggerOutput = seqParams.triggerOutput;
             
             %% Check specs
             if seqParams.maxGrad > specs.maxGrad
@@ -73,7 +78,7 @@ classdef skope_gtf < PulseqBase
         
             %% Prepare event objects
             % Trigger
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            mr_trig = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
             
             % Delay
             mr_gradFreeTime = mr.makeDelay(obj.gradFreeTime);

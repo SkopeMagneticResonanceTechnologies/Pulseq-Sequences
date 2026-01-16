@@ -8,6 +8,7 @@ classdef skope_localEddyCalib < PulseqBase
         N_rep = 10                  % Number of repetitions        
         relax = 0.8                 % Relax system limits
         nBlipsPerAxis = 32          % Number of blips per axis
+        triggerOutput;
     end
 
     methods
@@ -22,6 +23,8 @@ classdef skope_localEddyCalib < PulseqBase
             %% Set base class properties
             obj.TR = seqParams.TR;       % Repetition time [Unit: s]
             obj.gradFreeTime = 0.5e-3;   % Delay between trigger and blip-train [Unit: s]
+            % Set trigger output channel
+            obj.triggerOutput = seqParams.triggerOutput;
 
             %% Get system limits
             specs = GetMRSystemSpecs(seqParams.scannerType); 
@@ -72,7 +75,7 @@ classdef skope_localEddyCalib < PulseqBase
 
             %% Prepare event objects
             % Trigger
-            mr_trig = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            mr_trig = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
             
             % Delay
             mr_gradFreeTime = mr.makeDelay(obj.gradFreeTime);

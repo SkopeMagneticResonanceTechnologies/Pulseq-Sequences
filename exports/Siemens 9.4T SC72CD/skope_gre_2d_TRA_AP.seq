@@ -18,6 +18,7 @@ CameraNrSyncDynamics 10
 FOV 0.2 0.2 0.1575 
 GradientRasterTime 1e-05 
 Matrix 128 128 
+MonitoringDuringRF 0 
 Name gre2d 
 RadiofrequencyRasterTime 1e-06 
 SliceShifts -0.0735 -0.063 -0.0525 -0.042 -0.0315 -0.021 -0.0105 0 0.0105 0.021 0.0315 0.042 0.0525 0.063 0.0735 
@@ -22715,4 +22716,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 487afe0852c04b636f6129c1b3a36b68
+Hash 7f27e421bcc6869d736f3ceeebe2cc67

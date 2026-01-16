@@ -40,6 +40,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
         % Add phase correction lines
         addPhaseCorrLines = false;
+
+        % Trigger output channel
+        triggerOutput;
            
     end
 
@@ -316,7 +319,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
   
             %% Create external trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
 
             %% Calculate minimal TE
             if obj.addPhaseCorrLines

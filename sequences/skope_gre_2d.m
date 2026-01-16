@@ -70,6 +70,8 @@ classdef skope_gre_2d < PulseqBase
 
         doMonitoringDuringRF;
 
+        triggerOutput
+
     end
 
     methods
@@ -143,6 +145,9 @@ classdef skope_gre_2d < PulseqBase
 
             % Perform monitoring during RF
             obj.doMonitoringDuringRF = seqParams.doMonitoringDuringRF;
+
+            % Set trigger output channel
+            obj.triggerOutput = seqParams.triggerOutput;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -230,11 +235,11 @@ classdef skope_gre_2d < PulseqBase
                 % selection gradient
                 triggerDelay = obj.gz.flatTime/2 + obj.gz.riseTime - obj.triggerLatency; 
                 assert(triggerDelay>=0,'Trigger delay must be larger than zero.');
-                obj.extTrigger = mr.makeDigitalOutputPulse( 'ext1', ...
+                obj.extTrigger = mr.makeDigitalOutputPulse( obj.triggerOutput, ...
                                                             'duration', obj.sys.gradRasterTime, ...
                                                             'delay',triggerDelay);
             else
-                obj.extTrigger = mr.makeDigitalOutputPulse('ext1','duration', obj.sys.gradRasterTime);
+                obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
             end
 
             %% Calculate minimal TR

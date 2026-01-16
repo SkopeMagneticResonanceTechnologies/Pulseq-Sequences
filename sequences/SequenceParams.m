@@ -33,11 +33,19 @@ classdef SequenceParams
         
         sliceOrientation = SliceOrientation.TRA;  % Slice orientation        
         phaseEncDir = PhaseEncodingDirection.AP;  % Phase encoding direction
+
+        triggerOutput = 'ext1'; % Default optical output (other ouputs: 'osc0', 'osc1')
     end
 
     methods
-        function obj = SequenceParams(seqName,mode)
+        function obj = SequenceParams(seqName,scannerType,mode)
 
+            if not(exist('scannerType','var'))
+                scannerType = 'Siemens 7T Terra SC72CD';
+                warning('Using default scanner type "Siemens 7T Terra SC72CD"')
+            end
+            obj.scannerType = scannerType;
+            
             if not(exist('mode','var'))
                 mode = 'default';
             end
@@ -58,9 +66,14 @@ classdef SequenceParams
                     obj.nDummy = 10;
                     obj.doMonitoringDuringRF = 0;
                 case 'epi2d'
-                    obj.TE = 33e-3;
+                    obj.TE = 36e-3;
                     obj.TR = 200e-3;
-                    obj.readoutTime = 0.680e-3;
+                    switch scannerType
+                        case 'Siemens 3T Cima.X'
+                            obj.readoutTime = 0.500e-3;
+                        otherwise
+                            obj.readoutTime = 0.680e-3;
+                    end
                     obj.alpha = 90;
                     obj.fov = 200e-3;
                     obj.Nx = 80;
@@ -68,8 +81,8 @@ classdef SequenceParams
                     obj.thickness = 3e-3;
                     obj.nSlices = 15;
                     obj.maxGrad = 32;
-                    obj.maxSlew = 130;
-                    obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
+                    obj.maxSlew = 180;
+                    obj.nDummy = 4;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep = 10;
                 case 'se_epi2d_diff'
                     obj.TE = 110e-3;
@@ -89,7 +102,6 @@ classdef SequenceParams
                     obj.bFactor=[0, 1000, 1000, 1000]; %bencoding
                     obj.bDir = [0, 1, 2, 3]; %axis
                     obj.nbValues = length(obj.bDir);     
-                    obj.scannerType = 'Siemens 7T Terra SC72CD';
                     obj.seqSpecName = '';
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
