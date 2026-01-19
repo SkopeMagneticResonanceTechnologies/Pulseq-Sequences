@@ -47,55 +47,77 @@ gre2d.test();
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsEpi2d.accFacPE = 1;
+paramsEpi2d.nRep = 1;
+paramsEpi2d.TE = 33e-3;
+paramsEpi2d.TR = 130e-3;
+paramsEpi2d.Nx = 100; 
+paramsEpi2d.Ny = 100;
+switch scannerType
+    case 'Siemens 3T Cima.X'
+        paramsEpi2d.readoutTime = 500e-6;
+    otherwise
+        paramsEpi2d.readoutTime = 800e-6;
+end
 epi2d = skope_epi_2d(paramsEpi2d);
 
+%%
 % Plot sequence information
-timeRange = [5.999 6.070];
+timeRange = [25.05 25.13];
 epi2d.plot(timeRange);
 
+%%
 % Test sequence
 epi2d.test();
 
 %% EPI with acceleration factor 2 and higher resolution
+paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 paramsEpi2d.accFacPE = 2;
-paramsEpi2d.TE = 35e-3;
-paramsEpi2d.Nx = 120;
-paramsEpi2d.Ny = 120;
+paramsEpi2d.nRep = 1;
+paramsEpi2d.TE = 36e-3;
+paramsEpi2d.TR = 130e-3;
+paramsEpi2d.Nx = 180;
+paramsEpi2d.Ny = 180;
 switch scannerType
     case 'Siemens 3T Cima.X'
-        paramsEpi2d.readoutTime = 560e-6;
+        paramsEpi2d.readoutTime = 600e-6;
     otherwise
         paramsEpi2d.readoutTime = 680e-6;
 end
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-timeRange = [5.999 6.070];
+timeRange = [5.950 6.020];
 epi2d.plot(timeRange);
 
 % Test sequence
 epi2d.test();
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding
+% navigator is by default disabled here
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
 paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
 paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
 paramsSeEpi2dDiff.accFacPE = 2;
-paramsSeEpi2dDiff.Nx = 120;
-paramsSeEpi2dDiff.Ny = 120;
+paramsSeEpi2dDiff.nRep = 1;
+paramsSeEpi2dDiff.TE = 55e-3;
+paramsSeEpi2dDiff.TR = 130e-3;
+paramsSeEpi2dDiff.Nx = 130;
+paramsSeEpi2dDiff.Ny = 130;
 switch scannerType
     case 'Siemens 3T Cima.X'
-        paramsSeEpi2dDiff.readoutTime = 560e-6;
+        paramsSeEpi2dDiff.readoutTime = 500e-6;
     otherwise
         paramsSeEpi2dDiff.readoutTime = 680e-6;
 end
-paramsSeEpi2dDiff.maxSlew = 180;
+% paramsSeEpi2dDiff.nSlices = 1; %testing
+% paramsSeEpi2dDiff.nDummy = 1; %testing
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
-timeRange = [6 7];
+timeRange = [42.86 42.95];
 seepi2d.plot(timeRange);
 
 % Test sequence
@@ -173,7 +195,7 @@ paramsSweep = SequenceParams('sweep','Siemens 7T Terra SC72CD');
 sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Run as well with one average for nominal gradient simulation
-paramsSweep.nAve = 1;   
+% paramsSweep.nAve = 1;   
 sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Plot sequence

@@ -71,32 +71,41 @@ classdef SequenceParams
                     switch scannerType
                         case 'Siemens 3T Cima.X'
                             obj.readoutTime = 0.500e-3;
+                            obj.maxGrad = 190;
+                            obj.maxSlew = 190;
                         otherwise
                             obj.readoutTime = 0.680e-3;
+                            obj.maxGrad = 32;
+                            obj.maxSlew = 180;
                     end
                     obj.alpha = 90;
                     obj.fov = 200e-3;
                     obj.Nx = 80;
                     obj.Ny = 80;
                     obj.thickness = 3e-3;
-                    obj.nSlices = 15;
-                    obj.maxGrad = 32;
-                    obj.maxSlew = 180;
-                    obj.nDummy = 4;   % totalNofDummy=nDummy*nSlices (without FM trigger)
-                    obj.nRep = 10;
+                    obj.nSlices = 15;                   
+                    obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
+                    obj.nRep = 5;
                 case 'se_epi2d_diff'
                     obj.TE = 110e-3;
                     obj.TR = 200e-3;
-                    obj.readoutTime = 0.680e-3;
+                    switch scannerType
+                        case 'Siemens 3T Cima.X'
+                            obj.readoutTime = 0.500e-3;
+                            obj.maxGrad = 190;
+                            obj.maxSlew = 190;
+                        otherwise
+                            obj.readoutTime = 0.680e-3;
+                            obj.maxGrad = 32;
+                            obj.maxSlew = 180;
+                    end                    
                     obj.alpha = 90;
                     obj.fov = 200e-3;
                     obj.Nx = 80;
                     obj.Ny = 80;
                     obj.thickness = 3e-3;
-                    obj.nSlices = 1;
-                    obj.maxGrad = 32;
-                    obj.maxSlew = 130;
-                    obj.nDummy = 5;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nSlices = 15;
+                    obj.nDummy = 10;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
                     obj.accFacPE = 1;       % Acceleration factor [Phase] (only used for EPI at the moment)
                     obj.doPlayFatSat = 0;
                     obj.bFactor=[0, 1000, 1000, 1000]; %bencoding
