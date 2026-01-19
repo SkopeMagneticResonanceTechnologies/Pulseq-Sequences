@@ -1,6 +1,30 @@
+%% Pulseq example sequences 
+% including triggers and synchronization pre-scans for field-monitoring
+
+% (c) 2026 Skope Magnetic Resonance Technologies AG
+
+%% Clean up
+clear all
+close all
+clc
+
+%% Check if Pulseq module has been added
+if not(isfolder('pulseq/matlab'))
+    error("Please run 'git submodule init' and 'git submodule update' to get the latest Pulseq scripts.")
+end
+
+%% Add Pulseq, sequences and methods
+addpath('pulseq/matlab')
+addpath('methods')
+addpath('sequences')
+
+%% Define scanner type
+% 'Siemens 3T Cima.X', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
+scannerType = 'Siemens 3T Cima.X';
+
 %% Create a multi-shot 2D spiral gradient-echo sequence with pregenerated spiral waveform
 % Get default sequence parameters
-paramsSpiral2d = SequenceParams('spiral2d');
+paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
 obj.sys.gamma = 42576000;
 spiralWaveform = spiralWaveform / obj.sys.gamma * 1000;
@@ -44,7 +68,7 @@ g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
 % size(g_rv,1)
 %-------------------------------------------------------------------------
 
-paramsSpiral2d = SequenceParams('spiral2d');
+paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.mode = 'multiShot';
 
@@ -86,7 +110,7 @@ interpType = 'cubic';   % Type of interpolation used to interpolate the fov acce
 g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
 %-------------------------------------------------------------------------
 
-paramsSpiral2d = SequenceParams('spiral2d');
+paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.mode = 'singleShot';
 paramsSpiral2d.seqSpecName = '';
