@@ -61,16 +61,14 @@ switch scannerType
 end
 epi2d = skope_epi_2d(paramsEpi2d);
 
-%%
 % Plot sequence information
 timeRange = [25.05 25.13];
 epi2d.plot(timeRange);
 
-%%
 % Test sequence
 epi2d.test();
 
-%% EPI with acceleration factor 2 and higher resolution
+%% EPI with acceleration factor 3 and higher resolution
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
@@ -90,9 +88,9 @@ end
 paramsEpi2d.seqSpecName = '_slew170'
 epi2d = skope_epi_2d(paramsEpi2d);
 
-%%
 % Plot sequence information
-timeRange = [5.950 6.020];
+% timeRange = [5.950 6.020];
+timeRange = [26.08 26.18];
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -120,13 +118,10 @@ paramsSeEpi2dDiff.nSlices = 15; %testing
 paramsSeEpi2dDiff.nDummy = 0; %testing
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
-%%
 % Plot sequence information
 timeRange = [5 10];
 seepi2d.plot(timeRange);
 
-
-%%
 % Test sequence
 seepi2d.test();
 

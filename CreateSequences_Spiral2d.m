@@ -52,21 +52,23 @@ addpath(genpath(minTimeGradientDir))
 Nitlv = 16;             % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
 res	= 1;                % Resolution (in mm)
-fov	= [32, 30, 25, 25]; % Vector of fov (in cm)
-radius = [0,0.2,0.3,1]; % Vector of radius corresponding to the fov
+fov	= [25,1];           % Vector of fov (in cm)
+radius = [0,1];         % Vector of radius corresponding to the fov
 Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 15;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
-interpType = 'cubic';   % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
+interpType = 'linear';   % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
 
 [k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
 % Convert gradient to mT/m
 g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
-% plot(g_rv)
+plot(g_rv)
+plot(g_rv(:,1), g_rv(:,2))
 % size(g_rv,1)
 %-------------------------------------------------------------------------
+
 
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
@@ -76,7 +78,7 @@ paramsSpiral2d.mode = 'multiShot';
 spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-timeRange = [5.4 5.42];
+timeRange = [5.4 5.41];
 spiral2d.plot(timeRange);
 
 % Test sequence
