@@ -148,6 +148,11 @@ classdef skope_epi_2d < PulseqBase
                 end
             end
 
+            %% Check number of repetitions
+            if obj.nRep ~= 1
+                error('This sequence uses the ONCE flag to mark sync and dummy scans. The number of repetitions can be set on the Sequence Special Card on the scanner.')
+            end
+
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
             
@@ -200,18 +205,18 @@ classdef skope_epi_2d < PulseqBase
             % We round-up the duration to 2x the gradient raster time
             blip_dur = ceil(2*sqrt(deltaky/obj.sys.maxSlew)/10e-6/2)*10e-6*2; 
 
-            % The split code below fails if this really makes a trpezoid instead of a triangle.
+            % The split code below fails if this really makes a trapezoid instead of a triangle.
             % We use negative blips to save one k-space line on our way towards the k-space center
             obj.gy = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                       'Area', -deltaky, ...
                                       'Duration', blip_dur); 
             %gy = mr.makeTrapezoid(obj.axesOrder{2},lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
             
-            % readout gradient is a truncated trapezoid with dead times at the beginnig
+            % readout gradient is a truncated trapezoid with dead times at the beginning
             % and at the end each equal to a half of blip_dur
             % the area between the blips should be defined by kWidth
             % we do a two-step calculation: we first increase the area assuming maximum
-            % slewrate and then scale down the amlitude to fix the area 
+            % slewrate and then scale down the amplitude to fix the area 
             extra_area = blip_dur/2 * blip_dur/2 * obj.sys.maxSlew; % check unit!;
 
             obj.gx = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
@@ -274,7 +279,7 @@ classdef skope_epi_2d < PulseqBase
             [obj.gxPre, obj.gyPre] = mr.align('right', obj.gxPre, ...
                                              'left', obj.gyPre);
 
-            % relax the PE prepahser to reduce stimulation
+            % relax the PE prephaser to reduce stimulation
             obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                          'Area', obj.gyPre.area, ...
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
@@ -436,7 +441,7 @@ classdef skope_epi_2d < PulseqBase
                 error('Scanner type does not provide echo spacing limits. Echo spacing might hit scanner forbidden bands. Please provide that information.')
             end
 
-            %% Write to pulseq file
+            %% Write to Pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
             end
@@ -471,6 +476,15 @@ classdef skope_epi_2d < PulseqBase
 
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
+            end
+            
+            %% Set ONCE-flag to avoid repeating sync and dummy scans
+            if mode == KernelMode.Sync || mode==KernelMode.Dummy
+                % ONCE=1 marks the blocks that are only executed in the first repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 1));
+            else
+                % Blocks with ONCE=0 are executed on every repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 0));
             end
 
             %% RF and ADC settings
