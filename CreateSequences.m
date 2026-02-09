@@ -29,6 +29,8 @@ paramsGre2d = SequenceParams('gre2d',scannerType);
 % Set slice orientation and encoding direction
 paramsGre2d.sliceOrientation = SliceOrientation.TRA;
 paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
+
+paramsGre2d.seqSpecName = 'os2';
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
@@ -49,16 +51,19 @@ paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 paramsEpi2d.accFacPE = 1;
 paramsEpi2d.nRep = 1;
-paramsEpi2d.TE = 33e-3;
+paramsEpi2d.TE = 33.3e-3;
 paramsEpi2d.TR = 130e-3;
 paramsEpi2d.Nx = 100; 
 paramsEpi2d.Ny = 100;
 switch scannerType
     case 'Siemens 3T Cima.X'
-        paramsEpi2d.readoutTime = 500e-6;
+        paramsEpi2d.readoutTime = 520e-6;
     otherwise
         paramsEpi2d.readoutTime = 800e-6;
 end
+
+paramsEpi2d.seqSpecName = 'os2';
+
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
