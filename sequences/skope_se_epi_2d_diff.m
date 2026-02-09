@@ -269,18 +269,18 @@ classdef skope_se_epi_2d_diff < PulseqBase
             adcDwellNyquist = deltakx/obj.gx.amplitude/obj.ro_os;
 
             % round-down dwell time to 100 ns
-            adcDwell = floor(adcDwellNyquist*1e7)*1e-7;
+            adcDwell = floor(adcDwellNyquist*2e7)*2e-7;
 
             % on Siemens the number of ADC samples need to be divisible by 4
             adcSamples = floor(obj.readoutTime/adcDwell/4)*4; 
 
             % MZ: no idea, whether ceil,round or floor is better for the adcSamples...
-            obj.adc = mr.makeAdc(adcSamples, ...
-                                 'Dwell', adcDwell, ...
+            obj.adc = mr.makeAdc(adcSamples*2, ...
+                                 'Dwell', adcDwell/2, ...
                                  'Delay',blip_dur/2);
 
             % realign the ADC with respect to the gradient
-            time_to_center = obj.adc.dwell*((adcSamples-1)/2+0.5);
+            time_to_center = obj.adc.dwell*((adcSamples*2-1)/2+0.5);
 
             % we adjust the delay to align the trajectory with the gradient. We have to align the delay to 1us 
             obj.adc.delay = round((obj.gx.riseTime + obj.gx.flatTime/2-time_to_center)*1e6)*1e-6; 
@@ -363,7 +363,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
             %% Preparation of diffusion gradients
             for i = 2:seqParams.nbValues
-                % diffusion weithting calculation
+                % diffusion weighting calculation
                 % delayTE2 is our window for small_delta
                 % delayTE1+delayTE2-delayTE2 is our big delta
                 % we anticipate that we will use the maximum gradient amplitude, so we need
