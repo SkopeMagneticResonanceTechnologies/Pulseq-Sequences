@@ -190,10 +190,9 @@ lec.test();
 
 %% Create a series of blips
 paramsGtf = SequenceParams('gtf','Siemens 7T Terra SC72CD');
-gtf = skope_gtf(paramsGtf);
 
 % Run as well with one average for nominal gradient simulation
-paramsGtf.nAve = 1; 
+% paramsGtf.nAve = 1; 
 gtf = skope_gtf(paramsGtf);
 
 % Plot sequence information
@@ -217,7 +216,6 @@ gtf.test();
 %% Create off-resonance and position calibration sequence
 load('./waveforms/sweepWaveform.mat')
 paramsSweep = SequenceParams('sweep','Siemens 7T Terra SC72CD');
-sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Run as well with one average for nominal gradient simulation
 % paramsSweep.nAve = 1;   
