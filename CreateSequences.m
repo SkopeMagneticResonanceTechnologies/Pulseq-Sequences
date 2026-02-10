@@ -59,12 +59,17 @@ switch scannerType
     otherwise
         paramsEpi2d.readoutTime = 800e-6;
 end
+
+paramsEpi2d.ro_os = 2;
+paramsEpi2d.nSlices = 15;
+paramsEpi2d.nDummy = 10;
+paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os)];
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
 timeRange = [25.05 25.13];
 epi2d.plot(timeRange);
-
+% epi2d.plot([5.3 5.5]);
 % Test sequence
 epi2d.test();
 
@@ -79,17 +84,22 @@ paramsEpi2d.TR = 130e-3;
 paramsEpi2d.Nx = 180;
 paramsEpi2d.Ny = 180;
 paramsEpi2d.maxSlew = 170;
+paramsEpi2d.addPhaseCorrLines=1;
 switch scannerType
     case 'Siemens 3T Cima.X'
         paramsEpi2d.readoutTime = 800e-6;
     otherwise
         paramsEpi2d.readoutTime = 680e-6;
 end
-paramsEpi2d.seqSpecName = '_slew170'
+
+paramsEpi2d.ro_os = 2;
+paramsEpi2d.nSlices = 15;
+paramsEpi2d.nDummy = 10;
+paramsEpi2d.seqSpecName = ['_os' num2str(paramsEpi2d.ro_os)];
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-% timeRange = [5.950 6.020];
+% timeRange = [5 6];
 timeRange = [26.08 26.18];
 epi2d.plot(timeRange);
 
@@ -114,8 +124,8 @@ switch scannerType
     otherwise
         paramsSeEpi2dDiff.readoutTime = 680e-6;
 end
-paramsSeEpi2dDiff.nSlices = 15; %testing
-paramsSeEpi2dDiff.nDummy = 0; %testing
+paramsSeEpi2dDiff.nSlices = 1; %testing
+paramsSeEpi2dDiff.nDummy = 1; %testing
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
@@ -123,7 +133,7 @@ timeRange = [5 10];
 seepi2d.plot(timeRange);
 
 % Test sequence
-seepi2d.test();
+% seepi2d.test();
 
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding

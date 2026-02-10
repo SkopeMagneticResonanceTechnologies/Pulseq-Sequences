@@ -176,6 +176,11 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 end
             end
 
+            %% Check number of repetitions
+            if obj.nRep ~= 1
+                error('This sequence uses the ONCE flag to mark sync and dummy scans. The number of repetitions can be set on the Sequence Special Card on the scanner.')
+            end
+
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
             
@@ -237,18 +242,18 @@ classdef skope_se_epi_2d_diff < PulseqBase
             % We round-up the duration to 2x the gradient raster time
             blip_dur = ceil(2*sqrt(deltaky/obj.sys.maxSlew)/10e-6/2)*10e-6*2; 
 
-            % The split code below fails if this really makes a trpezoid instead of a triangle.
+            % The split code below fails if this really makes a trapezoid instead of a triangle.
             % We use negative blips to save one k-space line on our way towards the k-space center
             obj.gy = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                       'Area', -deltaky, ...
                                       'Duration', blip_dur); 
             %gy = mr.makeTrapezoid(obj.axesOrder{2},lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
             
-            % readout gradient is a truncated trapezoid with dead times at the beginnig
+            % readout gradient is a truncated trapezoid with dead times at the beginning
             % and at the end each equal to a half of blip_dur
             % the area between the blips should be defined by kWidth
             % we do a two-step calculation: we first increase the area assuming maximum
-            % slewrate and then scale down the amlitude to fix the area 
+            % slewrate and then scale down the amplitude to fix the area 
             extra_area = blip_dur/2 * blip_dur/2 * obj.sys.maxSlew; % check unit!;
 
             obj.gx = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
@@ -266,21 +271,21 @@ classdef skope_se_epi_2d_diff < PulseqBase
             % we use ramp sampling, so we have to calculate the dwell time and the
             % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
-            adcDwellNyquist = deltakx/obj.gx.amplitude/obj.ro_os;
+            adcDwellNyquist = deltakx/obj.gx.amplitude;
 
             % round-down dwell time to 100 ns
-            adcDwell = floor(adcDwellNyquist*1e7)*1e-7;
+            adcDwell = floor(adcDwellNyquist*1e7*obj.ro_os)*1e-7*obj.ro_os;
 
             % on Siemens the number of ADC samples need to be divisible by 4
             adcSamples = floor(obj.readoutTime/adcDwell/4)*4; 
 
             % MZ: no idea, whether ceil,round or floor is better for the adcSamples...
-            obj.adc = mr.makeAdc(adcSamples, ...
-                                 'Dwell', adcDwell, ...
+            obj.adc = mr.makeAdc(adcSamples*obj.ro_os, ...
+                                 'Dwell', adcDwell/obj.ro_os, ...
                                  'Delay',blip_dur/2);
 
             % realign the ADC with respect to the gradient
-            time_to_center = obj.adc.dwell*((adcSamples-1)/2+0.5);
+            time_to_center = obj.adc.dwell*((adcSamples*obj.ro_os-1)/2+0.5);
 
             % we adjust the delay to align the trajectory with the gradient. We have to align the delay to 1us 
             obj.adc.delay = round((obj.gx.riseTime + obj.gx.flatTime/2-time_to_center)*1e6)*1e-6; 
@@ -311,7 +316,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             [obj.gxPre, obj.gyPre] = mr.align('right', obj.gxPre, ...
                                              'left', obj.gyPre);
 
-            % relax the PE prepahser to reduce stimulation
+            % relax the PE prephaser to reduce stimulation
             obj.gyPre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                          'Area', obj.gyPre.area, ...
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
@@ -381,9 +386,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 assert(mr.calcDuration(obj.gDiff)<=obj.delayTE1);
                 assert(mr.calcDuration(obj.gDiff)<=obj.delayTE2);
             end
-
+            
             %% Time from trigger to scanner acquisition
-            obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre, obj.gyPre) ...
+            obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
                                        + obj.adc.delay;  
 
             if obj.addPhaseCorrLines
@@ -538,6 +543,15 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 error('Expected a kernel mode argument')
             end
 
+             %% Set ONCE-flag to avoid repeating sync and dummy scans
+            if mode == KernelMode.Sync || mode==KernelMode.Dummy
+                % ONCE=1 marks the blocks that are only executed in the first repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 1));
+            else
+                % Blocks with ONCE=0 are executed on every repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 0));
+            end
+
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
                 if obj.doPlayFatSat
@@ -590,6 +604,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 % First phase correction line
                 labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
                            mr.makeLabel('SET','AVG', 0), ...
+                           mr.makeLabel('SET','SEG', 1), ...
                            mr.makeLabel('SET','REP', rep-1), ...
                            mr.makeLabel('SET','SLC', slc-1), ...
                            mr.makeLabel('SET','SET', bValue-1), ...
@@ -604,7 +619,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
                 % Second phase correction line
                 labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
-                           mr.makeLabel('SET','AVG', 1), ...
+                           mr.makeLabel('SET','AVG', 0), ...
+                           mr.makeLabel('SET','SEG', 0), ...
                            mr.makeLabel('SET','REP', rep-1), ...
                            mr.makeLabel('SET','SLC', slc-1), ...
                            mr.makeLabel('SET','SET', bValue-1), ...
@@ -620,7 +636,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
                 % Third phase correction line
                 labels = { mr.makeLabel('SET','LIN', obj.echoTrainLength/2), ...
-                           mr.makeLabel('SET','AVG', 2), ...
+                           mr.makeLabel('SET','AVG', 1), ...
+                           mr.makeLabel('SET','SEG', 1), ...
                            mr.makeLabel('SET','REP', rep-1), ...
                            mr.makeLabel('SET','SLC', slc-1), ...
                            mr.makeLabel('SET','SET', bValue-1), ...
@@ -655,6 +672,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
                                mr.makeLabel('SET','NAV', false)};
                 else
                     labels = {mr.makeLabel('INC','LIN', 1)};
+                end
+
+                if mod(lin,2) %odd line
+                    labels = {mr.makeLabel('SET','SEG', 0)};
+                else %even line
+                    labels = {mr.makeLabel('SET','SEG', 1)};
                 end
               
                 if lin == 1

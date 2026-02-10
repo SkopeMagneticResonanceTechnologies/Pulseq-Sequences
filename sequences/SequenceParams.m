@@ -15,7 +15,9 @@ classdef SequenceParams
         maxGrad     % Used gradient amplitude by sequence
         maxSlew     % Used slew rate by sequence
         seqSpecName % String name appended to .seq file
-        doMonitoringDuringRF %boolean to enable monitoring during RFs (functionality active for GRE only)
+        doMonitoringDuringRF %boolean to enable monitoring during RFs (functionality active for GRE only)     
+        ro_os       %readout oversampling
+        addPhaseCorrLines
 
         %diffusion properties
         bFactor 
@@ -86,6 +88,9 @@ classdef SequenceParams
                     obj.nSlices = 15;                   
                     obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep = 5;
+                    obj.ro_os = 1;
+                    obj.addPhaseCorrLines = 1;
+                    
                 case 'se_epi2d_diff'
                     obj.TE = 110e-3;
                     obj.TR = 200e-3;
@@ -112,6 +117,7 @@ classdef SequenceParams
                     obj.bDir = [0, 1, 2, 3]; %axis
                     obj.nbValues = length(obj.bDir);     
                     obj.seqSpecName = '';
+                    obj.ro_os = 1;
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
