@@ -274,7 +274,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             adcDwellNyquist = deltakx/obj.gx.amplitude;
 
             % round-down dwell time to 100 ns
-            adcDwell = floor(adcDwellNyquist*1e7*obj.ro_os)*1e-7*obj.ro_os;
+            adcDwell = floor(adcDwellNyquist*1e7*obj.ro_os)*1e-7/obj.ro_os;
 
             % on Siemens the number of ADC samples need to be divisible by 4
             adcSamples = floor(obj.readoutTime/adcDwell/4)*4; 
@@ -661,6 +661,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
 
             for lin = 1:obj.echoTrainLength
+                
+                if mod(lin,2) %odd line
+                    segment = 0;
+                else %even line
+                    segment = 1;
+                end
 
                 % Set labels
                 if lin == 1                    
@@ -669,17 +675,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
                                mr.makeLabel('SET','REP', rep-1), ...
                                mr.makeLabel('SET','SLC', slc-1), ...
                                mr.makeLabel('SET','SET', bValue-1), ...
-                               mr.makeLabel('SET','NAV', false)};
+                               mr.makeLabel('SET','NAV', false), ...
+                               mr.makeLabel('SET','SEG', segment)};
                 else
-                    labels = {mr.makeLabel('INC','LIN', 1)};
+                    labels = {mr.makeLabel('INC','LIN', 1), ...
+                               mr.makeLabel('SET','SEG', segment)};
                 end
 
-                if mod(lin,2) %odd line
-                    labels = {mr.makeLabel('SET','SEG', 0)};
-                else %even line
-                    labels = {mr.makeLabel('SET','SEG', 1)};
-                end
-              
                 if lin == 1
                     % Read the first line of k-space with a single half-blip at the end
                     if mode==KernelMode.Sync || mode==KernelMode.Imaging

@@ -69,7 +69,6 @@ plot(g_rv(:,1), g_rv(:,2))
 % size(g_rv,1)
 %-------------------------------------------------------------------------
 
-
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.mode = 'multiShot';

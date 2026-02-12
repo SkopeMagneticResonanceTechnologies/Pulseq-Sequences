@@ -51,8 +51,8 @@ paramsEpi2d.accFacPE = 1;
 paramsEpi2d.nRep = 1;
 paramsEpi2d.TE = 33e-3;
 paramsEpi2d.TR = 130e-3;
-paramsEpi2d.Nx = 100; 
-paramsEpi2d.Ny = 100;
+paramsEpi2d.Nx = 96; 
+paramsEpi2d.Ny = 96;
 switch scannerType
     case 'Siemens 3T Cima.X'
         paramsEpi2d.readoutTime = 500e-6;
@@ -63,13 +63,14 @@ end
 paramsEpi2d.ro_os = 2;
 paramsEpi2d.nSlices = 15;
 paramsEpi2d.nDummy = 10;
-paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os)];
+paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os) ''];
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-timeRange = [25.05 25.13];
-epi2d.plot(timeRange);
+% timeRange = [25.05 25.13];
 % epi2d.plot([5.3 5.5]);
+% epi2d.plot(timeRange);
+% epi2d.plot();
 % Test sequence
 epi2d.test();
 
@@ -79,10 +80,10 @@ paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
 paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
 paramsEpi2d.accFacPE = 3;
 paramsEpi2d.nRep = 1;
-paramsEpi2d.TE = 33e-3;
+paramsEpi2d.TE = 26e-3;
 paramsEpi2d.TR = 130e-3;
-paramsEpi2d.Nx = 180;
-paramsEpi2d.Ny = 180;
+paramsEpi2d.Nx = 130;
+paramsEpi2d.Ny = 130;
 paramsEpi2d.maxSlew = 170;
 paramsEpi2d.addPhaseCorrLines=1;
 switch scannerType
@@ -95,13 +96,13 @@ end
 paramsEpi2d.ro_os = 2;
 paramsEpi2d.nSlices = 15;
 paramsEpi2d.nDummy = 10;
-paramsEpi2d.seqSpecName = ['_os' num2str(paramsEpi2d.ro_os)];
+paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os)];
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
 % timeRange = [5 6];
-timeRange = [26.08 26.18];
-epi2d.plot(timeRange);
+% timeRange = [26.08 26.18];
+% epi2d.plot(timeRange);
 
 % Test sequence
 epi2d.test();
@@ -115,17 +116,20 @@ paramsSeEpi2dDiff.accFacPE = 3;
 paramsSeEpi2dDiff.nRep = 1;
 paramsSeEpi2dDiff.TE = 60e-3;
 paramsSeEpi2dDiff.TR = 130e-3;
-paramsSeEpi2dDiff.Nx = 130;
-paramsSeEpi2dDiff.Ny = 130;
-paramsSeEpi2dDiff.maxSlew = 120;
+paramsSeEpi2dDiff.Nx = 128;
+paramsSeEpi2dDiff.Ny = 128;
+paramsSeEpi2dDiff.maxSlew = 120; %to be corrected by independent slew rate of diff gradients
 switch scannerType
     case 'Siemens 3T Cima.X'
         paramsSeEpi2dDiff.readoutTime = 800e-6;
     otherwise
         paramsSeEpi2dDiff.readoutTime = 680e-6;
 end
+
+paramsSeEpi2dDiff.ro_os = 1;
 paramsSeEpi2dDiff.nSlices = 1; %testing
 paramsSeEpi2dDiff.nDummy = 1; %testing
+paramsSeEpi2dDiff.seqSpecName = ['os' num2str(paramsSeEpi2dDiff.ro_os)];
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
@@ -134,29 +138,6 @@ seepi2d.plot(timeRange);
 
 % Test sequence
 % seepi2d.test();
-
-
-%% Create a 2D spin-echo EPI sequence with diffusion encoding
-% navigator is by default disabled here
-paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
-paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
-paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
-paramsSeEpi2dDiff.accFacPE = 1;
-paramsSeEpi2dDiff.nRep = 1;
-paramsSeEpi2dDiff.TE = 85e-3;
-paramsSeEpi2dDiff.TR = 130e-3;
-paramsSeEpi2dDiff.Nx = 100;
-paramsSeEpi2dDiff.Ny = 100;
-paramsSeEpi2dDiff.maxSlew = 120;
-switch scannerType
-    case 'Siemens 3T Cima.X'
-        paramsSeEpi2dDiff.readoutTime = 600e-6;
-    otherwise
-        paramsSeEpi2dDiff.readoutTime = 680e-6;
-end
-paramsSeEpi2dDiff.nSlices = 15; %testing
-paramsSeEpi2dDiff.nDummy = 0; %testing
-seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 %% Create a 3D monpolar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
