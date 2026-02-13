@@ -388,7 +388,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
             
             %% Time from trigger to scanner acquisition
             obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
-                                       + obj.adc.delay;  
+                                           + obj.gradFreeTime ...
+                                           + obj.adc.delay;  
 
             if obj.addPhaseCorrLines
                 obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
@@ -493,6 +494,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
+            obj.seq.setDefinition('SequenceType', 'SE');
 
             %% Echo spacing check to comply with scanner forbidden bands
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')
