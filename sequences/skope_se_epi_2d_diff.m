@@ -185,7 +185,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(200e-6);
+            obj.gradFreeTime = obj.roundUpToGRT(300e-6);
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -340,20 +340,18 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.delayTE1 = obj.roundUpToGRT(TE1 - (obj.gz.flatTime/2 ...
                   + obj.gz.fallTime ...
                   + mr.calcDuration(obj.gzReph) ...
-                  + mr.calcDuration(obj.gz180)/2 ));
-            assert(obj.delayTE1 >= obj.gradFreeTime, 'Assertion for delayTE1 failed');         
+                  + mr.calcDuration(obj.gz180)/2 ));         
 
             obj.delayTE2 = obj.roundUpToGRT(TE2 - (prepareTime  ...
                   + Ny_pre * mr.calcDuration(obj.gx) ...
                   + mr.calcDuration(obj.gx)/2 ...
-                  + mr.calcDuration(obj.gz180)/2));
+                  + mr.calcDuration(obj.gz180)/2 ...
+                  + obj.gradFreeTime ));
 												  
-            assert(obj.delayTE2  >= obj.gradFreeTime, 'Assertion for delayTE2 failed');
-
             %% Calculate minimal TR
             minTR = mr.calcDuration(obj.gz) ...
                   + mr.calcDuration(obj.gzReph) ...
-                  + obj.delayTE1 + obj.delayTE2 ...
+                  + obj.delayTE1 + obj.delayTE2 + obj.gradFreeTime ...
                   + mr.calcDuration(obj.gz180) ...
                   + prepareTime ...
                   + obj.echoTrainLength * mr.calcDuration(obj.gx); 
@@ -379,8 +377,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 big_delta=obj.delayTE1+mr.calcDuration(obj.rf180,obj.gz180);
                 % we define bFactCalc function below to eventually calculate time-optimal 
                 % gradients. For now we just abuse it with g=1 to give us the coefficient
-                g=sqrt(bFactor*1e6/bFactCalc(1,small_delta,big_delta)); 
-                gr=ceil(g/obj.sys.maxSlew/obj.sys.gradRasterTime)*obj.sys.gradRasterTime;
+                g=sqrt(bFactor*1e6/bFactCalc(1,small_delta,big_delta))*obj.axesSign(seqParams.bDir(i)); 
+                
+                gr=ceil(abs(g)/obj.sys.maxSlew/obj.sys.gradRasterTime)*obj.sys.gradRasterTime;
                 
                 obj.gDiff{i}=mr.makeTrapezoid(dir,'amplitude',g,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sys);
                 assert(mr.calcDuration(obj.gDiff)<=obj.delayTE1);
@@ -592,9 +591,11 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
 
             if mode==KernelMode.Sync || mode==KernelMode.Imaging
-                obj.addBlock(obj.extTrigger);												   
+                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.gradFreeTime)); 												   
+            else
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
             end
-                       
+                      
             if obj.addPhaseCorrLines
                
                 % Start with flip gx amplitude
@@ -662,10 +663,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
             for lin = 1:obj.echoTrainLength
                 
-                if mod(lin,2) %odd line
+                if mod(lin,2) % odd line
                     segment = 0;
-                else %even line
+                    reverse = false;
+                else % even line
                     segment = 1;
+                    reverse = true;
                 end
 
                 % Set labels
@@ -676,10 +679,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
                                mr.makeLabel('SET','SLC', slc-1), ...
                                mr.makeLabel('SET','SET', bValue-1), ...
                                mr.makeLabel('SET','NAV', false), ...
-                               mr.makeLabel('SET','SEG', segment)};
+                               mr.makeLabel('SET','SEG', segment), ...
+                               mr.makeLabel('SET','REV', reverse)};
                 else
                     labels = {mr.makeLabel('INC','LIN', 1), ...
-                               mr.makeLabel('SET','SEG', segment)};
+                               mr.makeLabel('SET','SEG', segment), ...
+                               mr.makeLabel('SET','REV', reverse)};
                 end
 
                 if lin == 1

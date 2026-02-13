@@ -579,10 +579,12 @@ classdef skope_epi_2d < PulseqBase
 
             for lin = 1:obj.echoTrainLength
 
-                if mod(lin,2) %odd line
+                if mod(lin,2) % odd line
                     segment = 0;
-                else %even line
+                    reverse = false;
+                else % even line
                     segment = 1;
+                    reverse = true;
                 end
 
                 % Set labels
@@ -592,10 +594,12 @@ classdef skope_epi_2d < PulseqBase
                                mr.makeLabel('SET','REP', rep-1), ...
                                mr.makeLabel('SET','SLC', slc-1), ...
                                mr.makeLabel('SET','NAV', false), ...
-                               mr.makeLabel('SET','SEG', segment)};
+                               mr.makeLabel('SET','SEG', segment), ...
+                               mr.makeLabel('SET','REV', reverse)};
                 else
                     labels = {mr.makeLabel('INC','LIN', 1), ...
-                              mr.makeLabel('SET','SEG', segment)};
+                              mr.makeLabel('SET','SEG', segment) ...
+                              mr.makeLabel('SET','REV', reverse)};
                 end
               
                 if lin == 1
