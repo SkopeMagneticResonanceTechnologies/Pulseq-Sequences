@@ -303,7 +303,8 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
-            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);           
+            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);  
+            obj.seq.setDefinition('SequenceType', 'GRE');
 
             %% Write to Pulseq file
             if not(isfolder('exports'))

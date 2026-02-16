@@ -435,7 +435,8 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100)); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
-            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);            
+            obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);    
+            obj.seq.setDefinition('SequenceType', 'GRE');
 
             %% Echo spacing check to comply with scanner forbidden bands
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')

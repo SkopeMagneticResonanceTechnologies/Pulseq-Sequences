@@ -352,6 +352,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('MonitoringDuringRF', obj.doMonitoringDuringRF);
+            obj.seq.setDefinition('SequenceType', 'GRE');
                         
             %% Write to Pulseq file
             if not(isfolder('exports'))
