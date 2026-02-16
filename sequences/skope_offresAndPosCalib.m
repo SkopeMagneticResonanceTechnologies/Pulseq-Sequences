@@ -98,8 +98,12 @@ classdef skope_offresAndPosCalib < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            
-            filename = 'exports/skope_offresAndPosCalib';
+
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_offresAndPosCalib');           
 
             if isprop(seqParams, 'triggerOutput') && ~isempty(seqParams.triggerOutput)
                 filename = strcat(filename, '_', seqParams.triggerOutput);																				

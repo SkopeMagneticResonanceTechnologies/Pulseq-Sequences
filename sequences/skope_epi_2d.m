@@ -457,16 +457,13 @@ classdef skope_epi_2d < PulseqBase
                 mkdir(strcat('exports/',string(seqParams.scannerType)))
             end
 
-
             filename = strcat('exports/',string(seqParams.scannerType),'/skope_epi_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));           
 
             if obj.doPlayFatSat == 1
                 filename = strcat(filename, '_fs');
             end
-
-       
+      
             filename = strcat(filename, '_R', num2str(obj.accFacPE));  
-
 
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				

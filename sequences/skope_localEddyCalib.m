@@ -157,7 +157,14 @@ classdef skope_localEddyCalib < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
-            obj.seq.write('exports/skope_localEddyCalib.seq')  
+
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_localEddyCalib');           
+
+            obj.seq.write(strcat(filename,'.seq'));   
                      
         end
 

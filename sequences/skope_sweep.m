@@ -113,10 +113,17 @@ classdef skope_sweep < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
+
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_sweep');           
+
             if obj.nAve == 1
-                obj.seq.write('exports/skope_sweep_one_ave.seq')  
+                obj.seq.write(strcat(filename,'_1avg.seq'))  
             else
-                obj.seq.write('exports/skope_sweep.seq')  
+                obj.seq.write(strcat(filename,'.seq')); 
             end
                                        
         end

@@ -172,14 +172,21 @@ classdef skope_gtf < PulseqBase
             if not(isfolder('exports'))
                 mkdir('exports')
             end
+
+            if not(isfolder(strcat('exports/',string(seqParams.scannerType))))
+                mkdir(strcat('exports/',string(seqParams.scannerType)))
+            end
+            
+            filename = strcat('exports/',string(seqParams.scannerType),'/skope_gtf');
+
             if strcmpi(seqParams.mode,'linearityCheck')
-                obj.seq.write('exports/skope_gtf_linearityCheck.seq')  
+                filename = strcat(filename, '_linearityCheck');  
+            end
+
+            if obj.nAve == 1
+                obj.seq.write(strcat(filename,'_1avg.seq'))  
             else
-                if obj.nAve == 1
-                    obj.seq.write('exports/skope_gtf_one_ave.seq')  
-                else
-                    obj.seq.write('exports/skope_gtf.seq')
-                end
+                obj.seq.write(strcat(filename,'.seq')); 
             end
                                  
         end
