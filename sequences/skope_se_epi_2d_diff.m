@@ -579,9 +579,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
                 obj.rf180.freqOffset=obj.gz180.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
                 obj.rf180.phaseOffset=-2*pi*obj.rf180.freqOffset * mr.calcRfCenter(obj.rf180); % compensate for the slice-offset induced phase
-                obj.addBlock(obj.rf180, obj.gz180, mr.makeLabel('SET','PMC',false));
+                obj.addBlock(obj.rf180, obj.gz180);
             else
-                obj.addBlock(obj.gz180, mr.makeLabel('SET','PMC',false));
+                obj.addBlock(obj.gz180);
             end
             
             if bValue<2 %b=0
