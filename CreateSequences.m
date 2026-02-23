@@ -28,26 +28,26 @@ scannerType = 'Siemens 3T Cima.X';
 paramsGre2d = SequenceParams('gre2d',scannerType);
 
 % Set slice orientation and encoding direction
-paramsGre2d.sliceOrientation = SliceOrientation.TRA;
-paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsGre2d.sliceOrientation = SliceOrientation.TRA; %TRA
+paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP; %AP
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
-% Plot first 10 s
-timeRange = [0 10];
-gre2d.plot(timeRange);
-
-% Plot sequence information after sync 
-timeRange = [4.25 4.27]; %s
-gre2d.plot(timeRange);
+% % Plot first 10 s
+% timeRange = [0 10];
+% gre2d.plot(timeRange);
+% 
+% % Plot sequence information after sync 
+% timeRange = [4.25 4.27]; %s
+% gre2d.plot(timeRange);
 
 % Test sequence
-gre2d.test();
+% gre2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
-paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsEpi2d.sliceOrientation = SliceOrientation.COR;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.RL;
 paramsEpi2d.accFacPE = 1;
 paramsEpi2d.nRep = 1;
 paramsEpi2d.TE = 33e-3;
@@ -61,15 +61,15 @@ switch scannerType
         paramsEpi2d.readoutTime = 800e-6;
 end
 
-paramsEpi2d.ro_os = 2;
-paramsEpi2d.nSlices = 1; %testing=1, otherwise = 15
-paramsEpi2d.nDummy = 1; %testing=1, otherwise = 15
+% paramsEpi2d.ro_os = 1;
+paramsEpi2d.nSlices = 15; %testing=1, otherwise = 15
+paramsEpi2d.nDummy = 10; %testing=1, otherwise = 10
 paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os) ''];
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
 % timeRange = [25.05 25.13];
-epi2d.plot([5.3 5.5]);
+% epi2d.plot([5.3 5.5]);
 % epi2d.plot(timeRange);
 % epi2d.plot();
 % Test sequence
@@ -86,7 +86,6 @@ paramsEpi2d.TR = 130e-3;
 paramsEpi2d.Nx = 130;
 paramsEpi2d.Ny = 130;
 paramsEpi2d.maxSlew = 170;
-paramsEpi2d.addPhaseCorrLines=1;
 switch scannerType
     case 'Siemens 3T Cima.X'
         paramsEpi2d.readoutTime = 800e-6;
@@ -94,9 +93,8 @@ switch scannerType
         paramsEpi2d.readoutTime = 680e-6;
 end
 
-paramsEpi2d.ro_os = 2;
-paramsEpi2d.nSlices = 1; %testing=1, otherwise = 15
-paramsEpi2d.nDummy = 1; %testing=1, otherwise = 10
+paramsEpi2d.nSlices = 15; %testing=1, otherwise = 15
+paramsEpi2d.nDummy = 10; %testing=1, otherwise = 10
 paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os)];
 epi2d = skope_epi_2d(paramsEpi2d);
 
@@ -127,9 +125,8 @@ switch scannerType
         paramsSeEpi2dDiff.readoutTime = 680e-6;
 end
 
-paramsSeEpi2dDiff.ro_os = 2;
-paramsSeEpi2dDiff.nSlices = 1; %testing=1, otherwise = 15
-paramsSeEpi2dDiff.nDummy = 1; %testing=1, otherwise = 3
+paramsSeEpi2dDiff.nSlices = 15; %testing=1, otherwise = 15
+paramsSeEpi2dDiff.nDummy = 3; %testing=1, otherwise = 3
 paramsSeEpi2dDiff.seqSpecName = ['os' num2str(paramsSeEpi2dDiff.ro_os)];
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
