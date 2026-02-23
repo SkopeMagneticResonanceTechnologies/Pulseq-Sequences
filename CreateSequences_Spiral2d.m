@@ -29,6 +29,7 @@ load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [H
 obj.sys.gamma = 42576000;
 spiralWaveform = spiralWaveform / obj.sys.gamma * 1000;
 paramsSpiral2d.seqSpecName = 'hardcoded';
+
 spiral2d = skope_spiral_2d(paramsSpiral2d,spiralWaveform);
 
 % Plot sequence information after sync 
@@ -69,8 +70,13 @@ plot(g_rv(:,1), g_rv(:,2))
 % size(g_rv,1)
 %-------------------------------------------------------------------------
 
+
+%%
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
+paramsSpiral2d.Nx = 248; %from fov/res
+paramsSpiral2d.fov = 250e-3; %from fov(1)
+paramsSpiral2d.readoutTime = 4.1e-3; %from size(k_rv,1) * 1e-3
 paramsSpiral2d.mode = 'multiShot';
 
 % Create sequence
@@ -113,6 +119,9 @@ g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
 
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
+paramsSpiral2d.Nx = 140; %from fov/res
+paramsSpiral2d.fov = 250e-3; %from fov(1)
+paramsSpiral2d.readoutTime = 70.1e-3; %from size(k_rv,1) * 1e-3
 paramsSpiral2d.mode = 'singleShot';
 paramsSpiral2d.seqSpecName = '';
 

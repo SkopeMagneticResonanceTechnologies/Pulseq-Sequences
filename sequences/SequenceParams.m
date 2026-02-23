@@ -88,7 +88,7 @@ classdef SequenceParams
                     obj.nSlices = 15;                   
                     obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep = 5;
-                    obj.ro_os = 1;
+                    obj.ro_os = 2;
                     obj.addPhaseCorrLines = 1;
                     
                 case 'se_epi2d_diff'
@@ -117,7 +117,7 @@ classdef SequenceParams
                     obj.bDir = [0, 1, 2, 3]; %axis
                     obj.nbValues = length(obj.bDir);     
                     obj.seqSpecName = '';
-                    obj.ro_os = 1;
+                    obj.ro_os = 2;
                 case 'gre3d'
                     obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
                     obj.Nx = 56; 
@@ -131,17 +131,15 @@ classdef SequenceParams
                     obj.maxSlew = 150;
                     obj.nDummy = 50;
                 case 'spiral2d' %to be changed.
-                    % spiral-trajectory not adaptive to input params (hard coded)
-                    % don't change!
-                    obj.fov = 192e-3; %to be changed.
-                    obj.Nx = 192; %to be changed.
+                    obj.fov = 192e-3; 
+                    obj.Nx = 192; 
                     obj.Ny = 16; 
                     obj.alpha = 15;   
                     obj.thickness = 3e-3; 
                     obj.nSlices = 15;
                     obj.TE = 2.5 * 1e-3;
                     obj.TR = 140e-3;       
-                    obj.readoutTime = 8e-3; %to be changed.
+                    obj.readoutTime = 8e-3; 
                     obj.mode = 'multiShot';
                     obj.maxGrad = 40;
                     obj.maxSlew = 150;
