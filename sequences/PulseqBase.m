@@ -96,6 +96,12 @@ classdef (Abstract) PulseqBase < handle
 
         % Pulseq object
         seq
+
+        % Slice positions in anatomical order
+        slicePositionAnatomical
+
+        % Slice positions in chronological order
+        slicePositionChronological
     end
 
     properties (Access=protected)

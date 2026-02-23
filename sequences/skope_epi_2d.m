@@ -234,21 +234,21 @@ classdef skope_epi_2d < PulseqBase
             % we use ramp sampling, so we have to calculate the dwell time and the
             % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
-            adcDwellNyquist = deltakx/obj.gx.amplitude;
+            adcDwellNyquist = deltakx/obj.gx.amplitude/obj.ro_os;
 
             % round-down dwell time to 100 ns
-            adcDwell = floor(adcDwellNyquist*1e7*obj.ro_os)*1e-7/obj.ro_os;
+            adcDwell = floor(adcDwellNyquist*1e7)*1e-7;
 
             % on Siemens the number of ADC samples need to be divisible by 4
             adcSamples = floor(obj.readoutTime/adcDwell/4)*4; 
 
             % MZ: no idea, whether ceil,round or floor is better for the adcSamples...
-            obj.adc = mr.makeAdc(adcSamples*obj.ro_os, ...
-                                 'Dwell', adcDwell/obj.ro_os, ...
+            obj.adc = mr.makeAdc(adcSamples, ...
+                                 'Dwell', adcDwell, ...
                                  'Delay',blip_dur/2);
 
             % realign the ADC with respect to the gradient
-            time_to_center = obj.adc.dwell*((adcSamples*obj.ro_os-1)/2+0.5);
+            time_to_center = obj.adc.dwell*((adcSamples-1)/2+0.5);
 
             % we adjust the delay to align the trajectory with the gradient. We have to align the delay to 1us 
             obj.adc.delay = round((obj.gx.riseTime + obj.gx.flatTime/2-time_to_center)*1e6)*1e-6; 
@@ -325,7 +325,7 @@ classdef skope_epi_2d < PulseqBase
             assert(obj.fillTR >= 0, 'Assertion for TR failed.');
 
             %% Time from trigger to scanner acquisition
-            if obj.addPhaseCorrLines %gxPre and gyPre are splitted when navigator is ON
+            if obj.addPhaseCorrLines %gxPre and gyPre are split when navigator is ON
                 obj.triggerToScannerAcqDelay =  obj.fillTE ...
                                            + mr.calcDuration(obj.gxPre) ...
                                            + mr.calcDuration(obj.gyPre) ...
@@ -351,6 +351,17 @@ classdef skope_epi_2d < PulseqBase
                     3*mr.calcDuration(obj.gx);
             end
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
+
+            %% Determine chronological order for slice positions
+            obj.slicePositionAnatomical = [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100);
+            
+            if mod(obj.nSlices,2) % odd
+                sliceOrder = [1:2:obj.nSlices, 2:2:obj.nSlices];
+            else
+                sliceOrder = [2:2:obj.nSlices, 1:2:obj.nSlices];
+            end
+            
+            obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
 
             %% Determine the echo spacing
             obj.echoSpacing = mr.calcDuration(obj.gx);
@@ -432,7 +443,7 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100)); 
+            obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);    
@@ -497,7 +508,7 @@ classdef skope_epi_2d < PulseqBase
                 if obj.doPlayFatSat
                     obj.addBlock(obj.rf_fs, obj.gz_fs);
                 end
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
                  % Compensate for the slice-offset induced phase
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
