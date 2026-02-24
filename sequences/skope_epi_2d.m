@@ -46,6 +46,9 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq transmit object
         rf
 
+        % Pulseq transmit object for SMS
+        rfSMS
+
         % Pulseq fat saturation object
         rf_fs
 
@@ -67,6 +70,12 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq slice selection gradient
         gz
 
+        % Pulseq slice selection gradient for SMS pulse including refocusing gradient
+        gzSMS
+
+        % z-Blip for SMS
+        gzBlip
+
         % Pulseq spoiling gradient
         gz_fs
 
@@ -76,8 +85,14 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq blip gradient
         gy_blipdown
 
-        % Pulseq blip gradient
+        % Pulseq phase-encoding blip gradient
         gy_blipdownup
+
+        % Pulseq CAIPI blip gradient
+        gz_blipup
+        gz_blipdown
+        gz_blipdowndown
+        gz_blipPre
 
         % Pulseq slice refocusing gradient
         gzReph
@@ -99,6 +114,26 @@ classdef skope_epi_2d < PulseqBase
 
         % Set trigger output channel
         triggerOutput
+
+        % Frequency offset (Hz) per slice thickness; use as
+        % carrier-frequency step when looping over slice groups.
+        freqSMS = 0
+
+        % Spoiling phase of RF and ADC events
+        rf_phase = 0
+        rf_inc = 0
+
+        % RF spoiling increment (degrees)
+        rfSpoilingInc = 117;       
+
+        % Difference between center of SMS-pulse and standard pulse to end
+        % of slice refocusing pulse
+        fillTESMS = 0
+        fillTRSMS = 0
+
+        % Slices indices 
+        chronologicalSliceSMS
+
     end
 
     methods
@@ -196,20 +231,61 @@ classdef skope_epi_2d < PulseqBase
             obj.gz.channel =  obj.axesOrder{3};  
             obj.gzReph.channel =  obj.axesOrder{3}; 
 
+            %% Create multi-band pulse
+            if obj.multiBandFactor > 1
+                % The center of the SMS RF pulse is not accurately
+                % determined by the Pulseq simulation
+                warning('OFF', 'mr:restoreShape')
+
+                % Input check
+                if mod(obj.nSlices, obj.multiBandFactor)
+                    error('Number of slices needs to be divisable by multi-band factor.')
+                end
+                sliceSep = obj.nSlices/obj.multiBandFactor*obj.thickness*(1+obj.distanceFactorPercentage/100);
+                [obj.rfSMS, obj.gzSMS, obj.freqSMS, t_rf_center] = CreateSMSPulse(obj.alpha, ...
+                                                                obj.thickness, ...
+                                                                4, ... timeBwProduct
+                                                                8e-3, ... 
+                                                                obj.multiBandFactor, ...
+                                                                sliceSep, ...
+                                                                obj.sys, ...
+                                                                'doSim', true, ...              % Plot simulated SMS slice profile
+                                                                'type', 'st', ...               % SLR choice. 'ex' = 90 excitation; 'st' = small-tip
+                                                                'noRfOffset', false, ...        % don't shift slice (slab) for 3D
+                                                                'ftype', 'ls');                 % filter design. 'ls' = least squares
+    
+                obj.gzSMS.waveform(1) = 0;
+                
+                % Set correct axis
+                obj.gzSMS.channel =  obj.axesOrder{3};  
+            end
+
             %% Define other gradients and ADC events
             deltakx = 1/obj.fov;
             deltaky = 1/obj.fov * obj.accFacPE;
+            if obj.multiBandFactor > 1
+                deltakz = 1/sliceSep;
+            else
+                deltakz = 0;
+            end
             kWidth = obj.Nx * deltakx;
             
             % Phase blip in shortest possible time
             % We round-up the duration to 2x the gradient raster time
             blip_dur = ceil(2*sqrt(deltaky/obj.sys.maxSlew)/10e-6/2)*10e-6*2; 
+            blip_dur = max(blip_dur, ceil(2*sqrt(deltakz/obj.sys.maxSlew)/10e-6/2)*10e-6*2); 
 
             % The split code below fails if this really makes a trapezoid instead of a triangle.
             % We use negative blips to save one k-space line on our way towards the k-space center
             obj.gy = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
                                       'Area', -deltaky, ...
                                       'Duration', blip_dur); 
+
+            %% Create z-blips
+            obj.gzBlip = mr.makeTrapezoid(obj.axesOrder{3}, obj.sys, ...
+                                'Area', deltakz, ...
+                                'Duration', blip_dur);
+
             %gy = mr.makeTrapezoid(obj.axesOrder{2},lims,'amplitude',deltak/blip_dur*2,'riseTime',blip_dur/2, 'flatTime', 0);
             
             % readout gradient is a truncated trapezoid with dead times at the beginning
@@ -262,8 +338,24 @@ classdef skope_epi_2d < PulseqBase
             obj.gy_blipup.waveform = obj.gy_blipup.waveform * obj.pe_enable;
             obj.gy_blipdown.waveform = obj.gy_blipdown.waveform * obj.pe_enable;
             obj.gy_blipdownup.waveform = obj.gy_blipdownup.waveform * obj.pe_enable;
+
+            %% split the blip into two halves and produce a combined synthetic gradient
+            gz_partsPos = mr.splitGradientAt(obj.gzBlip, blip_dur/2, obj.sys);  
+            [obj.gz_blipup, obj.gz_blipdown,~] = mr.align('right',gz_partsPos(1),'left',gz_partsPos(2), obj.gx);
+            obj.gz_blipup = mr.scaleGrad(obj.gz_blipup,-1.0);
+            obj.gz_blipdown = mr.scaleGrad(obj.gz_blipdown,-1.0);
+
+            gz_partsNeg = mr.splitGradientAt(mr.scaleGrad(obj.gzBlip,-1.0), blip_dur/2, obj.sys);
+            [grad1, grad2,~] = mr.align('right',gz_partsNeg(1),'left',gz_partsPos(2), obj.gx);
+            obj.gz_blipdowndown = mr.scaleGrad(mr.addGradients({grad1, grad2}, obj.sys),-1.0);
+           
+
+            % pe_enable support
+            obj.gz_blipup.waveform = obj.gz_blipup.waveform * obj.pe_enable;
+            obj.gz_blipdown.waveform = obj.gz_blipdown.waveform * obj.pe_enable;
+            obj.gz_blipdowndown.waveform = obj.gz_blipdowndown.waveform * obj.pe_enable;
             
-            % Phase encoding and partial Fourier         
+            %% Phase encoding and partial Fourier         
             % PE steps prior to ky=0, excluding the central line
             Ny_pre = round(obj.partFourierFactor*obj.Ny/2/obj.accFacPE-1); 
             
@@ -285,7 +377,14 @@ classdef skope_epi_2d < PulseqBase
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
             obj.gyPre.amplitude = obj.gyPre.amplitude*obj.pe_enable;
 
-  
+
+            %%
+            obj.gz_blipPre = mr.makeTrapezoid(obj.axesOrder{3}, obj.sys, ...
+                            'Area', deltakz, ...
+                            'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
+            obj.gz_blipPre.amplitude = obj.gz_blipPre.amplitude*obj.pe_enable;
+
+
             %% Create external trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
 
@@ -298,9 +397,21 @@ classdef skope_epi_2d < PulseqBase
                 prepareTime = mr.calcDuration(obj.gxPre, obj.gyPre);
             end
 
-            minTE = obj.gz.flatTime/2 ...
-                  + obj.gz.fallTime ...
-                  + mr.calcDuration(obj.gzReph) ...
+            sliceTimeTE = obj.gz.flatTime/2 ...
+                        + obj.gz.fallTime ...
+                        + mr.calcDuration(obj.gzReph);
+            
+            if obj.multiBandFactor > 1
+                % Difference between standard and SMS pulse
+                % Note that the gradient for the SMS pulse includes the rewinder
+                obj.fillTESMS = obj.roundUpToGRT(mr.calcDuration(obj.gzSMS) - t_rf_center - sliceTimeTE);
+                assert(obj.fillTESMS > 0, 'SMS pulse is supposed to be longer than normal excitation pulse.')
+            else
+                obj.fillTESMS = 0;
+            end
+
+            minTE = sliceTimeTE ...
+                  + obj.fillTESMS ...
                   + prepareTime  ...
                   + Ny_pre * mr.calcDuration(obj.gx) ...
                   + mr.calcDuration(obj.gx)/2;
@@ -310,8 +421,20 @@ classdef skope_epi_2d < PulseqBase
             assert(obj.fillTE >= obj.gradFreeTime, 'Assertion for TE failed');
 
             %% Calculate minimal TR
-            minTR = mr.calcDuration(obj.gz) ...
-                  + mr.calcDuration(obj.gzReph) ...
+            sliceTimeTR = mr.calcDuration(obj.gz) ...
+                + mr.calcDuration(obj.gzReph);
+
+            if obj.multiBandFactor > 1
+                % Difference between standard and SMS pulse
+                % Note that the gradient for the SMS pulse includes the rewinder
+                obj.fillTRSMS = mr.calcDuration(obj.gzSMS) - sliceTimeTR;
+                assert(obj.fillTRSMS > 0, 'SMS pulse is supposed to be longer than normal excitation pulse.')
+            else
+                obj.fillTRSMS = 0;
+            end
+
+            minTR = sliceTimeTR ...
+                  + obj.fillTRSMS ...
                   + obj.fillTE ...
                   + prepareTime ...
                   + obj.echoTrainLength * mr.calcDuration(obj.gx);  
@@ -353,6 +476,20 @@ classdef skope_epi_2d < PulseqBase
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
 
             %% Determine chronological order for slice positions
+
+            % Example for 10 slices
+            %  Anatomical      Chronological
+            %   10              05
+            %   09              10
+            %   08              04
+            %   07              09
+            %   06              03
+            %   05              08
+            %   04              02
+            %   03              07
+            %   02              01
+            %   01              06
+
             obj.slicePositionAnatomical = [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100);
             
             if mod(obj.nSlices,2) % odd
@@ -362,6 +499,40 @@ classdef skope_epi_2d < PulseqBase
             end
             
             obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
+
+            if obj.multiBandFactor > 1
+
+                % Example for 10 slices and MB 2
+                %  Anatomical      Chronological
+                %   10              05
+                %   09              10
+                %   08              04
+                %   07              09
+                %   06              03
+                % ----------------------------> Lower ones are measured
+                %                              Chronological SMS
+                %   05              08          #3
+                %   04              02          #5
+                %   03              07          #2
+                %   02              01          #4
+                %   01              06          #1
+
+                np = obj.nSlices/obj.multiBandFactor;
+
+                % Find the lowest nSli/multiBandFactor slices
+                for i=1:obj.nSlices/obj.multiBandFactor 
+                    lowestChronoSlice(i) = find(i==sliceOrder);
+                end
+                
+                sliceOrderSMS = [1:2:np 2:2:np];
+                if ~mod(np,2)
+                    % for np = even, change order of last two partitions/shots
+                    l = length(sliceOrderSMS);
+                    sliceOrderSMS = sliceOrderSMS([1:(l-2) l l-1]);
+                end
+                obj.chronologicalSliceSMS = lowestChronoSlice(sliceOrderSMS);
+
+            end
 
             %% Determine the echo spacing
             obj.echoSpacing = mr.calcDuration(obj.gx);
@@ -380,19 +551,28 @@ classdef skope_epi_2d < PulseqBase
                     rep = 1;
                     obj = runKernel(obj, slc, avg, rep, KernelMode.Sync);
                 end
-                
+
                 %% Add pause and reset flags
                 if obj.preScanPause < 4
                     warning('The pause between the synchronization and imaging scans should be equal or larger than 4 seconds. The current value is okay for simulation purposes.');
                 end
 
                 obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0));
-    
+
+            end
+
+            %% Reference scan - Single-band imaging of all slices
+            if obj.multiBandFactor > 1
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    rep = 1;
+                    obj = runKernel(obj, slc, avg, rep, KernelMode.Reference);
+                end    
             end
 
             %% Dummy scans
             for rep=1:obj.nDummy
-                for slc = 1:obj.nSlices
+                for slc = 1:obj.nSlices/obj.multiBandFactor
                     avg = 1;
                     obj = runKernel(obj, slc, avg, rep, KernelMode.Dummy);
                 end
@@ -400,7 +580,7 @@ classdef skope_epi_2d < PulseqBase
 
             %% Actual imaging sequence
             for rep=1:obj.nRep
-                for slc = 1:obj.nSlices
+                for slc = 1:obj.nSlices/obj.multiBandFactor
                     avg = 1;
                     obj = runKernel(obj, slc, avg, rep, KernelMode.Imaging);
                 end
@@ -495,7 +675,7 @@ classdef skope_epi_2d < PulseqBase
             end
             
             %% Set ONCE-flag to avoid repeating sync and dummy scans
-            if mode == KernelMode.Sync || mode==KernelMode.Dummy
+            if mode == KernelMode.Sync || mode==KernelMode.Dummy || mode==KernelMode.Reference
                 % ONCE=1 marks the blocks that are only executed in the first repetition
                 obj.addBlock(mr.makeLabel('SET','ONCE', 1));
             else
@@ -503,22 +683,62 @@ classdef skope_epi_2d < PulseqBase
                 obj.addBlock(mr.makeLabel('SET','ONCE', 0));
             end
 
+            % Flag the single-slice images
+            if mode==KernelMode.Reference
+                obj.addBlock(mr.makeLabel('SET','SMS', true));
+            else
+                obj.addBlock(mr.makeLabel('SET','SMS', false));
+            end
+
             %% RF and ADC settings
-            if mode==KernelMode.Dummy || mode==KernelMode.Imaging
+            if mode==KernelMode.Dummy || mode==KernelMode.Reference || mode==KernelMode.Imaging 
                 if obj.doPlayFatSat
                     obj.addBlock(obj.rf_fs, obj.gz_fs);
                 end
-                obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
-                 % Compensate for the slice-offset induced phase
-                obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
-                obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
-            else
-                obj.addBlock(obj.gz, mr.makeLabel('SET','PMC',true));
-            end
-            
-            obj.addBlock(obj.gzReph);
+                
+                if obj.multiBandFactor > 1 && (mode==KernelMode.Imaging || mode==KernelMode.Dummy)
+                    % Play out the SMS pulse 
 
-            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    % Frequency offset (Hz) for SMS slice shift
+                    obj.rfSMS.freqOffset = round((slc-1)*obj.freqSMS);
+
+                    % Get the chronological slice index from the slice counter
+                    sli = obj.chronologicalSliceSMS(slc);
+
+                    % Excitation pulse and RF spoiling
+                    obj.rfSMS.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rfSMS.freqOffset * mr.calcRfCenter(obj.rfSMS);  % align the phase for off-center slices
+                    obj.adc.phaseOffset = obj.rf_phase/180*pi;
+                    obj.addBlock(obj.rfSMS, obj.gzSMS, mr.makeLabel('SET','PMC',false));                    
+                else
+                    % Slice counter and slice index are identical
+                    sli = slc;                    
+                    % Play out the standard pulse
+                    obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(sli);
+                     % Compensate for the slice-offset induced phase
+                    obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
+                    obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
+                    obj.addBlock(obj.gzReph);
+                end
+            else
+                sli = slc; 
+                obj.addBlock(obj.gz, mr.makeLabel('SET','PMC',true));
+                obj.addBlock(obj.gzReph);
+            end
+
+            % Update RF spoiling
+            obj.rf_inc = mod(obj.rf_inc+obj.rfSpoilingInc, 360.0);
+            obj.rf_phase = mod(obj.rf_phase+obj.rf_inc, 360.0);
+
+            % The standard pulse is shorter than the SMS pulse
+            % Include the difference as a delay here for the sync and
+            % reference pulses
+            if obj.multiBandFactor > 1 
+                if mode==KernelMode.Sync || mode==KernelMode.Reference
+                    obj.addBlock(mr.makeDelay(obj.fillTESMS));
+                end
+            end
+
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging || mode==KernelMode.Reference
                 obj.addBlock(obj.extTrigger,mr.makeDelay(obj.fillTE));
             else
                obj.addBlock(mr.makeDelay(obj.fillTE)); 
@@ -535,11 +755,11 @@ classdef skope_epi_2d < PulseqBase
                            mr.makeLabel('SET','AVG', 0), ...
                            mr.makeLabel('SET','SEG', 1), ...
                            mr.makeLabel('SET','REP', rep-1), ...
-                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','SLC', sli-1), ...
                            mr.makeLabel('SET','NAV',true)};
                 obj.gx.amplitude = -obj.gx.amplitude;
                 
-                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging || mode==KernelMode.Reference
                     obj.addBlock(obj.gx, labels{:}, obj.adc);
                 else
                     obj.addBlock(obj.gx);
@@ -550,12 +770,12 @@ classdef skope_epi_2d < PulseqBase
                            mr.makeLabel('SET','AVG', 0), ...
                            mr.makeLabel('SET','SEG', 0), ...
                            mr.makeLabel('SET','REP', rep-1), ...
-                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','SLC', sli-1), ...
                            mr.makeLabel('SET','NAV',true)};
 
                 obj.gx.amplitude = -obj.gx.amplitude;
                 
-                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging || mode==KernelMode.Reference
                     obj.addBlock(obj.gx, labels{:}, obj.adc); 
                 else
                     obj.addBlock(obj.gx); 
@@ -566,11 +786,11 @@ classdef skope_epi_2d < PulseqBase
                            mr.makeLabel('SET','AVG', 1), ...
                            mr.makeLabel('SET','SEG', 1), ...
                            mr.makeLabel('SET','REP', rep-1), ...
-                           mr.makeLabel('SET','SLC', slc-1), ...
+                           mr.makeLabel('SET','SLC', sli-1), ...
                            mr.makeLabel('SET','NAV',true)};
                 obj.gx.amplitude = -obj.gx.amplitude;
-
-                if mode==KernelMode.Sync || mode==KernelMode.Imaging
+ 
+                if mode==KernelMode.Sync || mode==KernelMode.Imaging || mode==KernelMode.Reference
                     obj.addBlock(obj.gx, labels{:}, obj.adc); 
                 else
                     obj.addBlock(obj.gx); 
@@ -581,9 +801,25 @@ classdef skope_epi_2d < PulseqBase
                 obj.gxPre.amplitude = -obj.gxPre.amplitude; 
 
                 % Play out phase pre-winding gradient
-                obj.addBlock(obj.gyPre);
+                if obj.multiBandFactor == 1
+                    obj.addBlock(obj.gyPre);
+                else
+                    if mode == KernelMode.Imaging || mode == KernelMode.Dummy
+                        obj.addBlock(obj.gyPre, obj.gz_blipPre);
+                    else
+                        obj.addBlock(obj.gyPre);
+                    end
+                end
             else
-                obj.addBlock(obj.gxPre, obj.gyPre);
+                if obj.multiBandFactor == 1
+                    obj.addBlock(obj.gxPre, obj.gyPre);
+                else
+                    if mode == KernelMode.Imaging || mode == KernelMode.Dummy
+                        obj.addBlock(obj.gxPre, obj.gyPre, obj.gz_blipPre);
+                    else
+                        obj.addBlock(obj.gxPre, obj.gyPre);
+                    end
+                end
             end
 
             for lin = 1:obj.echoTrainLength
@@ -601,7 +837,7 @@ classdef skope_epi_2d < PulseqBase
                     labels = { mr.makeLabel('SET','LIN', 0), ...
                                mr.makeLabel('SET','AVG', avg-1), ...
                                mr.makeLabel('SET','REP', rep-1), ...
-                               mr.makeLabel('SET','SLC', slc-1), ...
+                               mr.makeLabel('SET','SLC', sli-1), ...
                                mr.makeLabel('SET','NAV', false), ...
                                mr.makeLabel('SET','SEG', segment), ...
                                mr.makeLabel('SET','REV', reverse)};
@@ -613,31 +849,73 @@ classdef skope_epi_2d < PulseqBase
               
                 if lin == 1
                     % Read the first line of k-space with a single half-blip at the end
-                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
-                        obj.addBlock(obj.gx, obj.gy_blipup, labels{:}, obj.adc); 
-                    else
-                        obj.addBlock(obj.gx, obj.gy_blipup); 
+                    if mode==KernelMode.Imaging
+                        if obj.multiBandFactor ==1
+                            obj.addBlock(obj.gx, obj.gy_blipup, labels{:}, obj.adc);
+                        else
+                            obj.addBlock(obj.gx, obj.gy_blipup, obj.gz_blipup, labels{:}, obj.adc);
+                        end
+                    elseif mode==KernelMode.Sync || mode==KernelMode.Reference 
+                        obj.addBlock(obj.gx, obj.gy_blipup, labels{:}, obj.adc);
+                    else % Dummy - no ADC
+                        if obj.multiBandFactor ==1
+                            obj.addBlock(obj.gx, obj.gy_blipup); 
+                        else
+                            obj.addBlock(obj.gx, obj.gy_blipup, obj.gz_blipup); 
+                        end
                     end
                 elseif lin==obj.echoTrainLength
                     % Read the last line of k-space with a single half-blip at the beginning
-                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    if mode==KernelMode.Imaging  
+                        if obj.multiBandFactor == 1
+                            obj.addBlock(obj.gx, obj.gy_blipdown, labels{:}, obj.adc); 
+                        else
+                            if mod(lin,2) % odd
+                                obj.addBlock(obj.gx, obj.gy_blipdown, mr.scaleGrad(obj.gz_blipdown,-1), labels{:}, obj.adc);
+                            else
+                                obj.addBlock(obj.gx, obj.gy_blipdown, obj.gz_blipdown, labels{:}, obj.adc);
+                            end
+                        end
+                    elseif mode==KernelMode.Sync || mode==KernelMode.Reference 
                         obj.addBlock(obj.gx, obj.gy_blipdown, labels{:}, obj.adc); 
                     else
-                        obj.addBlock(obj.gx, obj.gy_blipdown); 
+                        if obj.multiBandFactor ==1
+                            obj.addBlock(obj.gx, obj.gy_blipdown); 
+                        else
+                            if mod(lin,2) % odd
+                                obj.addBlock(obj.gx, obj.gy_blipdown, mr.scaleGrad(obj.gz_blipdown,-1)); 
+                            else
+                                obj.addBlock(obj.gx, obj.gy_blipdown, obj.gz_blipdown); 
+                            end
+                        end
                     end
                 else
                     % Read an intermediate line of k-space with a half-blip at the beginning and a half-blip at the end
-                    if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                    if mode==KernelMode.Imaging 
+                        if obj.multiBandFactor == 1
+                            obj.addBlock(obj.gx, obj.gy_blipdownup, labels{:}, obj.adc); 
+                        else
+                            obj.addBlock(obj.gx, obj.gy_blipdownup, mr.scaleGrad(obj.gz_blipdowndown,(-1)^(mod(lin,2))), labels{:}, obj.adc); 
+                        end
+                    elseif mode==KernelMode.Sync ||  mode==KernelMode.Reference 
                         obj.addBlock(obj.gx, obj.gy_blipdownup, labels{:}, obj.adc); 
                     else
-                        obj.addBlock(obj.gx, obj.gy_blipdownup); 
+                        if obj.multiBandFactor ==1
+                            obj.addBlock(obj.gx, obj.gy_blipdownup); 
+                        else
+                            obj.addBlock(obj.gx, obj.gy_blipdownup, mr.scaleGrad(obj.gz_blipdowndown,(-1)^(mod(lin,2))));
+                        end
                     end
                 end 
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
 
             %% TR filling
-            obj.addBlock(mr.makeDelay(obj.fillTR));
+            if obj.multiBandFactor > 1 && (mode==KernelMode.Sync || mode==KernelMode.Reference)
+                    obj.addBlock(mr.makeDelay(obj.fillTR + obj.fillTRSMS));
+            else
+                obj.addBlock(mr.makeDelay(obj.fillTR));
+            end
         
         end
     end

@@ -15,7 +15,7 @@ end
 
 %% Add Pulseq, sequences and methods
 addpath('pulseq/matlab')
-addpath('methods')
+addpath(genpath('methods'))
 addpath('sequences')
 
 %% Define scanner type
@@ -46,14 +46,15 @@ gre2d = skope_gre_2d(paramsGre2d);
 
 %% Create a 2D echo-planar imaging (EPI) sequence
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.sliceOrientation = SliceOrientation.COR;
-paramsEpi2d.phaseEncDir = PhaseEncodingDirection.RL;
-paramsEpi2d.accFacPE = 1;
+paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
+paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsEpi2d.accFacPE = 2;
 paramsEpi2d.nRep = 1;
-paramsEpi2d.TE = 33e-3;
+paramsEpi2d.TE = 39e-3;
 paramsEpi2d.TR = 130e-3;
 paramsEpi2d.Nx = 96; 
 paramsEpi2d.Ny = 96;
+paramsEpi2d.multiBandFactor = 2;
 switch scannerType
     case 'Siemens 3T Cima.X'
         paramsEpi2d.readoutTime = 500e-6;
@@ -61,9 +62,10 @@ switch scannerType
         paramsEpi2d.readoutTime = 800e-6;
 end
 
+clc
 % paramsEpi2d.ro_os = 1;
-paramsEpi2d.nSlices = 15; %testing=1, otherwise = 15
-paramsEpi2d.nDummy = 10; %testing=1, otherwise = 10
+paramsEpi2d.nSlices = 10; %testing=1, otherwise = 15
+paramsEpi2d.nDummy = 1; %testing=1, otherwise = 10
 paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os) ''];
 epi2d = skope_epi_2d(paramsEpi2d);
 
@@ -71,9 +73,9 @@ epi2d = skope_epi_2d(paramsEpi2d);
 % timeRange = [25.05 25.13];
 % epi2d.plot([5.3 5.5]);
 % epi2d.plot(timeRange);
-% epi2d.plot();
+epi2d.plot([0 10]);
 % Test sequence
-% epi2d.test();
+epi2d.test();
 
 %% EPI with acceleration factor 3 and higher resolution
 paramsEpi2d = SequenceParams('epi2d',scannerType);
@@ -131,7 +133,7 @@ paramsSeEpi2dDiff.seqSpecName = ['os' num2str(paramsSeEpi2dDiff.ro_os)];
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
-timeRange = [5 10];
+timeRange = [5 20];
 seepi2d.plot(timeRange);
 
 % Test sequence

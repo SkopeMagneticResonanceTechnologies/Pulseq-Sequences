@@ -62,6 +62,9 @@ classdef (Abstract) PulseqBase < handle
 
         % Number of dummy pulses to reach steady state
         nDummy = 0;
+
+        % Multi-band factor
+        multiBandFactor = 1
         
     end
 

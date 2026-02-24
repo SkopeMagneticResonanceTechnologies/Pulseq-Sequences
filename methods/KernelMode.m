@@ -1,5 +1,5 @@
 classdef KernelMode
    enumeration
-      Sync, Dummy, Imaging
+      Sync, Dummy, Reference, Imaging
    end
 end
