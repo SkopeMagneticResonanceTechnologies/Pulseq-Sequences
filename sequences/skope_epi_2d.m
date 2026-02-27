@@ -25,9 +25,6 @@ classdef skope_epi_2d < PulseqBase
         % A flag to quickly disable phase encoding (1/0) as needed for the delay calibration
         pe_enable = 1             
 
-        % Oversampling factor (in contrast to the product sequence we don't really need it)
-        ro_os = 1    
-
         % Partial Fourier factor: 1: full sampling 0: start with ky=0
         partFourierFactor = 1 
 
@@ -105,9 +102,6 @@ classdef skope_epi_2d < PulseqBase
 
         % Play out fat saturation pulse
         doPlayFatSat = false;
-
-        % Slice distance factor percentage
-        distanceFactorPercentage = 250;
 
         % Acceleration factor (Phase)
         accFacPE
@@ -587,8 +581,12 @@ classdef skope_epi_2d < PulseqBase
             end
 
             %% Set the number of imaging triggers
-            obj.nTrig = obj.nSlices*obj.nRep;
-
+            if obj.multiBandFactor == 1
+                obj.nTrig = obj.nSlices*obj.nRep;
+            else
+                obj.nTrig = obj.nSlices ...                     % Reference scans
+                            + obj.nSlices/obj.multiBandFactor;  % Actual imaging
+            end
             %% Calculate Camera Interleave TR (blank time)
             obj.CalculateInterleaveTR(obj.TR);
 
@@ -655,13 +653,18 @@ classdef skope_epi_2d < PulseqBase
                 filename = strcat(filename, '_fs');
             end
       
-            filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+            filename = strcat(filename, '_R', num2str(obj.accFacPE));
+
+            if obj.multiBandFactor > 1    
+                filename = strcat(filename, '_MB', num2str(obj.multiBandFactor));
+            end
 
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
 
             obj.seq.write(strcat(filename,'.seq')); 
+            disp(['Storing sequence file "', char(filename), '.seq"'])
 
         end
 

@@ -64,8 +64,6 @@ classdef skope_spiral_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
-        distanceFactorPercentage = 250;
-
         mode = 'default';
 
     end
@@ -144,6 +142,12 @@ classdef skope_spiral_2d < PulseqBase
 
             % Single or multi shot
             obj.mode = seqParams.mode;
+
+            % Dummy scans
+            obj.nDummy = seqParams.nDummy;
+
+            % Slice distance factor
+            obj.distanceFactorPercentage = seqParams.distanceFactorPercentage;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -227,6 +231,31 @@ classdef skope_spiral_2d < PulseqBase
                                   + mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe 
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
+
+            %% Determine chronological order for slice positions
+
+            % Example for 10 slices
+            %  Anatomical      Chronological
+            %   10              05
+            %   09              10
+            %   08              04
+            %   07              09
+            %   06              03
+            %   05              08
+            %   04              02
+            %   03              07
+            %   02              01
+            %   01              06
+
+            obj.slicePositionAnatomical = [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100);
+
+            if mod(obj.nSlices,2) % odd
+                sliceOrder = [1:2:obj.nSlices, 2:2:obj.nSlices];
+            else
+                sliceOrder = [2:2:obj.nSlices, 1:2:obj.nSlices];
+            end
+
+            obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
             
             %% Phase settings
             obj.rf_phase = 0;
@@ -237,7 +266,7 @@ classdef skope_spiral_2d < PulseqBase
                 for avg = 1:obj.nSyncDynamics
                     slc = 1;
                     lin = 1;
-                    obj = runKernel(obj, lin, slc, avg, false);
+                    obj = runKernel(obj, lin, slc, avg, KernelMode.Sync);
                 end
                 
                 %% Add pause and reset flags
@@ -248,13 +277,22 @@ classdef skope_spiral_2d < PulseqBase
                 obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0));
             end
 
+            %% Dummy scans
+            for lin = mod(1:obj.nDummy,obj.Ny)+1 
+                % loop over slices
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    obj = runKernel(obj, lin, slc, avg, KernelMode.Dummy);
+                end
+            end
+
             %% Actual imaging sequence
             % loop over phase encodes and define sequence blocks
             for lin = 1:obj.Ny
                 % loop over slices
                 for slc = 1:obj.nSlices
                     avg = 1;
-                    obj = runKernel(obj, lin, slc, avg);
+                    obj = runKernel(obj, lin, slc, avg, KernelMode.Imaging);
                 end
             end
 
@@ -293,7 +331,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell);
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]);
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100));
+            obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
@@ -326,16 +364,16 @@ classdef skope_spiral_2d < PulseqBase
             Gy_rot = sin(phi) * Gx + cos(phi) * Gy;    
         end
 
-        function obj = runKernel(obj, lin, slc, avg, doPlayRF)
+        function obj = runKernel(obj, lin, slc, avg, mode)
 
             %% Input check
-            if not(exist('doPlayRF','var'))
-                doPlayRF = true;
+            if not(isa(mode, 'KernelMode'))
+                error('Expected a kernel mode argument')
             end
         
             %% RF and ADC settings
-            if doPlayRF
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+            if mode == KernelMode.Imaging || mode == KernelMode.Dummy
+                obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
@@ -350,14 +388,17 @@ classdef skope_spiral_2d < PulseqBase
             %% Slice refocusing gradient
             obj.addBlock(obj.gzReph);
         
-            %% External trigger and gradient-free interval a
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
+            %% External trigger and gradient-free interval
+            if mode == KernelMode.Imaging || mode == KernelMode.Sync
+                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.fillTE(1)));
+            else
+                obj.addBlock(mr.makeDelay(obj.fillTE(1)));
+            end
         
             %% All LABELS / counters an flags are automatically initialized to 0 in the beginning, no need to define initial 0's  
             % so we will just increment LIN after the ADC event (e.g. during the spoiler)         
             %seq.addBlock(mr.makeDelay(1)); % older scanners like Trio may need this
             % dummy delay to keep up with timing
-
 
             %% Set labels
             labels = [  {mr.makeLabel('SET','LIN', lin-1)}, ...
@@ -370,7 +411,11 @@ classdef skope_spiral_2d < PulseqBase
             obj.gx = mr.makeArbitraryGrad(obj.axesOrder{1},gx);
             obj.gy = mr.makeArbitraryGrad(obj.axesOrder{2},gy);
 
-            obj.addBlock(obj.gx, obj.gy, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.gx, obj.gy, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+            else
+                obj.addBlock(obj.gx, obj.gy, mr.makeLabel('SET','ECO', 0), labels{:});
+            end
         
             %% Spoiling
             [gxRefoc, gyRefoc] = mr.rotate(obj.axesOrder{3},phi,{obj.gxRefoc, obj.gyRefoc});

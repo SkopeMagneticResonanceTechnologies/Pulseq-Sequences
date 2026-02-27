@@ -26,84 +26,113 @@ scannerType = 'Siemens 3T Cima.X';
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d',scannerType);
+paramsGre2d.fov = 0.24;
+paramsGre2d.Nx = 80;
+paramsGre2d.Ny = 80;
+paramsGre2d.thickness = 3e-3;
+paramsGre2d.nSlices = 44;
+paramsGre2d.seqSpecName = 'invivo';
+paramsGre2d.distanceFactorPercentage = 10;
+paramsGre2d.doPlayFatSat = true;
 
-% Set slice orientation and encoding direction
-paramsGre2d.sliceOrientation = SliceOrientation.TRA; %TRA
-paramsGre2d.phaseEncDir = PhaseEncodingDirection.AP; %AP
-% Generate the sequence
+%% Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
-% % Plot first 10 s
-% timeRange = [0 10];
-% gre2d.plot(timeRange);
-% 
-% % Plot sequence information after sync 
-% timeRange = [4.25 4.27]; %s
-% gre2d.plot(timeRange);
+% Plot first 10 s
+timeRange = [0 10];
+gre2d.plot(timeRange);
+
+% Plot sequence information after sync 
+timeRange = [4.25 4.27]; % Unit [s]
+gre2d.plot(timeRange);
 
 % Test sequence
-% gre2d.test();
+gre2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
-paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+paramsEpi2d.fov = 0.22;
+paramsEpi2d.Nx = 74;
+paramsEpi2d.Ny = 74;
+paramsEpi2d.thickness = 3e-3;
+paramsEpi2d.nSlices = 44;
+paramsEpi2d.seqSpecName = 'invivo';
+paramsEpi2d.distanceFactorPercentage = 10;
+paramsEpi2d.doPlayFatSat = true;
 paramsEpi2d.accFacPE = 2;
-paramsEpi2d.nRep = 1;
-paramsEpi2d.TE = 39e-3;
-paramsEpi2d.TR = 130e-3;
-paramsEpi2d.Nx = 96; 
-paramsEpi2d.Ny = 96;
 paramsEpi2d.multiBandFactor = 2;
-switch scannerType
-    case 'Siemens 3T Cima.X'
-        paramsEpi2d.readoutTime = 500e-6;
-    otherwise
-        paramsEpi2d.readoutTime = 800e-6;
-end
+paramsEpi2d.readoutTime = 500e-6;
+paramsEpi2d.TE = 20e-3;
+paramsEpi2d.TR = 45e-3;
 
-clc
-% paramsEpi2d.ro_os = 1;
-paramsEpi2d.nSlices = 10; %testing=1, otherwise = 15
-paramsEpi2d.nDummy = 1; %testing=1, otherwise = 10
-paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os) ''];
+%% Generate the sequence
+epi2d = skope_epi_2d(paramsEpi2d);
+
+%% Plot sequence information
+timeRange = [0 10]; % Unit [s]
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration
+paramsEpi2d = SequenceParams('epi2d',scannerType);
+% Set acceleration factor
+paramsEpi2d.accFacPE = 2;
+% Increase matrix size
+paramsEpi2d.Nx = 120;
+paramsEpi2d.Ny = 120;
+% Reduce TE
+paramsEpi2d.TE = 22e-3;
+
+% Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-% timeRange = [25.05 25.13];
-% epi2d.plot([5.3 5.5]);
-% epi2d.plot(timeRange);
-epi2d.plot([0 10]);
+timeRange = [0 10]; % Unit [s]
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration and multi-band excitation
+paramsEpi2d = SequenceParams('epi2d',scannerType);
+% Set acceleration factor
+paramsEpi2d.accFacPE = 2;
+% Increase matrix size
+paramsEpi2d.Nx = 120;
+paramsEpi2d.Ny = 120;
+% Set multi-band factor
+paramsEpi2d.multiBandFactor = 2;
+% Set echo time
+paramsEpi2d.TE = 25e-3;
+
+% Generate the sequence
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence information
+timeRange = [0 10]; % Unit [s]
+epi2d.plot(timeRange);
+
 % Test sequence
 epi2d.test();
 
 %% EPI with acceleration factor 3 and higher resolution
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.sliceOrientation = SliceOrientation.TRA;
-paramsEpi2d.phaseEncDir = PhaseEncodingDirection.AP;
+% Set acceleration factor
 paramsEpi2d.accFacPE = 3;
-paramsEpi2d.nRep = 1;
-paramsEpi2d.TE = 26e-3;
-paramsEpi2d.TR = 130e-3;
+% Increase matrix size
 paramsEpi2d.Nx = 130;
 paramsEpi2d.Ny = 130;
-paramsEpi2d.maxSlew = 170;
-switch scannerType
-    case 'Siemens 3T Cima.X'
-        paramsEpi2d.readoutTime = 800e-6;
-    otherwise
-        paramsEpi2d.readoutTime = 680e-6;
-end
+% Set echo time
+paramsEpi2d.TE = 18e-3;
 
-paramsEpi2d.nSlices = 15; %testing=1, otherwise = 15
-paramsEpi2d.nDummy = 10; %testing=1, otherwise = 10
-paramsEpi2d.seqSpecName = ['os' num2str(paramsEpi2d.ro_os)];
+% Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
 % Plot sequence information
-% timeRange = [5 6];
-% timeRange = [26.08 26.18];
-% epi2d.plot(timeRange);
+timeRange = [0 10]; % Unit [s]
+epi2d.plot(timeRange);
 
 % Test sequence
 epi2d.test();
@@ -111,25 +140,15 @@ epi2d.test();
 %% Create a 2D spin-echo EPI sequence with diffusion encoding
 % navigator is by default disabled here
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
-paramsSeEpi2dDiff.sliceOrientation = SliceOrientation.TRA;
-paramsSeEpi2dDiff.phaseEncDir = PhaseEncodingDirection.AP;
+% Set acceleration factor
 paramsSeEpi2dDiff.accFacPE = 3;
-paramsSeEpi2dDiff.nRep = 1;
-paramsSeEpi2dDiff.TE = 60e-3;
-paramsSeEpi2dDiff.TR = 130e-3;
+% Increase matrix size
 paramsSeEpi2dDiff.Nx = 128;
 paramsSeEpi2dDiff.Ny = 128;
-paramsSeEpi2dDiff.maxSlew = 120; %to be corrected by independent slew rate of diff gradients
-switch scannerType
-    case 'Siemens 3T Cima.X'
-        paramsSeEpi2dDiff.readoutTime = 800e-6;
-    otherwise
-        paramsSeEpi2dDiff.readoutTime = 680e-6;
-end
+% Reduce slew rate (To be corrected by independent slew rate for diffusion gradients)
+paramsSeEpi2dDiff.maxSlew = 120; 
 
-paramsSeEpi2dDiff.nSlices = 15; %testing=1, otherwise = 15
-paramsSeEpi2dDiff.nDummy = 3; %testing=1, otherwise = 3
-paramsSeEpi2dDiff.seqSpecName = ['os' num2str(paramsSeEpi2dDiff.ro_os)];
+% Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence information
@@ -137,10 +156,12 @@ timeRange = [5 20];
 seepi2d.plot(timeRange);
 
 % Test sequence
-% seepi2d.test();
+seepi2d.test();
 
-%% Create a 3D monpolar dual-echo gradient-echo sequence
+%% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
+
+% Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
 
 % Plot sequence information after sync 
@@ -151,15 +172,12 @@ gre3d.plot(timeRange);
 gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
-
 paramsOpc = SequenceParams('opc',scannerType);
-paramsOpc.triggerOutput = 'ext1'; % Default optical ouput
+
+paramsOpc.triggerOutput = 'ext1'; % Default optical output
 opc = skope_offresAndPosCalib(paramsOpc);
 
 paramsOpc.triggerOutput = 'osc0';
-opc = skope_offresAndPosCalib(paramsOpc);
-
-paramsOpc.triggerOutput = 'osc1';
 opc = skope_offresAndPosCalib(paramsOpc);
 
 % Plot sequence
@@ -171,6 +189,8 @@ opc.test();
 
 %% Create local eddy current calibration sequence
 paramsLec = SequenceParams('lec',scannerType);
+
+% Generate the sequence
 lec = skope_localEddyCalib(paramsLec);
 
 % Plot sequence
@@ -208,7 +228,7 @@ gtf.test();
 load('./waveforms/sweepWaveform.mat')
 paramsSweep = SequenceParams('sweep',scannerType);
 
-% paramsSweep.nAve = 1;   
+%paramsSweep.nAve = 1;   
 sweep = skope_sweep(paramsSweep,sweepWaveform);
 
 % Plot sequence

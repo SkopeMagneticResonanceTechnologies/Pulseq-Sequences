@@ -65,6 +65,9 @@ classdef (Abstract) PulseqBase < handle
 
         % Multi-band factor
         multiBandFactor = 1
+
+        % Slice distance factor in percent
+        distanceFactorPercentage = 0
         
     end
 
@@ -120,6 +123,9 @@ classdef (Abstract) PulseqBase < handle
 
         % Fill time for repetition time [Unit: s]
         fillTR
+
+        % Oversampling factor (Required for EPI)
+        ro_os = 2  
     end
 
     methods

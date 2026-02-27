@@ -22,7 +22,7 @@ addpath('sequences')
 % 'Siemens 3T Cima.X', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
 scannerType = 'Siemens 3T Cima.X';
 
-%% Create a multi-shot 2D spiral gradient-echo sequence with pregenerated spiral waveform
+%% Create a multi-shot 2D spiral gradient-echo sequence with pre-generated spiral waveform
 % Get default sequence parameters
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
@@ -40,8 +40,7 @@ spiral2d.plot(timeRange);
 spiral2d.test();
 
 %% Create a multi-shot 2D spiral gradient-echo sequence with specific spiral waveform
-parentDir = fileparts(pwd);
-minTimeGradientDir = fullfile(parentDir, 'minTimeGradient', 'Matlab');
+minTimeGradientDir = fullfile(pwd, 'minTimeGradient', 'Matlab');
 if not(isfolder(minTimeGradientDir))
     error('Download https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz')
 end
@@ -90,13 +89,6 @@ spiral2d.plot(timeRange);
 spiral2d.test();
 
 %% Create a single-shot 2D spiral gradient-echo with specific spiral waveform
-parentDir = fileparts(pwd);
-minTimeGradientDir = fullfile(parentDir, 'minTimeGradient', 'Matlab');
-if not(isfolder(minTimeGradientDir))
-    error('Download https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz')
-end
-addpath(genpath(minTimeGradientDir))
-
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------

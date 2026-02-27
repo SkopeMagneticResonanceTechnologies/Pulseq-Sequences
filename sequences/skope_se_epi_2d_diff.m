@@ -32,9 +32,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
         % A flag to quickly disable phase encoding (1/0) as needed for the delay calibration
         pe_enable = 1             
 
-        % Oversampling factor (in contrast to the product sequence we don't really need it)
-        ro_os = 1    
-
         % Partial Fourier factor: 1: full sampling 0: start with ky=0
         partFourierFactor = 1 
 
@@ -115,9 +112,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
         % Play out fat saturation pulse
         doPlayFatSat = false;
-
-        % Slice distance factor percentage
-        distanceFactorPercentage = 250;
 
         % Acceleration factor (Phase)
         accFacPE
@@ -271,21 +265,21 @@ classdef skope_se_epi_2d_diff < PulseqBase
             % we use ramp sampling, so we have to calculate the dwell time and the
             % number of samples, which are will be quite different from Nx and
             % readoutTime/Nx, respectively. 
-            adcDwellNyquist = deltakx/obj.gx.amplitude;
+            adcDwellNyquist = deltakx/obj.gx.amplitude/obj.ro_os;
 
             % round-down dwell time to 100 ns
-            adcDwell = floor(adcDwellNyquist*1e7*obj.ro_os)*1e-7/obj.ro_os;
+            adcDwell = floor(adcDwellNyquist*1e7)*1e-7;
 
             % on Siemens the number of ADC samples need to be divisible by 4
             adcSamples = floor(obj.readoutTime/adcDwell/4)*4; 
 
             % MZ: no idea, whether ceil,round or floor is better for the adcSamples...
-            obj.adc = mr.makeAdc(adcSamples*obj.ro_os, ...
-                                 'Dwell', adcDwell/obj.ro_os, ...
+            obj.adc = mr.makeAdc(adcSamples, ...
+                                 'Dwell', adcDwell, ...
                                  'Delay',blip_dur/2);
 
             % realign the ADC with respect to the gradient
-            time_to_center = obj.adc.dwell*((adcSamples*obj.ro_os-1)/2+0.5);
+            time_to_center = obj.adc.dwell*((adcSamples-1)/2+0.5);
 
             % we adjust the delay to align the trajectory with the gradient. We have to align the delay to 1us 
             obj.adc.delay = round((obj.gx.riseTime + obj.gx.flatTime/2-time_to_center)*1e6)*1e-6; 
@@ -406,6 +400,31 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
 
+            %% Determine chronological order for slice positions
+
+            % Example for 10 slices
+            %  Anatomical      Chronological
+            %   10              05
+            %   09              10
+            %   08              04
+            %   07              09
+            %   06              03
+            %   05              08
+            %   04              02
+            %   03              07
+            %   02              01
+            %   01              06
+
+            obj.slicePositionAnatomical = [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100);
+
+            if mod(obj.nSlices,2) % odd
+                sliceOrder = [1:2:obj.nSlices, 2:2:obj.nSlices];
+            else
+                sliceOrder = [2:2:obj.nSlices, 1:2:obj.nSlices];
+            end
+
+            obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
+
             %% Determine the echo spacing
             obj.echoSpacing = mr.calcDuration(obj.gx);
                         
@@ -490,7 +509,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100)); 
+            obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
@@ -558,7 +577,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 if obj.doPlayFatSat
                     obj.addBlock(obj.rf_fs, obj.gz_fs);
                 end
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);                															
+                obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);                															
                 obj.rf.phaseOffset = -2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); % Compensate for the slice-offset induced phase
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
             else
@@ -577,7 +596,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
 
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
-                obj.rf180.freqOffset=obj.gz180.amplitude * obj.thickness*(slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf180.freqOffset=obj.gz180.amplitude * obj.slicePositionChronological(slc); 
                 obj.rf180.phaseOffset=-2*pi*obj.rf180.freqOffset * mr.calcRfCenter(obj.rf180); % compensate for the slice-offset induced phase
                 obj.addBlock(obj.rf180, obj.gz180);
             else

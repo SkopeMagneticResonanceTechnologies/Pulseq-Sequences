@@ -1,5 +1,9 @@
 classdef SequenceParams
-    %SEQUENCEPARAMS Default sequence parameters
+    %SEQUENCEPARAMS Default sequence parameters.
+    %   SequenceParams(seqName, scannerType, mode) handles scanner-agnostic
+    %   sequences (gtf, opc, sweep, lec) directly, and delegates all
+    %   imaging sequences to the appropriate scanner-specific parameter
+    %   class (SequenceParams_Cima_X, SequenceParams_Terra_X, ...).
 
     properties        
         fov         % Field of view [Unit: m]
@@ -16,8 +20,8 @@ classdef SequenceParams
         maxSlew     % Used slew rate by sequence
         seqSpecName % String name appended to .seq file
         doMonitoringDuringRF %boolean to enable monitoring during RFs (functionality active for GRE only)     
-        ro_os       %readout oversampling
         addPhaseCorrLines
+        distanceFactorPercentage = 0;
 
         %diffusion properties
         bFactor 
@@ -41,7 +45,7 @@ classdef SequenceParams
     end
 
     methods
-        function obj = SequenceParams(seqName,scannerType,mode)
+        function obj = SequenceParams(seqName, scannerType, mode)
 
             if not(exist('scannerType','var'))
                 scannerType = 'Siemens 7T Terra SC72CD';
@@ -53,97 +57,8 @@ classdef SequenceParams
                 mode = 'default';
             end
 
+            % ---- Scanner-agnostic sequences (same on all hardware) ------
             switch lower(seqName)
-                case 'gre2d'
-                    obj.fov = 200e-3; 
-                    obj.Nx = 128; 
-                    obj.Ny = obj.Nx; 
-                    obj.alpha = 7;   
-                    obj.thickness = 3e-3; 
-                    obj.nSlices = 15;
-                    obj.TE = [6 12] * 1e-3;
-                    obj.TR = 25e-3;       
-                    obj.readoutTime = 3.2e-3;
-                    obj.maxGrad = 28;
-                    obj.maxSlew = 150;
-                    obj.nDummy = 10;
-                    obj.doMonitoringDuringRF = 0;
-                case 'epi2d'
-                    obj.TE = 36e-3;
-                    obj.TR = 200e-3;
-                    switch scannerType
-                        case 'Siemens 3T Cima.X'
-                            obj.readoutTime = 0.500e-3;
-                            obj.maxGrad = 190;
-                            obj.maxSlew = 190;
-                        otherwise
-                            obj.readoutTime = 0.680e-3;
-                            obj.maxGrad = 32;
-                            obj.maxSlew = 180;
-                    end
-                    obj.alpha = 90;
-                    obj.fov = 200e-3;
-                    obj.Nx = 80;
-                    obj.Ny = 80;
-                    obj.thickness = 3e-3;
-                    obj.nSlices = 15;                   
-                    obj.nDummy = 10;   % totalNofDummy=nDummy*nSlices (without FM trigger)
-                    obj.nRep = 5;
-                    obj.ro_os = 2;
-                    obj.addPhaseCorrLines = 1;
-                    
-                case 'se_epi2d_diff'
-                    obj.TE = 110e-3;
-                    obj.TR = 200e-3;
-                    switch scannerType
-                        case 'Siemens 3T Cima.X'
-                            obj.readoutTime = 0.500e-3;
-                            obj.maxGrad = 190;
-                            obj.maxSlew = 190;
-                        otherwise
-                            obj.readoutTime = 0.680e-3;
-                            obj.maxGrad = 32;
-                            obj.maxSlew = 180;
-                    end                    
-                    obj.alpha = 90;
-                    obj.fov = 200e-3;
-                    obj.Nx = 80;
-                    obj.Ny = 80;
-                    obj.thickness = 3e-3;
-                    obj.nSlices = 15;
-                    obj.nDummy = 10;         % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
-                    obj.accFacPE = 1;       % Acceleration factor [Phase] (only used for EPI at the moment)
-                    obj.doPlayFatSat = 0;
-                    obj.bFactor=[0, 1000, 1000, 1000]; %bencoding
-                    obj.bDir = [0, 1, 2, 3]; %axis
-                    obj.nbValues = length(obj.bDir);     
-                    obj.seqSpecName = '';
-                    obj.ro_os = 2;
-                case 'gre3d'
-                    obj.fov = [0.56 0.56 0.56]*1e-2*40053000/42577481; 
-                    obj.Nx = 56; 
-                    obj.Ny = obj.Nx; 
-                    obj.Nz = obj.Nx; 
-                    obj.alpha = 1;     
-                    obj.TE = [12.3 28.16] * 1e-3 + 1e-3; % one millisecond for phase estimation
-                    obj.TR = 100e-3;   
-                    obj.readoutTime = 7.84e-3;  
-                    obj.maxGrad = 35;
-                    obj.maxSlew = 150;
-                    obj.nDummy = 50;
-                case 'spiral2d' %to be changed.
-                    obj.fov = 192e-3; 
-                    obj.Nx = 192; 
-                    obj.Ny = 16; 
-                    obj.alpha = 15;   
-                    obj.thickness = 3e-3; 
-                    obj.nSlices = 15;
-                    obj.TE = 2.5 * 1e-3;
-                    obj.TR = 140e-3;       
-                    obj.readoutTime = 8e-3; 
-                    obj.mode = 'multiShot';
-                    obj.maxGrad = 40;
-                    obj.maxSlew = 150;
                 case 'gtf'
                     if strcmpi(mode,'default')
                         obj.TR = 1;  
@@ -160,21 +75,33 @@ classdef SequenceParams
                     else
                         error('Unknown sequence mode.')
                     end
+                    return
                 case 'opc'
                     obj.TR = 200e-3;
                     obj.maxGrad = 40;
                     obj.maxSlew = 200;
+                    return
                 case 'sweep'
                     obj.TR = 1;
                     obj.maxGrad = 40;
                     obj.maxSlew = 200;
                     obj.nAve = 100;
+                    return
                 case 'lec'
                     obj.TR = 200e-3;
                     obj.maxGrad = 40;
                     obj.maxSlew = 200;
+                    return
+            end
+
+            % ---- Imaging sequences: delegate fully to scanner class -----
+            switch scannerType
+                case 'Siemens 3T Cima.X'
+                    obj = SequenceParams_Cima_X.apply(obj, seqName, mode);
+                case {'Siemens 7T Terra.X', 'Siemens 7T Terra SC72CD'}
+                    obj = SequenceParams_Terra_X.apply(obj, seqName, mode);
                 otherwise
-                    error(['Unknown sequence: ', seqName])
+                    error('No parameters defined for scanner "%s" and sequence "%s".', scannerType, seqName);
             end
         end
     end

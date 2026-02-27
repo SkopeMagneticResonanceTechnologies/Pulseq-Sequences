@@ -5,13 +5,10 @@ classdef skope_gre_2d < PulseqBase
 % the generated sequence. 
 % 
 % Notes:
-% - The sequence file is written into the current folder.
 % - The TR refers to the excitation repetition time in this example and not
 %   the slice TR.
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
-% - The x-axis is flipped because of a bug in the Siemens Pulseq 
-%   interpreter 1.4.0. 
 %
 % Example:
 %  gre = skope_gre_2d(sequenceParams);
@@ -62,8 +59,6 @@ classdef skope_gre_2d < PulseqBase
 
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
-
-        distanceFactorPercentage = 250;        
 
         % Play out trigger earlier to compensate for field measurement latency
         triggerLatency = 150e-6;
@@ -138,9 +133,11 @@ classdef skope_gre_2d < PulseqBase
             % ADC duration [Unit: s]
             obj.readoutTime = seqParams.readoutTime;  
 
+            % Slice orientation and phase-encoding direction
             obj.sliceOrientation = seqParams.sliceOrientation;
             obj.phaseEncDir = seqParams.phaseEncDir;
 
+            % Number of dummies to reach steady-state
             obj.nDummy = seqParams.nDummy;
 
             % Perform monitoring during RF
@@ -148,6 +145,9 @@ classdef skope_gre_2d < PulseqBase
 
             % Set trigger output channel
             obj.triggerOutput = seqParams.triggerOutput;
+
+            % Slice distance factor in percent
+            obj.distanceFactorPercentage = seqParams.distanceFactorPercentage;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -179,7 +179,7 @@ classdef skope_gre_2d < PulseqBase
                                         'FlatArea', obj.Nx*deltak, ...
                                         'FlatTime', obj.readoutTime, ...
                                         'system',obj.sys);
-            obj.adc = mr.makeAdc(obj.Nx, ...
+            obj.adc = mr.makeAdc(obj.Nx*obj.ro_os, ...
                                 'Duration', obj.gx.flatTime, ...
                                 'Delay', obj.gx.riseTime, ...
                                 'system', obj.sys);
@@ -271,8 +271,31 @@ classdef skope_gre_2d < PulseqBase
                                         obj.gz.fallTime;
             end
 
-            obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
+            %% Determine chronological order for slice positions
+
+            % Example for 10 slices
+            %  Anatomical      Chronological
+            %   10              05
+            %   09              10
+            %   08              04
+            %   07              09
+            %   06              03
+            %   05              08
+            %   04              02
+            %   03              07
+            %   02              01
+            %   01              06
+
+            obj.slicePositionAnatomical = [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100);
             
+            if mod(obj.nSlices,2) % odd
+                sliceOrder = [1:2:obj.nSlices, 2:2:obj.nSlices];
+            else
+                sliceOrder = [2:2:obj.nSlices, 1:2:obj.nSlices];
+            end
+
+            obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
+
             %% Phase settings
             obj.rf_phase = 0;
             obj.rf_inc = 0;
@@ -294,7 +317,7 @@ classdef skope_gre_2d < PulseqBase
             end
 
             %% Dummies
-            for lin = 1:min(obj.Ny,obj.nDummy)      
+            for lin = mod(1:obj.nDummy,obj.Ny)+1      
                 % loop over slices
                 for slc = 1:obj.nSlices
                     avg = 1;
@@ -347,7 +370,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
-            obj.seq.setDefinition('SliceShifts', [obj.thickness*([1:obj.nSlices]-1-(obj.nSlices-1)/2)]*(1+obj.distanceFactorPercentage/100));
+            obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
@@ -369,6 +392,7 @@ classdef skope_gre_2d < PulseqBase
             end
 
             obj.seq.write(strcat(filename,'.seq')); 
+            disp(['Storing sequence file "', char(filename), '.seq"'])
             
         end    
     end
@@ -379,18 +403,17 @@ classdef skope_gre_2d < PulseqBase
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
             end
-
         
            %% RF and ADC settings
             if mode==KernelMode.Dummy
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf.freqOffset = obj.gz.amplitude  * obj.slicePositionChronological(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
                 obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
             elseif mode==KernelMode.Imaging
-                obj.rf.freqOffset = obj.gz.amplitude * obj.thickness * (slc-1-(obj.nSlices-1)/2)*(1+obj.distanceFactorPercentage/100);
+                obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi;
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
@@ -401,8 +424,6 @@ classdef skope_gre_2d < PulseqBase
                     obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
                 end
             elseif mode==KernelMode.Sync
-                obj.rf.freqOffset = 0;
-                obj.rf.phaseOffset = 0;
                 if obj.doMonitoringDuringRF
                     obj.addBlock(obj.gz, obj.extTrigger, mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1));
                 else
