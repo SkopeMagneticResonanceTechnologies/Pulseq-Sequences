@@ -23,27 +23,31 @@ addpath('sequences')
 % 'Siemens 3T Cima.X', 'Siemens 3T Connectom', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
 scannerType = 'Siemens 3T Cima.X';
 
+%% Acquire more slices for in vivo scans and activate fat saturation
+invivo = false;
+
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d',scannerType);
-paramsGre2d.fov = 0.24;
+paramsGre2d.fov = 0.22;
 paramsGre2d.Nx = 80;
 paramsGre2d.Ny = 80;
 paramsGre2d.thickness = 3e-3;
-paramsGre2d.nSlices = 44;
-paramsGre2d.seqSpecName = 'invivo';
-paramsGre2d.distanceFactorPercentage = 10;
-paramsGre2d.doPlayFatSat = true;
 
-%% Generate the sequence
+paramsGre2d.nSlices = 12;
+paramsGre2d.distanceFactorPercentage = 150;
+if invivo
+    paramsGre2d.nSlices = 44;
+    paramsGre2d.distanceFactorPercentage = 10;
+    paramsGre2d.seqSpecName = 'invivo';
+    % GRE has currently no fat saturation pulse 
+end
+
+% Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
-% Plot first 10 s
+% Plot sequence diagram for the first 10 s
 timeRange = [0 10];
-gre2d.plot(timeRange);
-
-% Plot sequence information after sync 
-timeRange = [4.25 4.27]; % Unit [s]
 gre2d.plot(timeRange);
 
 % Test sequence
@@ -54,22 +58,25 @@ paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
 paramsEpi2d.Nx = 74;
 paramsEpi2d.Ny = 74;
+paramsEpi2d.TE = 25e-3;
+paramsEpi2d.TR = 60e-3;
+paramsEpi2d.readoutTime = 500e-6; 
 paramsEpi2d.thickness = 3e-3;
-paramsEpi2d.nSlices = 44;
-paramsEpi2d.seqSpecName = 'invivo';
-paramsEpi2d.distanceFactorPercentage = 10;
-paramsEpi2d.doPlayFatSat = true;
-paramsEpi2d.accFacPE = 2;
-paramsEpi2d.multiBandFactor = 2;
-paramsEpi2d.readoutTime = 500e-6;
-paramsEpi2d.TE = 20e-3;
-paramsEpi2d.TR = 45e-3;
 
-%% Generate the sequence
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
+
+% Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
-%% Plot sequence information
-timeRange = [0 10]; % Unit [s]
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -77,19 +84,29 @@ epi2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-% Set acceleration factor
+paramsEpi2d.fov = 0.22;
 paramsEpi2d.accFacPE = 2;
-% Increase matrix size
 paramsEpi2d.Nx = 120;
 paramsEpi2d.Ny = 120;
-% Reduce TE
-paramsEpi2d.TE = 22e-3;
+paramsEpi2d.TE = 25e-3;
+paramsEpi2d.TR = 60e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
 
 % Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
-% Plot sequence information
-timeRange = [0 10]; % Unit [s]
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -97,21 +114,30 @@ epi2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration and multi-band excitation
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-% Set acceleration factor
+paramsEpi2d.fov = 0.22;
 paramsEpi2d.accFacPE = 2;
-% Increase matrix size
+paramsEpi2d.multiBandFactor = 2;
 paramsEpi2d.Nx = 120;
 paramsEpi2d.Ny = 120;
-% Set multi-band factor
-paramsEpi2d.multiBandFactor = 2;
-% Set echo time
 paramsEpi2d.TE = 25e-3;
+paramsEpi2d.TR = 60e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
 
 % Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
-% Plot sequence information
-timeRange = [0 10]; % Unit [s]
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -119,19 +145,29 @@ epi2d.test();
 
 %% EPI with acceleration factor 3 and higher resolution
 paramsEpi2d = SequenceParams('epi2d',scannerType);
-% Set acceleration factor
+paramsEpi2d.fov = 0.22;
 paramsEpi2d.accFacPE = 3;
-% Increase matrix size
 paramsEpi2d.Nx = 130;
 paramsEpi2d.Ny = 130;
-% Set echo time
-paramsEpi2d.TE = 18e-3;
+paramsEpi2d.TE = 25e-3;
+paramsEpi2d.TR = 60e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
 
 % Generate the sequence
 epi2d = skope_epi_2d(paramsEpi2d);
 
-% Plot sequence information
-timeRange = [0 10]; % Unit [s]
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10]; 
 epi2d.plot(timeRange);
 
 % Test sequence
@@ -140,18 +176,26 @@ epi2d.test();
 %% Create a 2D spin-echo EPI sequence with diffusion encoding
 % navigator is by default disabled here
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
-% Set acceleration factor
+paramsSeEpi2dDiff.fov = 0.22;
 paramsSeEpi2dDiff.accFacPE = 3;
-% Increase matrix size
 paramsSeEpi2dDiff.Nx = 128;
 paramsSeEpi2dDiff.Ny = 128;
 % Reduce slew rate (To be corrected by independent slew rate for diffusion gradients)
 paramsSeEpi2dDiff.maxSlew = 120; 
 
+paramsSeEpi2dDiff.nSlices = 12;
+paramsSeEpi2dDiff.distanceFactorPercentage = 150; 
+if invivo
+    paramsSeEpi2dDiff.nSlices = 44;
+    paramsSeEpi2dDiff.distanceFactorPercentage = 10;
+    paramsSeEpi2dDiff.seqSpecName = 'invivo';
+    paramsSeEpi2dDiff.doPlayFatSat = true;
+end
+
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
-% Plot sequence information
+% Plot sequence diagram for the first 5 to 20 s
 timeRange = [5 20];
 seepi2d.plot(timeRange);
 

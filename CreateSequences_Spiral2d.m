@@ -52,7 +52,7 @@ addpath(genpath(minTimeGradientDir))
 Nitlv = 16;             % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
 res	= 1;                % Resolution (in mm)
-fov	= [25,1];           % Vector of fov (in cm)
+fov	= [25,25];          % Vector of fov (in cm)
 radius = [0,1];         % Vector of radius corresponding to the fov
 Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 15;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)

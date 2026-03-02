@@ -75,7 +75,7 @@ classdef skope_gre_2d < PulseqBase
 
             %% Check input structure
             if not(isa(seqParams,'SequenceParams'))
-                error('Input need to be a SequenceParams object.');
+                error('Input needs to be a SequenceParams object.');
             end
 
             %% Get system limits
@@ -220,7 +220,8 @@ classdef skope_gre_2d < PulseqBase
                 obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + ...
                                                 obj.triggerLatency + ...
                                                 obj.gz.flatTime/2 + ...
-                                                obj.gz.fallTime;
+                                                obj.gz.fallTime + ...
+                                                mr.calcDuration(obj.gzReph);
             end
 
             %% Absorb delayTE2 in gradient
@@ -268,7 +269,8 @@ classdef skope_gre_2d < PulseqBase
                 obj.cameraAcqDuration = obj.cameraAcqDuration + ...
                                         obj.triggerLatency + ...
                                         obj.gz.flatTime/2 + ...
-                                        obj.gz.fallTime;
+                                        obj.gz.fallTime + ...
+                                        mr.calcDuration(obj.gzReph);
             end
 
             %% Determine chronological order for slice positions
@@ -376,6 +378,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('MonitoringDuringRF', obj.doMonitoringDuringRF);
             obj.seq.setDefinition('SequenceType', 'GRE');
+            obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
                         
             %% Write to Pulseq file
             if not(isfolder('exports'))
@@ -407,17 +410,13 @@ classdef skope_gre_2d < PulseqBase
            %% RF and ADC settings
             if mode==KernelMode.Dummy
                 obj.rf.freqOffset = obj.gz.amplitude  * obj.slicePositionChronological(slc);
-                obj.rf.phaseOffset = obj.rf_phase/180*pi;
+                obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf);  % compensate for slice-offset induced phase
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
-                obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
-                obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
                 obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
             elseif mode==KernelMode.Imaging
                 obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
-                obj.rf.phaseOffset = obj.rf_phase/180*pi;
+                obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf);  % compensate for slice-offset induced phase
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
-                obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
-                obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
                 if obj.doMonitoringDuringRF
                     obj.addBlock(obj.rf, obj.extTrigger, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
                 else
@@ -432,6 +431,10 @@ classdef skope_gre_2d < PulseqBase
             else
                 error('Unknown kernel mode');
             end
+
+            % Update RF spoiling
+            obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360.0);
+            obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360.0);
             
             %% Slice refocusing gradient
             obj.addBlock(obj.gzReph);

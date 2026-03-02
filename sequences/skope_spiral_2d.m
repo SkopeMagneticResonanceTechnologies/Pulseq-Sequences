@@ -336,6 +336,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('SequenceType', 'GRE');
+            obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
 
             %% Write to Pulseq file
             if not(isfolder('exports'))

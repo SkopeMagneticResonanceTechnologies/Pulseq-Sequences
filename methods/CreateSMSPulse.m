@@ -1,4 +1,4 @@
-function [rf, gz, freq, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, nSlices, sliceSep, sys, varargin)
+function [rf, gz, gzAmplitude, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, nSlices, sliceSep, sys, varargin)
 % Create simultaneous multi-slice (SMS) RF pulse as Pulseq events.
 %
 % Designs a single-slice SLR pulse, then superposes frequency-shifted,
@@ -7,9 +7,9 @@ function [rf, gz, freq, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, n
 % events ready for a Siemens .seq file.
 %
 % Usage:
-%   [rf, gz, freq, t_rfCenter] = createsmspulse(alpha, slThick, tbw, dur, ...
+%   [rf, gz, gzAmplitude, t_rfCenter] = createsmspulse(alpha, slThick, tbw, dur, ...
 %                                               nSlices, sliceSep, sys)
-%   [rf, gz, freq, t_rfCenter] = createsmspulse(..., 'Name', Value, ...)
+%   [rf, gz, gzAmplitude, t_rfCenter] = createsmspulse(..., 'Name', Value, ...)
 %
 % Required inputs
 %   alpha      [1]   flip angle (deg)
@@ -35,8 +35,9 @@ function [rf, gz, freq, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, n
 % Outputs
 %   rf           Pulseq rf event (mr.makeArbitraryRf)
 %   gz           Pulseq gradient event (mr.makeArbitraryGrad, z-axis)
-%   freq         [1]  frequency offset (Hz) per slice thickness; use as
-%                     carrier-frequency step when looping over slice groups.
+%   gzAmplitude  [1]  slice-select gradient plateau amplitude (Hz/m); use as
+%                     obj.gzSMSAmplitude * slicePosition to compute the RF
+%                     frequency offset, analogous to obj.gz.amplitude.
 %   t_rfCenter   [1]  time from rf event start to RF pulse centre (s)
 %
 % Dependencies
@@ -56,12 +57,34 @@ function [rf, gz, freq, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, n
 %   [rf, gz] = getsmspulse(70, 5e-3, 6, 8e-3, 4, 20e-3, sys, ...
 %                          'type', 'st', 'doSim', true);
 
+% MIT License
+% 
+% Copyright (c) 2023 Jon-Fredrik Nielsen, <jfnielse@umich.edu>
+% 
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+% 
+% The above copyright notice and this permission notice shall be included in all
+% copies or substantial portions of the Software.
+% 
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+% SOFTWARE.
+
 % ---------------------------------------------------------------------------
 % Test / self-check call
 % ---------------------------------------------------------------------------
 if ischar(alpha) && strcmp(alpha, 'test')
     sub_test();
-    rf = []; gz = []; freq = []; t_rfCenter = [];
+    rf = []; gz = []; gzAmplitude = []; t_rfCenter = [];
     return;
 end
 
@@ -124,8 +147,9 @@ for sl = 1:nSlices
     rfSMS = rfSMS + rf1 .* exp(1i*2*pi*f*t) * exp(1i*PHS(sl));
 end
 
-% Frequency offset for one slice thickness (returned to caller)
-freq = GAMMA_HZ_G * gPlateau * slThick_cm;   % Hz
+% Slice-select gradient plateau amplitude in Pulseq units (Hz/m), returned
+% to caller so it can be used as: rfSMS.freqOffset = gzAmplitude * slicePosition
+gzAmplitude = gPlateau * GAMMA_HZ_G * 100;   % Hz/m  (×100: G/cm → Hz/m)
 
 % ---------------------------------------------------------------------------
 % Optional Bloch simulation / slice-profile display
@@ -584,10 +608,10 @@ sys = mr.opts('maxGrad', 28, 'gradUnit', 'mT/m', ...
               'rfRingdownTime', 60e-6, ...
               'adcDeadTime',    40e-6);
 
-[rf, gz, freq, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, mb, ...
+[rf, gz, gzAmplitude, t_rfCenter] = CreateSMSPulse(alpha, slThick, tbw, dur, mb, ...
     sliceSep, sys, 'type', 'st', 'doSim', true);
 
-fprintf('  freq offset  = %.1f Hz\n', freq);
+fprintf('  gz amplitude = %.1f Hz/m\n', gzAmplitude);
 fprintf('  t_rfCenter   = %.3f ms\n', t_rfCenter*1e3);
 fprintf('  RF duration  = %.3f ms\n', numel(rf.signal)*sys.rfRasterTime*1e3);
 fprintf('createsmspulse self-test complete.\n');

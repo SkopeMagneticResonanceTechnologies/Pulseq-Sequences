@@ -66,8 +66,14 @@ classdef (Abstract) PulseqBase < handle
         % Multi-band factor
         multiBandFactor = 1
 
+        % Field of view shift factor for multi-band imaging
+        fovShiftFactor = 2
+
         % Slice distance factor in percent
         distanceFactorPercentage = 0
+
+        % Slice ordering
+        sliceOrdering = 'SEQUENTIAL'
         
     end
 

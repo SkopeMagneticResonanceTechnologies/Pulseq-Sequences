@@ -90,7 +90,7 @@ classdef skope_epi_2d < PulseqBase
         gz_blipdown
         gz_blipdowndown
         gz_blipPre
-
+        
         % Pulseq slice refocusing gradient
         gzReph
 
@@ -109,9 +109,9 @@ classdef skope_epi_2d < PulseqBase
         % Set trigger output channel
         triggerOutput
 
-        % Frequency offset (Hz) per slice thickness; use as
-        % carrier-frequency step when looping over slice groups.
-        freqSMS = 0
+        % Slice-select gradient plateau amplitude (Hz/m) of the SMS pulse;
+        % use as gzSMSAmplitude * slicePosition to compute RF frequency offsets.
+        gzSMSAmplitude = 0
 
         % Spoiling phase of RF and ADC events
         rf_phase = 0
@@ -127,6 +127,7 @@ classdef skope_epi_2d < PulseqBase
 
         % Slices indices 
         chronologicalSliceSMS
+        anatomicalSliceIndexChronologically
 
     end
 
@@ -236,7 +237,7 @@ classdef skope_epi_2d < PulseqBase
                     error('Number of slices needs to be divisable by multi-band factor.')
                 end
                 sliceSep = obj.nSlices/obj.multiBandFactor*obj.thickness*(1+obj.distanceFactorPercentage/100);
-                [obj.rfSMS, obj.gzSMS, obj.freqSMS, t_rf_center] = CreateSMSPulse(obj.alpha, ...
+                [obj.rfSMS, obj.gzSMS, obj.gzSMSAmplitude, t_rf_center] = CreateSMSPulse(obj.alpha, ...
                                                                 obj.thickness, ...
                                                                 4, ... timeBwProduct
                                                                 8e-3, ... 
@@ -258,7 +259,7 @@ classdef skope_epi_2d < PulseqBase
             deltakx = 1/obj.fov;
             deltaky = 1/obj.fov * obj.accFacPE;
             if obj.multiBandFactor > 1
-                deltakz = 1/sliceSep;
+                deltakz = 1/sliceSep/obj.fovShiftFactor;
             else
                 deltakz = 0;
             end
@@ -493,6 +494,8 @@ classdef skope_epi_2d < PulseqBase
             end
             
             obj.slicePositionChronological = obj.slicePositionAnatomical(sliceOrder);
+            obj.anatomicalSliceIndexChronologically = [1:obj.nSlices];
+            obj.anatomicalSliceIndexChronologically = obj.anatomicalSliceIndexChronologically(sliceOrder);
 
             if obj.multiBandFactor > 1
 
@@ -626,6 +629,11 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);    
             obj.seq.setDefinition('SequenceType', 'GRE');
+            obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
+            if obj.multiBandFactor > 1  
+                obj.seq.setDefinition('MultiBandFactor', obj.multiBandFactor);  
+                obj.seq.setDefinition('FovShiftFactor', obj.fovShiftFactor); 
+            end
 
             %% Echo spacing check to comply with scanner forbidden bands
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')
@@ -700,25 +708,31 @@ classdef skope_epi_2d < PulseqBase
                 end
                 
                 if obj.multiBandFactor > 1 && (mode==KernelMode.Imaging || mode==KernelMode.Dummy)
-                    % Play out the SMS pulse 
-
-                    % Frequency offset (Hz) for SMS slice shift
-                    obj.rfSMS.freqOffset = round((slc-1)*obj.freqSMS);
+                    % Play out multi-band pulse 
 
                     % Get the chronological slice index from the slice counter
                     sli = obj.chronologicalSliceSMS(slc);
 
+                    % Compensate for the slice-offset induced phase
+                    obj.rfSMS.freqOffset = obj.gzSMSAmplitude * obj.slicePositionChronological(sli);
+                      
                     % Excitation pulse and RF spoiling
                     obj.rfSMS.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rfSMS.freqOffset * mr.calcRfCenter(obj.rfSMS);  % align the phase for off-center slices
                     obj.adc.phaseOffset = obj.rf_phase/180*pi;
-                    obj.addBlock(obj.rfSMS, obj.gzSMS, mr.makeLabel('SET','PMC',false));                    
+                    obj.addBlock(obj.rfSMS, obj.gzSMS, mr.makeLabel('SET','PMC',false));            
+
+                    % For debugging
+                    % disp([char(mode) ' SlC ' num2str(slc) ' SLI '  num2str(sli) ' POS ' num2str(obj.slicePositionChronological(sli)*1000) ' mm' ])
                 else
+                    % Play out single-band pulse 
+
                     % Slice counter and slice index are identical
                     sli = slc;                    
                     % Play out the standard pulse
                     obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(sli);
-                     % Compensate for the slice-offset induced phase
+                    % Compensate for the slice-offset induced phase
                     obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf); 
+                    obj.adc.phaseOffset = obj.rf_phase/180*pi;
                     obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false));
                     obj.addBlock(obj.gzReph);
                 end
@@ -882,7 +896,7 @@ classdef skope_epi_2d < PulseqBase
                     elseif mode==KernelMode.Sync || mode==KernelMode.Reference 
                         obj.addBlock(obj.gx, obj.gy_blipdown, labels{:}, obj.adc); 
                     else
-                        if obj.multiBandFactor ==1
+                        if obj.multiBandFactor == 1
                             obj.addBlock(obj.gx, obj.gy_blipdown); 
                         else
                             if mod(lin,2) % odd
@@ -903,7 +917,7 @@ classdef skope_epi_2d < PulseqBase
                     elseif mode==KernelMode.Sync ||  mode==KernelMode.Reference 
                         obj.addBlock(obj.gx, obj.gy_blipdownup, labels{:}, obj.adc); 
                     else
-                        if obj.multiBandFactor ==1
+                        if obj.multiBandFactor == 1
                             obj.addBlock(obj.gx, obj.gy_blipdownup); 
                         else
                             obj.addBlock(obj.gx, obj.gy_blipdownup, mr.scaleGrad(obj.gz_blipdowndown,(-1)^(mod(lin,2))));
