@@ -158,8 +158,10 @@ if arg.doSim
     fov = 20;
     z   = -fov/2 : 0.05 : fov/2;   % cm
     figure;
-    sub_slicesim([0 0 1], rfSMS, gz1, DT_MS, z, 1000, 100, true);
-    title(sprintf('SMS slice profile  (mb=%d, sep=%.1f cm, type=%s)', ...
+    % Note that we simulate here for a negative gz gradient because that's
+    % how we will play out the gradient for transversal imaging
+    sub_slicesim([0 0 1], rfSMS, -gz1, DT_MS, z, 1000, 100, true);
+    title(sprintf('SMS slice profile for transversal (mb=%d, sep=%.1f cm, type=%s)', ...
         nSlices, sliceSep_cm, arg.type));
 end
 
@@ -451,8 +453,8 @@ end
 if doDisplay
     T = dt * (1:nstep);
     subplot(1,3,1); hold off;
-    plot(T, abs(rf)*1e4, 'b'); hold on;
-    plot(T, gz/max(abs(gz)+eps)*max(abs(rf)*1e4)*0.8, 'g');
+    plot(T, abs(rf)*1e4); hold on;
+    plot(T, gz/max(abs(gz)+eps)*max(abs(rf)*1e4)*0.8);
     legend('|rf| (a.u.)', 'gz (scaled)'); xlabel('time (ms)');
     subplot(1,3,2); plot(Z, abs(m)); xlabel('z (cm)'); ylabel('|m_{xy}|');
     subplot(1,3,3); plot(Z, angle(m)); xlabel('z (cm)'); ylabel('\angle m_{xy} (rad)');
