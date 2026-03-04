@@ -623,7 +623,9 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
-            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
+            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]);
+            obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.echoTrainLength]);
+            obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);

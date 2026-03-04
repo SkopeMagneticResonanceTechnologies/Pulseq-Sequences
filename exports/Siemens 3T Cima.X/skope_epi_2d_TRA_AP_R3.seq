@@ -17,8 +17,10 @@ CameraNrDynamics 6
 CameraNrSyncDynamics 10 
 EchoSpacing 0.0006 
 EchoTrainLength 44 
+EncodingMatrix 332 44 
 FOV 0.22 0.22 0.09 
 GradientRasterTime 1e-05 
+InplaneAcceleration 3 
 Matrix 130 130 
 Name epi2d 
 RadiofrequencyRasterTime 1e-06 
@@ -6886,4 +6888,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash f30a2ed238963a8e459f471afc82f0e9
+Hash fd81a16d9e2d6c637dee7eb143d228d3

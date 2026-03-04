@@ -82,7 +82,7 @@ paramsSpiral2d.mode = 'multiShot';
 spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-timeRange = [5.4 5.41];
+timeRange = [5.4 5.42];
 spiral2d.plot(timeRange);
 
 % Test sequence

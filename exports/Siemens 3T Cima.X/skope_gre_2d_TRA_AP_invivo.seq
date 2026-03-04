@@ -15,8 +15,10 @@ CameraAqDelay 0
 CameraInterleaveTR 0.123 
 CameraNrDynamics 704 
 CameraNrSyncDynamics 10 
+EncodingMatrix 160 80 
 FOV 0.22 0.22 0.1452 
 GradientRasterTime 1e-05 
+InplaneAcceleration 1 
 Matrix 80 80 
 MonitoringDuringRF 0 
 Name gre2d 
@@ -39719,4 +39721,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash d048a3ad7cee5267fbd7f2c6e9be6081
+Hash 8bea7e9da1eb29d8304fa75c11a7b7b4

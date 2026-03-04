@@ -15,9 +15,12 @@ CameraAqDelay 0
 CameraInterleaveTR 0.138 
 CameraNrDynamics 12 
 CameraNrSyncDynamics 10 
+EncodingMatrix 35040 1 
 FOV 0.25 0.25 0.09 
 GradientRasterTime 1e-05 
-Matrix 140 1 
+InplaneAcceleration 1 
+Matrix 138 138 
+MaxAdcSegmentLength 5840 
 Name spir2d 
 RadiofrequencyRasterTime 1e-06 
 SequenceType GRE 
@@ -16280,4 +16283,4 @@ num_samples 1500
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 8bc0b16773c17259c79881ef2c291014
+Hash 613bd061931c3b03b4f73c7a6eea08c0

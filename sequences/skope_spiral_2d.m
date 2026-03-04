@@ -105,7 +105,9 @@ classdef skope_spiral_2d < PulseqBase
                                 'SlewUnit', 'T/m/s', ...
                                 'rfRingdownTime', 20e-6, ...
                                 'rfDeadTime', 100e-6, ...
-                                'adcDeadTime', 10e-6);  
+                                'adcDeadTime', 10e-6,...
+                                'adcSamplesLimit', specs.adcSamplesLimit,...
+                                'adcSamplesDivisor', specs.adcSamplesDivisor);  
 
             % ADC dwelltime
             obj.adcDwelltime = 2e-6;
@@ -167,8 +169,17 @@ classdef skope_spiral_2d < PulseqBase
                                                 'apodization', 0.5, ...
                                                 'timeBwProduct', 4, ...
                                                 'system',obj.sys);
+
+            %% Determine resolution
+            % Convert waveform [mT/m] to gradient in [Hz/m] and integrate
+            gspiral_tmp = waveform.' * obj.sys.gamma / 1000; % [Hz/m]
+            k_tmp = cumsum(gspiral_tmp, 2) * obj.sys.gradRasterTime; % k-space trajectory [1/m]
+            kmax = max(sqrt(k_tmp(1,:).^2 + k_tmp(2,:).^2)); % max k-space radius [1/m]
+            resolution = 1 / (2 * kmax); % spatial resolution [m]
+            n = round(obj.fov/resolution);
+            n = n - mod(n,2);
             
-            %% Define other gradients and ADC events (Not that X gradient has been flipped here)
+            %% Define other gradients and ADC events
             obj.gzReph = mr.makeTrapezoid(obj.axesOrder{3},'Area',-obj.gz.area/2,'Duration',1e-3,'system',obj.sys);
 
             % Create spiral waveform
@@ -177,8 +188,18 @@ classdef skope_spiral_2d < PulseqBase
             obj.gy = mr.makeArbitraryGrad(obj.axesOrder{2},obj.gspiral(2,:));
             durADC = mr.calcDuration(obj.gx);
 
-            % Let's make the number of samples divisible by 10 and 8
-            nSamplesADC = floor(durADC/obj.adcDwelltime/80)*80;
+            % Let's make the number of samples divisible by 8 and 10
+            nSamplesADC = round(durADC/obj.adcDwelltime/80)*80;
+            adcSamplesPerSegment = nSamplesADC;
+
+            if nSamplesADC > obj.sys.adcSamplesLimit
+                [adcSegments,adcSamplesPerSegment] = mr.calcAdcSeg(nSamplesADC, ...
+                                                    obj.adcDwelltime, ...
+                                                    obj.sys, ...
+                                                    'shorten');
+                nSamplesADC = adcSegments*adcSamplesPerSegment;
+            end
+            
             % Update duration
             durADC = nSamplesADC*obj.adcDwelltime;
 
@@ -330,13 +351,18 @@ classdef skope_spiral_2d < PulseqBase
             obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR);
             obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell);
-            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]);
+            obj.seq.setDefinition('Matrix', [n n]);
+            obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.Ny]);
+            obj.seq.setDefinition('InplaneAcceleration', 1);
             obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('SequenceType', 'GRE');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
+            % this is important for making the sequence run automatically
+            % on siemens scanners without further parameter tweaking
+            obj.seq.setDefinition('MaxAdcSegmentLength', adcSamplesPerSegment); 
 
             %% Write to Pulseq file
             if not(isfolder('exports'))

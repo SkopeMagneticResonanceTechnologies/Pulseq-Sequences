@@ -24,7 +24,7 @@ addpath('sequences')
 scannerType = 'Siemens 3T Cima.X';
 
 %% Acquire more slices for in vivo scans and activate fat saturation
-invivo = false;
+invivo = true;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
@@ -82,7 +82,7 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-%% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration
+%% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
 paramsEpi2d.accFacPE = 2;
@@ -90,6 +90,68 @@ paramsEpi2d.Nx = 120;
 paramsEpi2d.Ny = 120;
 paramsEpi2d.TE = 25e-3;
 paramsEpi2d.TR = 60e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
+
+% Generate the sequence
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 2-fold multi-band excitation
+paramsEpi2d = SequenceParams('epi2d',scannerType);
+paramsEpi2d.fov = 0.22;
+paramsEpi2d.accFacPE = 1;
+paramsEpi2d.multiBandFactor = 2;
+paramsEpi2d.Nx = 74;
+paramsEpi2d.Ny = 74;
+paramsEpi2d.TE = 30e-3;
+paramsEpi2d.TR = 80e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
+
+% Generate the sequence
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
+%% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 4-fold multi-band excitation
+paramsEpi2d = SequenceParams('epi2d',scannerType);
+paramsEpi2d.fov = 0.22;
+paramsEpi2d.accFacPE = 1;
+paramsEpi2d.multiBandFactor = 4;
+paramsEpi2d.Nx = 74;
+paramsEpi2d.Ny = 74;
+paramsEpi2d.TE = 30e-3;
+paramsEpi2d.TR = 80e-3;
 paramsEpi2d.readoutTime = 500e-6; 
 paramsEpi2d.thickness = 3e-3;
 

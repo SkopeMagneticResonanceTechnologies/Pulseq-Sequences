@@ -7,6 +7,8 @@ function specs = GetMRSystemSpecs(scannerType)
     specs.maxGrad_unit = 'mT/m';
     specs.maxSlew_unit = 'T/m/s';
     specs.forbiddenBandsEchoSpacingUnits = 's';
+    specs.adcSamplesLimit = 8192;
+    specs.adcSamplesDivisor = 8;
 
     switch scannerType
         % 3T       
@@ -14,16 +16,16 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.type = scannerType;            
             specs.maxGrad = 200; 
             specs.maxSlew = 200; 
-            specs.B0 = 2.89;            
+            specs.B0 = 2.89;               
             specs.forbiddenBandsEchoSpacingLimits = [0.77e-3, 1.07e-3;... %[1113,344]Hz
-                                                     1.49e-3, 1.76e-3 ];  %[567,100] Hz                    
+                                                     1.62e-3, 1.93e-3 ];  %[567,100] Hz                    
         case 'Siemens 3T Connectom'
             specs.type = scannerType;            
             specs.maxGrad = 300; 
             specs.maxSlew = 200; 
             specs.B0 = 2.89;            
             specs.forbiddenBandsEchoSpacingLimits = [0.66e-3, 1.0e-3;... %[1250,500]Hz
-                                                     1.54e-3, 1.93e-3 ]; %[596,100] Hz
+                                                     1.54e-3, 1.83e-3 ]; %[596,100] Hz
         % 7T 
         case 'Siemens 7T Terra SC72CD'
             specs.type = scannerType;            
@@ -55,9 +57,3 @@ function specs = GetMRSystemSpecs(scannerType)
     end
 
 end
-
-% 1.47e-3 , 2.11e-3
-% 0.68e-3, 1.30e-3, 
-
-%576, 100
-% 1113, 344

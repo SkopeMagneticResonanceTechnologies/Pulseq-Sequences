@@ -372,6 +372,8 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]); 
+            obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.Ny]);
+            obj.seq.setDefinition('InplaneAcceleration', 1);
             obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
@@ -379,7 +381,7 @@ classdef skope_gre_2d < PulseqBase
             obj.seq.setDefinition('MonitoringDuringRF', obj.doMonitoringDuringRF);
             obj.seq.setDefinition('SequenceType', 'GRE');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
-                        
+                                     
             %% Write to Pulseq file
             if not(isfolder('exports'))
                 mkdir('exports')
