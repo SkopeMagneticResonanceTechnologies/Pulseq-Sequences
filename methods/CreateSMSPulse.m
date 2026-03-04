@@ -140,7 +140,7 @@ for sl = 1:nSlices
     if arg.noRfOffset
         slOff_cm = 0;
     else
-        slOff_cm = (-nSlices/2 + sl - 1) * sliceSep_cm;  % cm
+        slOff_cm = (-nSlices + sl) * sliceSep_cm;  % cm
     end
     % f [Hz] = gamma [Hz/G] * G [G/cm] * z [cm]  (units cancel correctly)
     f     = GAMMA_HZ_G * gPlateau * slOff_cm;
@@ -156,7 +156,7 @@ gzAmplitude = gPlateau * GAMMA_HZ_G * 100;   % Hz/m  (×100: G/cm → Hz/m)
 % ---------------------------------------------------------------------------
 if arg.doSim
     fov = 20;
-    z   = -fov/2 : 0.05 : fov/2;   % cm
+    z   = -fov : 0.05 : fov;   % cm
     figure;
     % Note that we simulate here for a negative gz gradient because that's
     % how we will play out the gradient for transversal imaging

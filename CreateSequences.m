@@ -150,7 +150,7 @@ paramsEpi2d.accFacPE = 1;
 paramsEpi2d.multiBandFactor = 4;
 paramsEpi2d.Nx = 74;
 paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 30e-3;
+paramsEpi2d.TE = 35e-3;
 paramsEpi2d.TR = 80e-3;
 paramsEpi2d.readoutTime = 500e-6; 
 paramsEpi2d.thickness = 3e-3;
@@ -174,7 +174,7 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-%% Create a 2D echo-planar imaging (EPI) sequence with in-plane acceleration and multi-band excitation
+%% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration and 2-fold multi-band excitation
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
 paramsEpi2d.accFacPE = 2;
