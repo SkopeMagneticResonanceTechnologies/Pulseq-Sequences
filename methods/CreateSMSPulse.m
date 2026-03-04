@@ -136,7 +136,7 @@ t_rfCenter = iRfCenter * DT_S;
 PHS   = sub_smsphase(nSlices);    % Wong 2012 phase table (rad), Table 1 p2209
 rfSMS = zeros(N, 1);
 
-for sl = 1:nSlices
+for sl = 1:nSlices 
     if arg.noRfOffset
         slOff_cm = 0;
     else
