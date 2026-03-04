@@ -5,11 +5,8 @@ classdef skope_epi_2d < PulseqBase
 % display the generated sequence.
 % 
 % Notes:
-% - The sequence file is written into the current folder.
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
-% - The x-axis was flipped because of a bug in the Siemens Pulseq 
-%   interpreter 1.4.0. 
 %
 % Example:
 %  epi = skope_epi_2d(sequenceParams);
