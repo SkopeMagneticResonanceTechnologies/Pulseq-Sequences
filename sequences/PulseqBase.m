@@ -75,6 +75,8 @@ classdef (Abstract) PulseqBase < handle
         % Slice ordering
         sliceOrdering = 'SEQUENTIAL'
         
+        % Diffusion System properties
+        sysDiff
     end
 
      properties(SetAccess=protected, GetAccess=public)

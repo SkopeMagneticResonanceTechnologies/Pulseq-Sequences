@@ -150,6 +150,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
             if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
+             if seqParams.maxDiffSlew > specs.maxSlew
+                error('Scanner does not support requested Diffusion slew rate.');
+            end
 
             % Set system limits
             obj.sys = mr.opts('MaxGrad', seqParams.maxGrad, ...
@@ -160,6 +163,16 @@ classdef skope_se_epi_2d_diff < PulseqBase
                               'rfDeadtime', 100e-6,...
                               'B0', specs.B0 ...
             );      
+
+            % set Diff grad limits
+            obj.sysDiff = mr.opts('MaxGrad', seqParams.maxGrad, ...
+                              'GradUnit','mT/m',...
+                              'MaxSlew', seqParams.maxDiffSlew, ...
+                              'SlewUnit','T/m/s',...
+                              'rfRingdownTime', 30e-6, ...
+                              'rfDeadtime', 100e-6,...
+                              'B0', specs.B0 ...
+            ); 
 
             % Copy all sequence parameters
             fieldNames = fields(seqParams);
@@ -359,31 +372,45 @@ classdef skope_se_epi_2d_diff < PulseqBase
             assert(obj.fillTR >= 0, 'Assertion for TR failed.');
 
             %% Preparation of diffusion gradients
-            for i = 2:seqParams.nbValues
+            for i = 2:seqParams.nbValues %i=1 always b0
                 % diffusion weithting calculation
                 % delayTE2 is our window for small_delta
                 % delayTE1+delayTE2-delayTE2 is our big delta
                 % we anticipate that we will use the maximum gradient amplitude, so we need
                 % to shorten delayTE2 by gmax/max_sr to accommodate the ramp down 
                 bFactor = seqParams.bFactor(i);
-                dir = obj.axesOrder{seqParams.bDir(i)}; % 1:x, 2:y, 3:z
-                small_delta=obj.delayTE2-ceil(obj.sys.maxGrad/obj.sys.maxSlew/obj.sys.gradRasterTime)*obj.sys.gradRasterTime;
-                big_delta=obj.delayTE1+mr.calcDuration(obj.rf180,obj.gz180);
-                % we define bFactCalc function below to eventually calculate time-optimal 
-                % gradients. For now we just abuse it with g=1 to give us the coefficient
-                g=sqrt(bFactor*1e6/bFactCalc(1,small_delta,big_delta))*obj.axesSign(seqParams.bDir(i)); 
                 
-                gr=ceil(abs(g)/obj.sys.maxSlew/obj.sys.gradRasterTime)*obj.sys.gradRasterTime;
-                
-                obj.gDiff{i}=mr.makeTrapezoid(dir,'amplitude',g,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sys);
-                assert(mr.calcDuration(obj.gDiff)<=obj.delayTE1);
-                assert(mr.calcDuration(obj.gDiff)<=obj.delayTE2);
+                for ja = 1:3 %axis index
+                    dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
+                    if seqParams.bDir(i,ja) > 0                                                              
+                        small_delta=obj.delayTE2-ceil(obj.sysDiff.maxGrad/obj.sysDiff.maxSlew/obj.sysDiff.gradRasterTime)*obj.sysDiff.gradRasterTime;
+                        big_delta=obj.delayTE1+mr.calcDuration(obj.rf180,obj.gz180);
+                        % we define bFactCalc function below to eventually calculate time-optimal 
+                        % gradients. For now we just abuse it with g=1 to give us the coefficient
+                        g=sqrt(bFactor*1e6/bFactCalc(1,small_delta,big_delta))*obj.axesSign(ja); 
+                        
+                        gr=ceil(abs(g)/obj.sysDiff.maxSlew/obj.sysDiff.gradRasterTime)*obj.sysDiff.gradRasterTime;
+                        
+                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',g,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sysDiff);
+                        assert(mr.calcDuration(obj.gDiff{i,ja})<=obj.delayTE1);
+                        assert(mr.calcDuration(obj.gDiff{i,ja})<=obj.delayTE2);
+                    else
+                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',0,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sysDiff);
+                    end
+                end
             end
             
             %% Time from trigger to scanner acquisition
-            obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
+            if obj.addPhaseCorrLines %gxPre and gyPre are split when navigator is ON
+                obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre) ...
+                                           + mr.calcDuration(obj.gyPre) ...
                                            + obj.gradFreeTime ...
                                            + obj.adc.delay;  
+            else %gxPre and gyPre are played simultaneously when navigator is OFF
+                obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
+                                           + obj.gradFreeTime ...
+                                           + obj.adc.delay;  
+            end
 
             if obj.addPhaseCorrLines
                 obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
@@ -591,11 +618,11 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end  
             obj.addBlock(obj.gzReph);
 
-            if bValue<2 %b=0
+            if bValue<2 % b0
                 obj.addBlock(mr.makeDelay(obj.delayTE1));
-            else %nonzero b-encoding 
-                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{bValue}))); 
-                obj.addBlock(obj.gDiff{bValue});
+            else % nonzero b-encoding 
+                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
             end
 
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
@@ -606,11 +633,11 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.addBlock(obj.gz180);
             end
             
-            if bValue<2 %b=0
+            if bValue<2 % b0
                 obj.addBlock(mr.makeDelay(obj.delayTE2));
-            else %nonzero b-encoding 
-                obj.addBlock(obj.gDiff{bValue});
-                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{bValue})));                
+            else % nonzero b-encoding 
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
             end
 
 
