@@ -26,6 +26,16 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.B0 = 2.89;            
             specs.forbiddenBandsEchoSpacingLimits = [0.66e-3, 1.0e-3;... %[1250,500]Hz
                                                      1.54e-3, 1.83e-3 ]; %[596,100] Hz
+        % 5T 
+        case 'United 5T uMR Jupiter'
+            specs.type = scannerType;            
+            specs.maxGrad = 120; 
+            specs.maxSlew = 200; 
+            specs.B0 = 4.95;            
+            specs.forbiddenBandsEchoSpacingLimits = [0.62e-3, 0.70e-3;...
+                                                     0.80e-3, 0.88e-3;...
+                                                     0.98e-3, 1.05e-3;...
+                                                     1.09e-3, 1.17e-3 ];    
         % 7T 
         case 'Siemens 7T Terra SC72CD'
             specs.type = scannerType;            
