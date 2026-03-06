@@ -101,6 +101,8 @@ classdef SequenceParams
                     obj = SequenceParams_Cima_X.apply(obj, seqName, mode);
                 case {'Siemens 7T Terra.X', 'Siemens 7T Terra SC72CD'}
                     obj = SequenceParams_Terra_X.apply(obj, seqName, mode);
+                case {'United 5T uMR Jupiter'}
+                    obj = SequenceParams_uM_Jupiter_5T.apply(obj, seqName, mode);
                 otherwise
                     error('No parameters defined for scanner "%s" and sequence "%s".', scannerType, seqName);
             end
