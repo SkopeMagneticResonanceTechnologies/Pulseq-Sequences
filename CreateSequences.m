@@ -24,7 +24,7 @@ addpath('sequences')
 scannerType = 'Siemens 3T Cima.X';
 
 %% Acquire more slices for in vivo scans and activate fat saturation
-invivo = true;
+invivo = false;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
@@ -243,7 +243,8 @@ paramsSeEpi2dDiff.accFacPE = 3;
 paramsSeEpi2dDiff.Nx = 128;
 paramsSeEpi2dDiff.Ny = 128;
 % Reduce slew rate (To be corrected by independent slew rate for diffusion gradients)
-paramsSeEpi2dDiff.maxSlew = 120; 
+% paramsSeEpi2dDiff.maxSlew = 120; 
+paramsSeEpi2dDiff.readoutTime = 500e-6;  
 
 paramsSeEpi2dDiff.nSlices = 12;
 paramsSeEpi2dDiff.distanceFactorPercentage = 150; 
@@ -253,6 +254,9 @@ if invivo
     paramsSeEpi2dDiff.seqSpecName = 'invivo';
     paramsSeEpi2dDiff.doPlayFatSat = true;
 end
+
+% paramsSeEpi2dDiff.nSlices = 2; %tmp
+% paramsSeEpi2dDiff.nDummy = 1; %tmp
 
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
