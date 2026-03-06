@@ -62,13 +62,10 @@ interpType = 'linear';   % Type of interpolation used to interpolate the fov acc
 
 [k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
-% Convert gradient to mT/m
-g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
-plot(g_rv)
-plot(g_rv(:,1), g_rv(:,2))
-% size(g_rv,1)
-%-------------------------------------------------------------------------
-
+% Convert gradient to T/m
+g_rv = [0,0; g_rv(:,1:2); 0,0] * 10/1000;
+gamma = 2.6752e+08;
+plot(gamma*10e-6*cumsum(g_rv(:,1)), gamma*10e-6*cumsum(g_rv(:,2)))
 
 %%
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);

@@ -629,6 +629,7 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);    
             obj.seq.setDefinition('SequenceType', 'GRE');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
+            obj.seq.setDefinition('SliceThickness', obj.thickness);            
             if obj.multiBandFactor > 1  
                 obj.seq.setDefinition('MultiBandFactor', obj.multiBandFactor);  
                 obj.seq.setDefinition('FovShiftFactor', obj.fovShiftFactor); 

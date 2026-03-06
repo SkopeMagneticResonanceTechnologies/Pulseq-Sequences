@@ -360,6 +360,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('SequenceType', 'GRE');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
+            obj.seq.setDefinition('SliceThickness', obj.thickness);  
             % this is important for making the sequence run automatically
             % on siemens scanners without further parameter tweaking
             obj.seq.setDefinition('MaxAdcSegmentLength', adcSamplesPerSegment); 

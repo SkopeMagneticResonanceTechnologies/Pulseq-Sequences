@@ -517,6 +517,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);
             obj.seq.setDefinition('SequenceType', 'SE');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
+            obj.seq.setDefinition('SliceThickness', obj.thickness);  
 
             %% Echo spacing check to comply with scanner forbidden bands
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')

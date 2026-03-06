@@ -27,6 +27,7 @@ RadiofrequencyRasterTime 1e-06
 SequenceType GRE 
 SliceOrdering INTERLEAVED 
 SliceShifts -0.06765 -0.06105 -0.05445 -0.04785 -0.04125 -0.03465 -0.02805 -0.02145 -0.01485 -0.00825 -0.00165 0.00495 0.01155 0.01815 0.02475 0.03135 0.03795 0.04455 0.05115 0.05775 0.06435 0.07095 -0.07095 -0.06435 -0.05775 -0.05115 -0.04455 -0.03795 -0.03135 -0.02475 -0.01815 -0.01155 -0.00495 0.00165 0.00825 0.01485 0.02145 0.02805 0.03465 0.04125 0.04785 0.05445 0.06105 0.06765 
+SliceThickness 0.003 
 TE 0.025 
 TR 0.06 
 TotalDuration 20.3515 
@@ -27103,4 +27104,4 @@ num_samples 2000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash c4346b94cd8a6e213867fb035f3401bf
+Hash 48135787547e99137a00ee10262dac05
