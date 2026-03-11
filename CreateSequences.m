@@ -1,6 +1,6 @@
 %% Pulseq example sequences 
 % including triggers and synchronization pre-scans for field-monitoring
-
+% Demo 7
 % (c) 2026 Skope Magnetic Resonance Technologies AG
 
 %% Clean up
