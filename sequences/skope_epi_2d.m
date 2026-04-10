@@ -91,6 +91,9 @@ classdef skope_epi_2d < PulseqBase
         % Pulseq slice refocusing gradient
         gzReph
 
+        gxSpoil
+        gzSpoil
+
         % Echo train length
         echoTrainLength
 
@@ -246,8 +249,6 @@ classdef skope_epi_2d < PulseqBase
                                                                                         'noRfOffset', false, ...        % don't shift slice (slab) for 3D
                                                                                         'ftype', 'ls');                 % filter design. 'ls' = least squares
                 
-                obj.gzSMS.waveform(1) = 0;
-                
                 % Set correct axis
                 obj.gzSMS.channel =  obj.axesOrder{3};  
             end
@@ -377,6 +378,15 @@ classdef skope_epi_2d < PulseqBase
             obj.gz_blipPre.amplitude = obj.gz_blipPre.amplitude*obj.pe_enable;
 
 
+            % gradient spoiling
+            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'Area', 2*obj.Nx*deltakx,'system', obj.sys);
+            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'Area',4/obj.thickness,'system', obj.sys);
+            spoilTime = 2*mr.calcDuration({obj.gxSpoil,obj.gzSpoil});
+
+            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'system', obj.sys,'Duration',spoilTime,'Area',2*obj.Nx*deltakx);
+            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'system', obj.sys,'Duration',spoilTime,'Area',4/obj.thickness);
+            
+
             %% Create external trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
 
@@ -429,7 +439,8 @@ classdef skope_epi_2d < PulseqBase
                   + obj.fillTRSMS ...
                   + obj.fillTE ...
                   + prepareTime ...
-                  + obj.echoTrainLength * mr.calcDuration(obj.gx);  
+                  + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
+                  + mr.calcDuration(obj.gxSpoil, obj.gzSpoil); 
             if obj.doPlayFatSat
                 minTR = minTR + mr.calcDuration(obj.gz_fs);
             end
@@ -926,6 +937,10 @@ classdef skope_epi_2d < PulseqBase
                 end 
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
+
+            %% Spoiling
+            spoilBlockContents = {obj.gxSpoil, obj.gzSpoil};
+            obj.addBlock(spoilBlockContents{:});
 
             %% TR filling
             if obj.multiBandFactor > 1 && (mode==KernelMode.Sync || mode==KernelMode.Reference)

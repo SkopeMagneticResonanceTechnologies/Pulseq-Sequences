@@ -14,8 +14,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 % - the diffusion encoding allows for:
 % i. definition of the b-encoding vector of magnitude
 % e.g.: obj.bFactor=[0, 1000, 1000, 1000];
-% ii. definition of the b-eencoding of directions (1:x, 2:y, 3:z axis)
-%    %bencoding
+% ii. definition of the b-encoding of directions (1:x, 2:y, 3:z axis)
 % e.g.: obj.bDir = [0, 1, 2, 3]; %axis
 %
 % Example:
@@ -373,7 +372,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
             %% Preparation of diffusion gradients
             for i = 2:seqParams.nbValues %i=1 always b0
-                % diffusion weithting calculation
+                % diffusion weighting calculation
                 % delayTE2 is our window for small_delta
                 % delayTE1+delayTE2-delayTE2 is our big delta
                 % we anticipate that we will use the maximum gradient amplitude, so we need

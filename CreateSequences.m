@@ -24,7 +24,7 @@ addpath('sequences')
 scannerType = 'Siemens 3T Cima.X';
 
 %% Acquire more slices for in vivo scans and activate fat saturation
-invivo = false;
+invivo = true;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
@@ -174,6 +174,37 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
+%% Create a 2D echo-planar imaging (EPI) sequence with 2-fold inplane acceleration and 4-fold multi-band excitation
+paramsEpi2d = SequenceParams('epi2d',scannerType);
+paramsEpi2d.fov = 0.22;
+paramsEpi2d.accFacPE = 2;
+paramsEpi2d.multiBandFactor = 4;
+paramsEpi2d.Nx = 74;
+paramsEpi2d.Ny = 74;
+paramsEpi2d.TE = 35e-3;
+paramsEpi2d.TR = 80e-3;
+paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.thickness = 3e-3;
+
+paramsEpi2d.nSlices = 12;
+paramsEpi2d.distanceFactorPercentage = 150; 
+if invivo
+    paramsEpi2d.nSlices = 44;
+    paramsEpi2d.distanceFactorPercentage = 10;
+    paramsEpi2d.seqSpecName = 'invivo';
+    paramsEpi2d.doPlayFatSat = true;
+end
+
+% Generate the sequence
+epi2d = skope_epi_2d(paramsEpi2d);
+
+% Plot sequence diagram for the first 10 s
+timeRange = [0 10];
+epi2d.plot(timeRange);
+
+% Test sequence
+epi2d.test();
+
 %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration and 2-fold multi-band excitation
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
@@ -213,7 +244,7 @@ paramsEpi2d.Nx = 130;
 paramsEpi2d.Ny = 130;
 paramsEpi2d.TE = 25e-3;
 paramsEpi2d.TR = 60e-3;
-paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.readoutTime = 660e-6; 
 paramsEpi2d.thickness = 3e-3;
 
 paramsEpi2d.nSlices = 12;
@@ -258,6 +289,8 @@ end
 % paramsSeEpi2dDiff.nSlices = 2; %tmp
 % paramsSeEpi2dDiff.nDummy = 1; %tmp
 
+paramsSeEpi2dDiff.TE = 53e-3;
+
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
@@ -299,6 +332,9 @@ opc.test();
 
 %% Create local eddy current calibration sequence
 paramsLec = SequenceParams('lec',scannerType);
+
+
+paramsLec.triggerOutput = 'osc0';
 
 % Generate the sequence
 lec = skope_localEddyCalib(paramsLec);
