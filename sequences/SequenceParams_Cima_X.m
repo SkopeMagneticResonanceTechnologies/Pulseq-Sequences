@@ -13,7 +13,7 @@ classdef SequenceParams_Cima_X
                     obj.alpha        = 7;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
-                    obj.TE           = [5 10] * 1e-3;
+                    obj.TE           = [6 12] * 1e-3;
                     obj.TR           = 25e-3;
                     obj.readoutTime  = 3.2e-3;
                     obj.maxGrad      = 28;
@@ -50,14 +50,14 @@ classdef SequenceParams_Cima_X
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 1000, 1000, 1000, 1000, 1000, 1000];
+                    obj.bFactor      = [0, 2000, 2000, 2000, 2000, 2000, 2000];
                     obj.bDir         = [0,0,0;... % b0
                                         1,0,0;... % x
                                         0,1,0;... % y
                                         0,0,1;... % z
-                                        1,1,0;... % xy
-                                        0,1,1;... % yz
-                                        1,0,1;];  % xz
+                                        [1,1,0]./sqrt(2);... % xy
+                                        [0,1,1]./sqrt(2);... % yz
+                                        [1,0,1]./sqrt(2);];  % xz
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
                     obj.readoutTime  = 0.600e-3;

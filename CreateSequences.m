@@ -112,98 +112,98 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-%% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 2-fold multi-band excitation
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 1;
-paramsEpi2d.multiBandFactor = 2;
-paramsEpi2d.Nx = 74;
-paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 30e-3;
-paramsEpi2d.TR = 80e-3;
-paramsEpi2d.readoutTime = 500e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
-
-%% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 4-fold multi-band excitation
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 1;
-paramsEpi2d.multiBandFactor = 4;
-paramsEpi2d.Nx = 74;
-paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 35e-3;
-paramsEpi2d.TR = 80e-3;
-paramsEpi2d.readoutTime = 500e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
-
-%% Create a 2D echo-planar imaging (EPI) sequence with 2-fold inplane acceleration and 4-fold multi-band excitation
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 2;
-paramsEpi2d.multiBandFactor = 4;
-paramsEpi2d.Nx = 74;
-paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 35e-3;
-paramsEpi2d.TR = 80e-3;
-paramsEpi2d.readoutTime = 500e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
+% %% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 2-fold multi-band excitation
+% paramsEpi2d = SequenceParams('epi2d',scannerType);
+% paramsEpi2d.fov = 0.22;
+% paramsEpi2d.accFacPE = 1;
+% paramsEpi2d.multiBandFactor = 2;
+% paramsEpi2d.Nx = 74;
+% paramsEpi2d.Ny = 74;
+% paramsEpi2d.TE = 30e-3;
+% paramsEpi2d.TR = 80e-3;
+% paramsEpi2d.readoutTime = 500e-6; 
+% paramsEpi2d.thickness = 3e-3;
+% 
+% paramsEpi2d.nSlices = 12;
+% paramsEpi2d.distanceFactorPercentage = 150; 
+% if invivo
+%     paramsEpi2d.nSlices = 44;
+%     paramsEpi2d.distanceFactorPercentage = 10;
+%     paramsEpi2d.seqSpecName = 'invivo';
+%     paramsEpi2d.doPlayFatSat = true;
+% end
+% 
+% % Generate the sequence
+% epi2d = skope_epi_2d(paramsEpi2d);
+% 
+% % Plot sequence diagram for the first 10 s
+% timeRange = [0 10];
+% epi2d.plot(timeRange);
+% 
+% % Test sequence
+% epi2d.test();
+% 
+% %% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 4-fold multi-band excitation
+% paramsEpi2d = SequenceParams('epi2d',scannerType);
+% paramsEpi2d.fov = 0.22;
+% paramsEpi2d.accFacPE = 1;
+% paramsEpi2d.multiBandFactor = 4;
+% paramsEpi2d.Nx = 74;
+% paramsEpi2d.Ny = 74;
+% paramsEpi2d.TE = 35e-3;
+% paramsEpi2d.TR = 80e-3;
+% paramsEpi2d.readoutTime = 500e-6; 
+% paramsEpi2d.thickness = 3e-3;
+% 
+% paramsEpi2d.nSlices = 12;
+% paramsEpi2d.distanceFactorPercentage = 150; 
+% if invivo
+%     paramsEpi2d.nSlices = 44;
+%     paramsEpi2d.distanceFactorPercentage = 10;
+%     paramsEpi2d.seqSpecName = 'invivo';
+%     paramsEpi2d.doPlayFatSat = true;
+% end
+% 
+% % Generate the sequence
+% epi2d = skope_epi_2d(paramsEpi2d);
+% 
+% % Plot sequence diagram for the first 10 s
+% timeRange = [0 10];
+% epi2d.plot(timeRange);
+% 
+% % Test sequence
+% epi2d.test();
+% 
+% %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold inplane acceleration and 4-fold multi-band excitation
+% paramsEpi2d = SequenceParams('epi2d',scannerType);
+% paramsEpi2d.fov = 0.22;
+% paramsEpi2d.accFacPE = 2;
+% paramsEpi2d.multiBandFactor = 4;
+% paramsEpi2d.Nx = 74;
+% paramsEpi2d.Ny = 74;
+% paramsEpi2d.TE = 35e-3;
+% paramsEpi2d.TR = 80e-3;
+% paramsEpi2d.readoutTime = 500e-6; 
+% paramsEpi2d.thickness = 3e-3;
+% 
+% paramsEpi2d.nSlices = 12;
+% paramsEpi2d.distanceFactorPercentage = 150; 
+% if invivo
+%     paramsEpi2d.nSlices = 44;
+%     paramsEpi2d.distanceFactorPercentage = 10;
+%     paramsEpi2d.seqSpecName = 'invivo';
+%     paramsEpi2d.doPlayFatSat = true;
+% end
+% 
+% % Generate the sequence
+% epi2d = skope_epi_2d(paramsEpi2d);
+% 
+% % Plot sequence diagram for the first 10 s
+% timeRange = [0 10];
+% epi2d.plot(timeRange);
+% 
+% % Test sequence
+% epi2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration and 2-fold multi-band excitation
 paramsEpi2d = SequenceParams('epi2d',scannerType);
@@ -236,35 +236,35 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-%% EPI with acceleration factor 3 and higher resolution
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 3;
-paramsEpi2d.Nx = 130;
-paramsEpi2d.Ny = 130;
-paramsEpi2d.TE = 25e-3;
-paramsEpi2d.TR = 60e-3;
-paramsEpi2d.readoutTime = 660e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10]; 
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
+% %% EPI with acceleration factor 3 and higher resolution
+% paramsEpi2d = SequenceParams('epi2d',scannerType);
+% paramsEpi2d.fov = 0.22;
+% paramsEpi2d.accFacPE = 3;
+% paramsEpi2d.Nx = 130;
+% paramsEpi2d.Ny = 130;
+% paramsEpi2d.TE = 25e-3;
+% paramsEpi2d.TR = 60e-3;
+% paramsEpi2d.readoutTime = 660e-6; 
+% paramsEpi2d.thickness = 3e-3;
+% 
+% paramsEpi2d.nSlices = 12;
+% paramsEpi2d.distanceFactorPercentage = 150; 
+% if invivo
+%     paramsEpi2d.nSlices = 44;
+%     paramsEpi2d.distanceFactorPercentage = 10;
+%     paramsEpi2d.seqSpecName = 'invivo';
+%     paramsEpi2d.doPlayFatSat = true;
+% end
+% 
+% % Generate the sequence
+% epi2d = skope_epi_2d(paramsEpi2d);
+% 
+% % Plot sequence diagram for the first 10 s
+% timeRange = [0 10]; 
+% epi2d.plot(timeRange);
+% 
+% % Test sequence
+% epi2d.test();
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding
 % navigator is by default disabled here
@@ -273,8 +273,6 @@ paramsSeEpi2dDiff.fov = 0.22;
 paramsSeEpi2dDiff.accFacPE = 3;
 paramsSeEpi2dDiff.Nx = 128;
 paramsSeEpi2dDiff.Ny = 128;
-% Reduce slew rate (To be corrected by independent slew rate for diffusion gradients)
-% paramsSeEpi2dDiff.maxSlew = 120; 
 paramsSeEpi2dDiff.readoutTime = 500e-6;  
 
 paramsSeEpi2dDiff.nSlices = 12;
@@ -290,6 +288,7 @@ end
 % paramsSeEpi2dDiff.nDummy = 1; %tmp
 
 paramsSeEpi2dDiff.TE = 53e-3;
+paramsSeEpi2dDiff.TR = 70e-3;
 
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
