@@ -213,6 +213,8 @@ rf = mr.makeArbitraryRf(rfp, ...
 rf.signal = rf.signal / max(abs(rf.signal)) * max(abs(rfp));  % preserve amplitude
 
 gz = mr.makeArbitraryGrad('z', gzp, sys, 'delay', gdelay);
+gz.waveform(1) = 0;
+gz.waveform(end) = 0;
 gz.first = 0;
 gz.last  = 0;
 

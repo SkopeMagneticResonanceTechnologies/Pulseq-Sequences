@@ -13,10 +13,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
 % - dummy scans are played out before every bencoding volume
 % - the diffusion encoding allows for:
 % i. definition of the b-encoding vector of magnitude
-% e.g.: obj.bFactor=[0, 1000, 1000, 1000];
-% ii. definition of the b-eencoding of directions (1:x, 2:y, 3:z axis)
-%    %bencoding
-% e.g.: obj.bDir = [0, 1, 2, 3]; %axis
+%       e.g.: obj.bFactor=[0, 1000, 1000, 1000];
+% ii. definition of the b-encoding vector of directions 
+% e.g.: obj.bDir = [0,0,0; 1,0,0; 0,1,1]; % equals to b0, x and y,z cross terms
 %
 % Example:
 %  epi = skope_se_epi_2d_diff(sequenceParams);
@@ -103,6 +102,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
         % Pulseq slice refocusing gradient
         gzReph
+
+        gxSpoil
+        gzSpoil
 
         % Echo train length
         echoTrainLength
@@ -329,6 +331,14 @@ classdef skope_se_epi_2d_diff < PulseqBase
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
             obj.gyPre.amplitude = obj.gyPre.amplitude*obj.pe_enable;
 
+            % gradient spoiling
+            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'Area', 2*obj.Nx*deltakx,'system', obj.sys);
+            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'Area',4/obj.thickness,'system', obj.sys);
+            spoilTime = 2*mr.calcDuration({obj.gxSpoil,obj.gzSpoil});
+
+            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'system', obj.sys,'Duration',spoilTime,'Area',2*obj.Nx*deltakx);
+            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'system', obj.sys,'Duration',spoilTime,'Area',4/obj.thickness);
+
   
             %% Create external trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
@@ -361,7 +371,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
                   + obj.delayTE1 + obj.delayTE2 + obj.gradFreeTime ...
                   + mr.calcDuration(obj.gz180) ...
                   + prepareTime ...
-                  + obj.echoTrainLength * mr.calcDuration(obj.gx); 
+                  + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
+                  + mr.calcDuration(obj.gxSpoil, obj.gzSpoil); 
             if obj.doPlayFatSat
                 minTR = minTR + mr.calcDuration(obj.gz_fs);
             end
@@ -373,7 +384,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
             %% Preparation of diffusion gradients
             for i = 2:seqParams.nbValues %i=1 always b0
-                % diffusion weithting calculation
+                % diffusion weighting calculation
                 % delayTE2 is our window for small_delta
                 % delayTE1+delayTE2-delayTE2 is our big delta
                 % we anticipate that we will use the maximum gradient amplitude, so we need
@@ -762,6 +773,10 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 end 
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
+
+            %% Spoiling
+            spoilBlockContents = {obj.gxSpoil, obj.gzSpoil};
+            obj.addBlock(spoilBlockContents{:});
 
             %% TR filling
             obj.addBlock(mr.makeDelay(obj.fillTR));
