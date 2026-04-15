@@ -285,16 +285,24 @@ if invivo
 end
 
 % paramsSeEpi2dDiff.nSlices = 2; %tmp
-% paramsSeEpi2dDiff.nDummy = 1; %tmp
+% paramsSeEpi2dDiff.nDummy = 0; %tmp
 
-paramsSeEpi2dDiff.TE = 53e-3;
-paramsSeEpi2dDiff.TR = 70e-3;
+% ---- PF OFF -----
+% paramsSeEpi2dDiff.TE = 53e-3;
+% paramsSeEpi2dDiff.TR = 70e-3;
+% ---- PF off -----
+
+% ---- PF ON -----
+paramsSeEpi2dDiff.partFourierFactor = 4/8; %RR: realistic is a 6/8
+paramsSeEpi2dDiff.TE = 40e-3;
+paramsSeEpi2dDiff.TR = 56e-3;
+% ---- PF ON -----
 
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence diagram for the first 5 to 20 s
-timeRange = [5 20];
+timeRange = [4 20];
 seepi2d.plot(timeRange);
 
 % Test sequence

@@ -38,6 +38,7 @@ classdef SequenceParams
         nDummy = 0;             % Number of dummy pulses to reach steady state
         accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI at the moment)
         multiBandFactor = 1
+        partFourierFactor = 1
         
         sliceOrientation = SliceOrientation.TRA;  % Slice orientation        
         phaseEncDir = PhaseEncodingDirection.AP;  % Phase encoding direction

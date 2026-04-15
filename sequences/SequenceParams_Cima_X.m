@@ -47,6 +47,7 @@ classdef SequenceParams_Cima_X
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
                     obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nRep         = 1;
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;

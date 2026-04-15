@@ -492,8 +492,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
             
             %% Main sequence body
             for bValue=1:seqParams.nbValues
-                % Dummy scans
-                for rep=1:obj.nDummy
+                % Dummy scans 
+                for rep=1:obj.nDummy %number of dummy volumes (i.e., they loop through slices too)
                     for slc = 1:obj.nSlices
                         avg = 1;
                         obj = runKernel(obj, slc, avg, rep, bValue, KernelMode.Dummy);
