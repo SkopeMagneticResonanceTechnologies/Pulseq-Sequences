@@ -22,25 +22,25 @@ addpath('sequences')
 % 'Siemens 3T Cima.X', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
 scannerType = 'Siemens 3T Cima.X';
 
-%% Create a multi-shot 2D spiral gradient-echo sequence with pre-generated spiral waveform
-% Get default sequence parameters
-paramsSpiral2d = SequenceParams('spiral2d',scannerType);
-load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
-obj.sys.gamma = 42576000;
-spiralWaveform = spiralWaveform / obj.sys.gamma * 1000;
-paramsSpiral2d.seqSpecName = 'hardcoded';
-
-spiral2d = skope_spiral_2d(paramsSpiral2d,spiralWaveform);
-
-% Plot sequence information after sync 
-timeRange = [5.4 5.42];
-spiral2d.plot(timeRange);
-
-% Test sequence
-spiral2d.test();
+% %% Create a multi-shot 2D spiral gradient-echo sequence with pre-generated spiral waveform
+% % Get default sequence parameters
+% paramsSpiral2d = SequenceParams('spiral2d',scannerType);
+% load('./waveforms/spiralGrad_FOV192_RES1mm_minRise6_maxAmp40_nitlv16.mat'); % [Hz/m]
+% obj.sys.gamma = 42576000;
+% spiralWaveform = spiralWaveform / obj.sys.gamma * 1000;
+% paramsSpiral2d.seqSpecName = 'hardcoded';
+% 
+% spiral2d = skope_spiral_2d(paramsSpiral2d,spiralWaveform);
+% 
+% % Plot sequence information after sync 
+% timeRange = [5.4 5.42];
+% spiral2d.plot(timeRange);
+% 
+% % Test sequence
+% spiral2d.test();
 
 %% Create a multi-shot 2D spiral gradient-echo sequence with specific spiral waveform
-minTimeGradientDir = fullfile(pwd, 'minTimeGradient', 'Matlab');
+minTimeGradientDir = fullfile(fileparts(pwd), 'minTimeGradient', 'Matlab');
 if not(isfolder(minTimeGradientDir))
     error('Download https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz')
 end
@@ -64,8 +64,8 @@ interpType = 'linear';   % Type of interpolation used to interpolate the fov acc
 
 % Convert gradient to mT/m
 g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
-plot(g_rv)
-plot(g_rv(:,1), g_rv(:,2))
+figure, plot(g_rv), xlabel('datapoints'), ylabel('gradients [mt/m]'), title('Gradient waveforms')
+figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral trajectory')
 % size(g_rv,1)
 %-------------------------------------------------------------------------
 
@@ -73,9 +73,9 @@ plot(g_rv(:,1), g_rv(:,2))
 %%
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
-paramsSpiral2d.Nx = 248; %from fov/res
-paramsSpiral2d.fov = 250e-3; %from fov(1)
-paramsSpiral2d.readoutTime = 4.1e-3; %from size(k_rv,1) * 1e-3
+paramsSpiral2d.Nx = ceil(fov(1)./res);
+paramsSpiral2d.fov = fov(1)*1e-2; 
+paramsSpiral2d.readoutTime = time_rv; 
 paramsSpiral2d.mode = 'multiShot';
 
 % Create sequence
@@ -94,8 +94,8 @@ spiral2d.test();
 %-------------------------------------------------------------------------
 Nitlv = 1;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 1.8;              % Resolution (in mm)
-fov	= [25 24 22];       % Vector of fov (in cm)
+res	= 2;              % Resolution (in mm)
+fov	= [25 25 25];       % Vector of fov (in cm)
 radius = [0,0.5,1];     % Vector of radius corresponding to the fov
 Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
@@ -107,13 +107,17 @@ interpType = 'cubic';   % Type of interpolation used to interpolate the fov acce
 
 % Convert gradient to mT/m
 g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
-%-------------------------------------------------------------------------
+figure, plot(g_rv), xlabel('datapoints'), ylabel('gradients [mt/m]'), title('Gradient waveforms')
+figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral trajectory')
+
+
+%%
 
 paramsSpiral2d = SequenceParams('spiral2d',scannerType);
 paramsSpiral2d.Ny = Nitlv;
-paramsSpiral2d.Nx = 140; %from fov/res
-paramsSpiral2d.fov = 250e-3; %from fov(1)
-paramsSpiral2d.readoutTime = 70.1e-3; %from size(k_rv,1) * 1e-3
+paramsSpiral2d.Nx = ceil(fov(1)./res);
+paramsSpiral2d.fov = fov(1)*1e-2; 
+paramsSpiral2d.readoutTime = time_rv; %from size(k_rv,1) * 1e-3
 paramsSpiral2d.mode = 'singleShot';
 paramsSpiral2d.seqSpecName = '';
 
