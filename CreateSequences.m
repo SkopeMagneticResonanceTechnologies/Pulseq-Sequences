@@ -300,6 +300,42 @@ seepi2d.plot(timeRange);
 % Test sequence
 seepi2d.test();
 
+
+%% Create a 2D spin-echo EPI sequence with diffusion encoding (R2, MB2)
+% navigator is by default disabled here
+paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff_mb',scannerType);
+paramsSeEpi2dDiff.fov = 0.22;
+paramsSeEpi2dDiff.accFacPE = 2;
+paramsSeEpi2dDiff.multiBandFactor = 2;
+paramsSeEpi2dDiff.Nx = 100;
+paramsSeEpi2dDiff.Ny = 100;
+paramsSeEpi2dDiff.readoutTime = 500e-6;  
+
+paramsSeEpi2dDiff.nSlices = 12;
+paramsSeEpi2dDiff.distanceFactorPercentage = 150; 
+if invivo
+    paramsSeEpi2dDiff.nSlices = 44;
+    paramsSeEpi2dDiff.distanceFactorPercentage = 10;
+    paramsSeEpi2dDiff.seqSpecName = 'invivo';
+    paramsSeEpi2dDiff.doPlayFatSat = true;
+end
+
+paramsSeEpi2dDiff.nSlices = 4; %tmp
+paramsSeEpi2dDiff.nDummy = 1; %tmp
+
+paramsSeEpi2dDiff.TE = 80e-3;
+paramsSeEpi2dDiff.TR = 120e-3;
+
+% Generate the sequence
+seepi2d = skope_se_epi_2d_diff_mb(paramsSeEpi2dDiff);
+
+% Plot sequence diagram for the first 5 to 20 s
+timeRange = [5 20];
+seepi2d.plot(timeRange);
+
+% Test sequence
+% seepi2d.test();
+
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
 

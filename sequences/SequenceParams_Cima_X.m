@@ -65,6 +65,34 @@ classdef SequenceParams_Cima_X
                     obj.maxSlew      = 190;
                     obj.maxDiffSlew  = 120;
                     obj.distanceFactorPercentage = 150;
+                case 'se_epi2d_diff_mb'
+                    obj.TE           = 64e-3;
+                    obj.TR           = 130e-3;
+                    obj.alpha        = 90;
+                    obj.fov          = 220e-3;
+                    obj.Nx           = 80;
+                    obj.Ny           = 80;
+                    obj.thickness    = 3e-3;
+                    obj.nSlices      = 12;
+                    obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.accFacPE     = 1;
+                    obj.addPhaseCorrLines = 1;
+                    obj.doPlayFatSat = 0;
+                    obj.bFactor      = [0, 2000, 2000, 2000, 2000, 2000, 2000];
+                    obj.bDir         = [0,0,0;... % b0
+                                        1,0,0;... % x
+                                        0,1,0;... % y
+                                        0,0,1;... % z
+                                        [1,1,0]./sqrt(2);... % xy
+                                        [0,1,1]./sqrt(2);... % yz
+                                        [1,0,1]./sqrt(2);];  % xz
+                    obj.nbValues     = size(obj.bDir,1);
+                    obj.seqSpecName  = '';
+                    obj.readoutTime  = 0.600e-3;
+                    obj.maxGrad      = 190;
+                    obj.maxSlew      = 190;
+                    obj.maxDiffSlew  = 120;
+                    obj.distanceFactorPercentage = 150;
                 case 'gre3d'
                     obj.fov          = [0.56 0.56 0.56]*1e-2*40053000/42577481;
                     obj.Nx           = 56;
