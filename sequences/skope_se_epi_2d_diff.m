@@ -339,24 +339,28 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'system', obj.sys,'Duration',spoilTime,'Area',2*obj.Nx*deltakx);
             obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'system', obj.sys,'Duration',spoilTime,'Area',4/obj.thickness);
 
+            obj.gxPre.amplitudeInit = obj.gxPre.amplitude; % keep track of initialized amplitude in case Nreadout EPI lobes is odd and swap UP-DOWN results wrong
+            obj.gx.amplitudeInit = obj.gx.amplitude;
+
   
             %% Create external trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
 
             %% Calculate minimal TE
             if obj.addPhaseCorrLines
-                prepareTime = mr.calcDuration(obj.gxPre) + ...
-                            3*mr.calcDuration(obj.gx) + ...
-                            mr.calcDuration(obj.gyPre);
+                navTime = 2*mr.calcDuration(obj.gxPre) + ...
+                            3*mr.calcDuration(obj.gx);
             else
-                prepareTime = mr.calcDuration(obj.gxPre, obj.gyPre);
+                navTime = 0;
             end
-            
+            prepareTime = mr.calcDuration(obj.gxPre, obj.gyPre);
+
             TE1 = obj.TE/2;
             TE2 = TE1;
             obj.delayTE1 = obj.roundUpToGRT(TE1 - (obj.gz.flatTime/2 ...
                   + obj.gz.fallTime ...
                   + mr.calcDuration(obj.gzReph) ...
+                  + navTime ...
                   + mr.calcDuration(obj.gz180)/2 ));         
 
             obj.delayTE2 = obj.roundUpToGRT(TE2 - (prepareTime  ...
@@ -369,6 +373,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             minTR = mr.calcDuration(obj.gz) ...
                   + mr.calcDuration(obj.gzReph) ...
                   + obj.delayTE1 + obj.delayTE2 + obj.gradFreeTime ...
+                  + navTime ...
                   + mr.calcDuration(obj.gz180) ...
                   + prepareTime ...
                   + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
@@ -412,30 +417,30 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
             
             %% Time from trigger to scanner acquisition
-            if obj.addPhaseCorrLines %gxPre and gyPre are split when navigator is ON
-                obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre) ...
-                                           + mr.calcDuration(obj.gyPre) ...
-                                           + obj.gradFreeTime ...
-                                           + obj.adc.delay;  
-            else %gxPre and gyPre are played simultaneously when navigator is OFF
-                obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
-                                           + obj.gradFreeTime ...
-                                           + obj.adc.delay;  
-            end
+            % if obj.addPhaseCorrLines %gxPre and gyPre are split when navigator is ON
+            %     obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre) ...
+            %                                + mr.calcDuration(obj.gyPre) ...
+            %                                + obj.gradFreeTime ...
+            %                                + obj.adc.delay;  
+            % else %gxPre and gyPre are played simultaneously when navigator is OFF
+            obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre,obj.gyPre)...
+                                       + obj.gradFreeTime ...
+                                       + obj.adc.delay;  
+            % end
 
-            if obj.addPhaseCorrLines
-                obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
-            end
+            % if obj.addPhaseCorrLines
+            %     obj.triggerToScannerAcqDelay = obj.triggerToScannerAcqDelay + 3*mr.calcDuration(obj.gx);
+            % end
             
             %% Calculate required camera acquisition duration
             obj.cameraAcqDuration = mr.calcDuration(obj.gxPre, obj.gyPre) ...
                                   + obj.echoTrainLength * mr.calcDuration(obj.gx) ...
                                   + 1e-3; % To be safe
 
-            if obj.addPhaseCorrLines
-                obj.cameraAcqDuration = obj.cameraAcqDuration + ...
-                    3*mr.calcDuration(obj.gx);
-            end
+            % if obj.addPhaseCorrLines
+            %     obj.cameraAcqDuration = obj.cameraAcqDuration + ...
+            %         3*mr.calcDuration(obj.gx);
+            % end
             obj.cameraAcqDuration = ceil(obj.cameraAcqDuration*1000)/1000;
 
             %% Determine chronological order for slice positions
@@ -612,6 +617,10 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 % Blocks with ONCE=0 are executed on every repetition
                 obj.addBlock(mr.makeLabel('SET','ONCE', 0));
             end
+            
+            % signs of EPI readout gradients and prephaser initialized
+            obj.gxPre.amplitude = obj.gxPre.amplitudeInit; 
+            obj.gx.amplitude = obj.gx.amplitudeInit;
 
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
@@ -629,39 +638,10 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end  
             obj.addBlock(obj.gzReph);
 
-            if bValue<2 % b0
-                obj.addBlock(mr.makeDelay(obj.delayTE1));
-            else % nonzero b-encoding 
-                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
-                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-            end
-
-            if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
-                obj.rf180.freqOffset=obj.gz180.amplitude * obj.slicePositionChronological(slc); 
-                obj.rf180.phaseOffset=-2*pi*obj.rf180.freqOffset * mr.calcRfCenter(obj.rf180); % compensate for the slice-offset induced phase
-                obj.addBlock(obj.rf180, obj.gz180);
-            else
-                obj.addBlock(obj.gz180);
-            end
-            
-            if bValue<2 % b0
-                obj.addBlock(mr.makeDelay(obj.delayTE2));
-            else % nonzero b-encoding 
-                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
-            end
-
-
-            if mode==KernelMode.Sync || mode==KernelMode.Imaging
-                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.gradFreeTime)); 												   
-            else
-                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
-            end
-                      
             if obj.addPhaseCorrLines
                
                 % Start with flip gx amplitude
-                obj.gxPre.amplitude = -obj.gxPre.amplitude;   
+                % obj.gxPre.amplitude = -obj.gxPre.amplitude;   
                 obj.addBlock(obj.gxPre); 
 
                 % First phase correction line
@@ -672,7 +652,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                            mr.makeLabel('SET','SLC', slc-1), ...
                            mr.makeLabel('SET','SET', bValue-1), ...
                            mr.makeLabel('SET','NAV',true)};
-                obj.gx.amplitude = -obj.gx.amplitude;
+                % obj.gx.amplitude = -obj.gx.amplitude;
                 
                 if mode==KernelMode.Sync || mode==KernelMode.Imaging
                     obj.addBlock(obj.gx, labels{:}, obj.adc);
@@ -714,14 +694,41 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 end
 
                 % Restore original polarity
-                obj.gx.amplitude = -obj.gx.amplitude;
-                obj.gxPre.amplitude = -obj.gxPre.amplitude; 
+                % obj.gx.amplitude = -obj.gx.amplitude;
 
-                % Play out phase pre-winding gradient
-                obj.addBlock(obj.gyPre);
-            else
-                obj.addBlock(obj.gxPre, obj.gyPre);
+                obj.addBlock(obj.gxPre);
             end
+                
+            if bValue<2 % b0
+                obj.addBlock(mr.makeDelay(obj.delayTE1));
+            else % nonzero b-encoding 
+                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+            end
+
+            if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
+                obj.rf180.freqOffset=obj.gz180.amplitude * obj.slicePositionChronological(slc); 
+                obj.rf180.phaseOffset=-2*pi*obj.rf180.freqOffset * mr.calcRfCenter(obj.rf180); % compensate for the slice-offset induced phase
+                obj.addBlock(obj.rf180, obj.gz180);
+            else
+                obj.addBlock(obj.gz180);
+            end
+            
+            if bValue<2 % b0
+                obj.addBlock(mr.makeDelay(obj.delayTE2));
+            else % nonzero b-encoding 
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
+            end
+
+
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.gradFreeTime)); 												   
+            else
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
+            end
+          
+            obj.addBlock(obj.gxPre, obj.gyPre);            
 
             for lin = 1:obj.echoTrainLength
                 
