@@ -51,20 +51,20 @@ classdef SequenceParams_Cima_X
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 2000, 2000, 2000, 2000, 2000, 2000];
+                    obj.bFactor      = [0, 2000, 2000, 2000, 2000./sqrt(2), 2000./sqrt(2), 2000./sqrt(2)];
                     obj.bDir         = [0,0,0;... % b0
                                         1,0,0;... % x
                                         0,1,0;... % y
                                         0,0,1;... % z
-                                        [1,1,0]./sqrt(2);... % xy
-                                        [0,1,1]./sqrt(2);... % yz
-                                        [1,0,1]./sqrt(2);];  % xz
+                                        1,1,0;... % xy
+                                        0,1,1;... % yz
+                                        1,0,1;];  % xz
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
                     obj.readoutTime  = 0.600e-3;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
-                    obj.maxDiffSlew  = 120;
+                    obj.maxDiffSlew  = 15;
                     obj.distanceFactorPercentage = 150;
                 case 'se_epi2d_diff_mb'
                     obj.TE           = 64e-3;
