@@ -46,7 +46,7 @@ classdef SequenceParams_Cima_X
                     obj.Ny           = 80;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
-                    obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nDummy       = 1;   % no trigger played out. Total number of readout dummies = nDummy*nSlices.
                     obj.nRep         = 1;
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
@@ -64,7 +64,9 @@ classdef SequenceParams_Cima_X
                     obj.readoutTime  = 0.600e-3;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
-                    obj.maxDiffSlew  = 15;
+                    %failed 65/180, try 40/180 and 60/160
+                    obj.maxDiffSlew  = 60; %65  
+                    obj.maxDiffGrad  = 160;
                     obj.distanceFactorPercentage = 150;
                 case 'se_epi2d_diff_mb'
                     obj.TE           = 64e-3;
@@ -118,10 +120,10 @@ classdef SequenceParams_Cima_X
                     obj.TR           = 140e-3;
                     obj.readoutTime  = 8e-3;
                     obj.mode         = 'multiShot';
-                    obj.maxGrad      = 40;
-                    obj.maxSlew      = 150;
+                    obj.maxGrad      = 190;
+                    obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 150;
-                    obj.nDummy       = 5;
+                    obj.nDummy       = 1;
                 otherwise
                     error('SequenceParams_Cima_X: unknown sequence "%s".', seqName)
             end

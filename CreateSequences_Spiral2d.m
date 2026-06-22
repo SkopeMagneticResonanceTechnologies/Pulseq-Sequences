@@ -46,13 +46,15 @@ if not(isfolder(minTimeGradientDir))
 end
 addpath(genpath(minTimeGradientDir))
 
+
+%%
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------
 Nitlv = 16;             % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 1;                % Resolution (in mm)
-fov	= [25,25];          % Vector of fov (in cm)
+res	= 0.8;                % Resolution (in mm)
+fov	= [22,22];          % Vector of fov (in cm)
 radius = [0,1];         % Vector of radius corresponding to the fov
 Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
@@ -76,7 +78,9 @@ paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv; 
-paramsSpiral2d.mode = 'multiShot';
+paramsSpiral2d.mode = 'MS';
+% paramsSpiral2d.nSlices = 2;
+paramsSpiral2d.nDummy = 1;
 
 % Create sequence
 spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);
@@ -95,9 +99,9 @@ spiral2d.test();
 Nitlv = 1;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
 res	= 2;              % Resolution (in mm)
-fov	= [25 25 25];       % Vector of fov (in cm)
+fov	= [22 22 22];       % Vector of fov (in cm)
 radius = [0,0.5,1];     % Vector of radius corresponding to the fov
-Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
+Gmax = 15;               % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
@@ -119,7 +123,9 @@ paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv; %from size(k_rv,1) * 1e-3
 paramsSpiral2d.mode = 'singleShot';
-paramsSpiral2d.seqSpecName = '';
+paramsSpiral2d.seqSpecName = '2mm';
+paramsSpiral2d.nDummy = 1;
+% paramsSpiral2d.nSlices = 2;
 
 % Create sequence
 spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);

@@ -16,8 +16,8 @@ classdef SequenceParams_Terra_X
                     obj.TE           = [6 12] * 1e-3;
                     obj.TR           = 25e-3;
                     obj.readoutTime  = 3.2e-3;
-                    obj.maxGrad      = 28;
-                    obj.maxSlew      = 150;
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
                     obj.nDummy       = 10;
                     obj.doMonitoringDuringRF = 0;
                     obj.distanceFactorPercentage = 200;
@@ -34,29 +34,38 @@ classdef SequenceParams_Terra_X
                     obj.nRep         = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.readoutTime  = 0.800e-3;
-                    obj.maxGrad      = 32;
-                    obj.maxSlew      = 180;
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 200;
                 case 'se_epi2d_diff'
-                    obj.TE           = 110e-3;
-                    obj.TR           = 200e-3;
+                   obj.TE           = 64e-3;
+                    obj.TR           = 130e-3;
                     obj.alpha        = 90;
-                    obj.fov          = 200e-3;
+                    obj.fov          = 220e-3;
                     obj.Nx           = 80;
                     obj.Ny           = 80;
                     obj.thickness    = 3e-3;
-                    obj.nSlices      = 15;
-                    obj.nDummy       = 10;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nSlices      = 12;
+                    obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.nRep         = 1;
                     obj.accFacPE     = 1;
+                    obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 1000, 1000, 1000];
-                    obj.bDir         = [0, 1, 2, 3];
-                    obj.nbValues     = length(obj.bDir);
+                    obj.bFactor      = [0, 2000, 2000, 2000, 2000./sqrt(2), 2000./sqrt(2), 2000./sqrt(2)];
+                    obj.bDir         = [0,0,0;... % b0
+                                        1,0,0;... % x
+                                        0,1,0;... % y
+                                        0,0,1;... % z
+                                        1,1,0;... % xy
+                                        0,1,1;... % yz
+                                        1,0,1;];  % xz
+                    obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
-                    obj.readoutTime  = 0.680e-3;
-                    obj.maxGrad      = 32;
-                    obj.maxSlew      = 180;
-                    obj.distanceFactorPercentage = 200;
+                    obj.readoutTime  = 0.600e-3;
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
+                    obj.maxDiffSlew  = 15;
+                    obj.distanceFactorPercentage = 150;
                 case 'gre3d'
                     obj.fov          = [0.56 0.56 0.56]*1e-2*40053000/42577481;
                     obj.Nx           = 56;
@@ -66,8 +75,8 @@ classdef SequenceParams_Terra_X
                     obj.TE           = [12.3 28.16]*1e-3 + 1e-3;
                     obj.TR           = 100e-3;
                     obj.readoutTime  = 7.84e-3;
-                    obj.maxGrad      = 35;
-                    obj.maxSlew      = 150;
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
                     obj.nDummy       = 50;
                 case 'spiral2d'
                     obj.fov          = 192e-3;
@@ -80,8 +89,8 @@ classdef SequenceParams_Terra_X
                     obj.TR           = 140e-3;
                     obj.readoutTime  = 8e-3;
                     obj.mode         = 'multiShot';
-                    obj.maxGrad      = 40;
-                    obj.maxSlew      = 150;
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 200;
                 otherwise
                     error('SequenceParams_Terra_X: unknown sequence "%s".', seqName)

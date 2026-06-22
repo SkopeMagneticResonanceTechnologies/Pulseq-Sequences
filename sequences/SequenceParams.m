@@ -28,6 +28,7 @@ classdef SequenceParams
         bDir
         nbValues
         maxDiffSlew
+        maxDiffGrad
         
         % Defaults
         scannerType = 'Siemens 9.4T SC72CD';

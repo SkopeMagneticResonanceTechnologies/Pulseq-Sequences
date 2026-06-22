@@ -271,9 +271,9 @@ epi2d.test();
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
 paramsSeEpi2dDiff.fov = 0.22;
 paramsSeEpi2dDiff.accFacPE = 3;
-paramsSeEpi2dDiff.Nx = 120;
-paramsSeEpi2dDiff.Ny = 120;
-paramsSeEpi2dDiff.readoutTime = 500e-6;  
+paramsSeEpi2dDiff.Nx = 120;%180;
+paramsSeEpi2dDiff.Ny = 120;%180;
+paramsSeEpi2dDiff.readoutTime = 600e-6;%500e-6;  
 paramsSeEpi2dDiff.addPhaseCorrLines = true;
 
 paramsSeEpi2dDiff.nSlices = 12;
@@ -287,11 +287,11 @@ end
 
 % paramsSeEpi2dDiff.nSlices = 2; %tmp
 % paramsSeEpi2dDiff.nDummy = 1; %tmp
-paramsSeEpi2dDiff.seqSpecName = '6dir_b2000_te80_tr140';
+paramsSeEpi2dDiff.seqSpecName = '6dir_b2000_te80_tr120_1.8mm_s60a160';
 
 % ---- PF OFF -----
 paramsSeEpi2dDiff.TE = 80e-3;
-paramsSeEpi2dDiff.TR = 140e-3;
+paramsSeEpi2dDiff.TR = 120e-3;
 % ---- PF OFF -----
 
 % ---- PF ON -----
@@ -331,7 +331,7 @@ if invivo
 end
 
 paramsSeEpi2dDiff.nSlices = 4; %tmp
-paramsSeEpi2dDiff.nDummy = 1; %tmp
+% paramsSeEpi2dDiff.nDummy = 1; %tmp
 
 paramsSeEpi2dDiff.TE = 80e-3;
 paramsSeEpi2dDiff.TR = 120e-3;

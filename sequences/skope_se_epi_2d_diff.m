@@ -167,7 +167,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             );      
 
             % set Diff grad limits
-            obj.sysDiff = mr.opts('MaxGrad', seqParams.maxGrad, ...
+            obj.sysDiff = mr.opts('MaxGrad', seqParams.maxDiffGrad, ...
                               'GradUnit','mT/m',...
                               'MaxSlew', seqParams.maxDiffSlew, ...
                               'SlewUnit','T/m/s',...
@@ -387,31 +387,50 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.fillTR = obj.roundUpToGRT(obj.TR - minTR);
             assert(obj.fillTR >= 0, 'Assertion for TR failed.');
 
-            %% Preparation of diffusion gradients
-            for i = 2:seqParams.nbValues %i=1 always b0
-                % diffusion weighting calculation
-                % delayTE2 is our window for small_delta
-                % delayTE1+delayTE2-delayTE2 is our big delta
-                % we anticipate that we will use the maximum gradient amplitude, so we need
-                % to shorten delayTE2 by gmax/max_sr to accommodate the ramp down 
+            %% Preparation of diffusion gradients            
+            %        90° RF                           180° RF
+            %          |                                |
+            %          |        ______       _          |       ______
+            %                  /      \      ¦          |      /      \
+            %          |      /        \     ¦ G        |     /        \
+            %          |     /          \    ¦          |    /          \
+            %          |____/            \___¦__________|___/            \____
+            %               <tau> 
+            %               <  delta  >
+            %               <             Delta            >    
+
+            for i = 1:seqParams.nbValues %i=1 always b0
                 bFactor = seqParams.bFactor(i);
+                
+                if i<2 %run this once
+                    % estimate timing for diffusion gradients when bFactor is max
+                    bFactor_max = max(seqParams.bFactor);
+                    % for the max bvalue applied to one axis, calculate the min duration of the gradient
+                    tau = round(obj.sysDiff.maxGrad / obj.sysDiff.maxSlew,4); %ramp duration for diff gradients (shortest possible from specs) 
+                    %Delta: distance between the two diffusion gradients
+                    Delta = obj.delayTE1 + mr.calcDuration(obj.gz180); %function of TE and pulse duration
+                    %delta: duration of diffusion gradient, assuming it rectangular (ie: flattop + tau)
+                    delta = round(sqrt(bFactor_max*1e6/((2*pi)^2 * obj.sysDiff.maxGrad^2 * (obj.delayTE1 - tau/2))),4);
+                    b=bFactCalc(obj.sysDiff.maxGrad/obj.sys.gamma, tau, delta, Delta, obj);
+                    disp(['Reference b-value for delta: ' num2str(b) 's2/mm'])                  
+                    gDiff_flattime = delta-tau;
+                    %is the gradient fitting the delays we have
+                    assert(delta+tau<=obj.delayTE2); 
+                    assert(delta+tau<=obj.delayTE1); 
+                end
                 
                 for ja = 1:3 %axis index
                     dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
-                    if seqParams.bDir(i,ja) > 0                                                              
-                        small_delta=obj.delayTE2-ceil(obj.sysDiff.maxGrad/obj.sysDiff.maxSlew/obj.sysDiff.gradRasterTime)*obj.sysDiff.gradRasterTime;
-                        big_delta=obj.delayTE1+mr.calcDuration(obj.rf180,obj.gz180);
-                        % we define bFactCalc function below to eventually calculate time-optimal 
-                        % gradients. For now we just abuse it with g=1 to give us the coefficient
-                        g=sqrt(bFactor*1e6/bFactCalc(1,small_delta,big_delta))*obj.axesSign(ja); 
+                    if seqParams.bDir(i,ja) > 0                                                                                      
+                        g = sqrt( bFactor*1e6/( (2*pi)^2*delta^2*(Delta-delta/3) ) )*obj.axesSign(ja);
+                        assert(g<=obj.sysDiff.maxGrad); %g shall be smaller than max allowed G.
                         
-                        gr=ceil(abs(g)/obj.sysDiff.maxSlew/obj.sysDiff.gradRasterTime)*obj.sysDiff.gradRasterTime;
-                        
-                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',g,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sysDiff);
-                        assert(mr.calcDuration(obj.gDiff{i,ja})<=obj.delayTE1);
-                        assert(mr.calcDuration(obj.gDiff{i,ja})<=obj.delayTE2);
+                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',g,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
+                        b=bFactCalc(g/obj.sys.gamma, tau, delta, Delta, obj);
+                        disp(['b-enc: ' num2str(i) ', axis: ' num2str(ja) ', b-value: ' num2str(b) ' s2/mm']) 
+               
                     else
-                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',0,'riseTime',gr,'flatTime',small_delta-gr,'system',obj.sysDiff);
+                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',0,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
                     end
                 end
             end
@@ -496,16 +515,16 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
             
             %% Main sequence body
-            for bValue=1:seqParams.nbValues
-                % Dummy scans 
-                for rep=1:obj.nDummy %number of dummy volumes (i.e., they loop through slices too)
-                    for slc = 1:obj.nSlices
-                        avg = 1;
-                        obj = runKernel(obj, slc, avg, rep, bValue, KernelMode.Dummy);
-                    end
+            
+            % Dummy scans: repeated nDummy-times for no b-encoding
+            for rep=1:obj.nDummy %number of dummy volumes (i.e., they loop through the whole slice volume)
+                for slc = 1:obj.nSlices
+                    avg = 1;
+                    obj = runKernel(obj, slc, avg, rep, 1, KernelMode.Dummy); %bValue = 1 has no b-encoding
                 end
-    
+            end
 
+            for bValue=1:seqParams.nbValues               
                 % Actual imaging sequence
                 for rep=1:obj.nRep
                     for slc = 1:obj.nSlices
@@ -699,12 +718,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.addBlock(obj.gxPre);
             end
                 
-            if bValue<2 % b0
-                obj.addBlock(mr.makeDelay(obj.delayTE1));
-            else % nonzero b-encoding 
-                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
-                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-            end
+            % if bValue<2 % b0
+            %     obj.addBlock(mr.makeDelay(obj.delayTE1));
+            % else % nonzero b-encoding               
+            obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+            obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
+            % end
 
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
                 obj.rf180.freqOffset=obj.gz180.amplitude * obj.slicePositionChronological(slc); 
@@ -714,12 +733,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.addBlock(obj.gz180);
             end
             
-            if bValue<2 % b0
-                obj.addBlock(mr.makeDelay(obj.delayTE2));
-            else % nonzero b-encoding 
-                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
-            end
+            % if bValue<2 % b0
+            %     obj.addBlock(mr.makeDelay(obj.delayTE2));
+            % else % nonzero b-encoding 
+            obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+            obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
+            % end
 
 
             if mode==KernelMode.Sync || mode==KernelMode.Imaging
@@ -793,16 +812,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
 end
 
-function b=bFactCalc(g, delta, DELTA)
-    % see DAVY SINNAEVE Concepts in Magnetic Resonance Part A, Vol. 40A(2) 39–65 (2012) DOI 10.1002/cmr.a
-    % b = gamma^2  g^2 delta^2 sigma^2 (DELTA + 2 (kappa - lambda) delta)
-    % in pulseq we don't need gamma as our gradinets are Hz/m
-    % however, we do need 2pi as diffusion equations are all based on phase
-    % for rect gradients: sigma=1 lambda=1/2 kappa=1/3 
-    % for trapezoid gradients: TODO
-    sigma=1;
-    %lambda=1/2;
-    %kappa=1/3;
-    kappa_minus_lambda=1/3-1/2;
-    b= (2*pi * g * delta * sigma)^2 * (DELTA + 2*kappa_minus_lambda*delta);
+function b=bFactCalc(G, tau, delta, Delta, obj)
+    gamma = obj.sys.gamma*2*pi;
+    b = (gamma)^2 * G^2 * ( delta^2 * (Delta-delta/3) + tau^3/30 - tau^2*delta/6 ) *1e-6;
 end
