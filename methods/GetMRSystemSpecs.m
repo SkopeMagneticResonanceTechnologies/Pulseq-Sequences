@@ -18,7 +18,9 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.maxSlew = 200; 
             specs.B0 = 2.89;               
             specs.forbiddenBandsEchoSpacingLimits = [0.77e-3, 1.07e-3;... %[1113,344]Hz
-                                                     1.62e-3, 1.93e-3 ];  %[567,100] Hz                    
+                                                     1.48e-3, 2.10e-3 ];  %[576,100] Hz 
+            specs.PNSfilename = 'MP_GradSys_P034_X60.asc';
+            
         case 'Siemens 3T Connectom'
             specs.type = scannerType;            
             specs.maxGrad = 300; 

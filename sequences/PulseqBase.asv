@@ -197,7 +197,19 @@ classdef (Abstract) PulseqBase < handle
             fprintf([rep{:}]);
 
         end
-      
+
+        function obj = CalculatePNS(obj)
+            ascfile = 'MP_GradSys_P034_X60.asc';
+            % hw = safe_hw_from_asc(ascfile);
+            fprintf('PNS computation: using hardware file %s \n', ascfile);
+            [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+            if ok
+                fprintf('PNS check passed sccessfully (max norm = %.1f < 1) \n', max(pns_norm));
+            else
+                fprintf('PNS check failed (max norm = %.1f > 1) \n', max(pns_norm));
+            end
+        end
+                
         function obj = CalculateInterleaveTR(obj, triggerTR)
         % Calculate blank time for Camera Acquisition System. The field
         % probes can perform an acquisition circa every 110 ms. If the
