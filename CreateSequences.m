@@ -18,6 +18,7 @@ addpath('pulseq/matlab')
 addpath(genpath('methods'))
 addpath('sequences')
 addpath('safe_pns_prediction')
+addpath('dependencies/pulseq151')
 
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m

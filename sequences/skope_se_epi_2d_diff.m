@@ -668,7 +668,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             ascfile = fullfile('dependencies', specs.PNSfilename);
             % hw = safe_hw_from_asc(ascfile);
             fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
-            [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+            [ok, pns_norm, pns_comp, t_axis] = calcPNS151(obj.seq,ascfile);
             maxPNS = max(pns_norm(1,:));
             maxCNS = max(pns_norm(2,:));
 
@@ -690,7 +690,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
 
             %% Gradient spectrum check
-            [R, Rax, F] = obj.seq.gradSpectrum(ascfile);
+            [R, Rax, F] = gradSpectrum151(obj.seq,ascfile);
 
         end
 

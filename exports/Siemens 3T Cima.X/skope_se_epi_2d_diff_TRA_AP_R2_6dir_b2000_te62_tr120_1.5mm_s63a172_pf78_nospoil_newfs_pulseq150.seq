@@ -7,8 +7,6 @@ minor 5
 revision 0
 
 [DEFINITIONS]
-units of time - seconds
-units of space - meters
 AdcRasterTime 1e-07 
 AdcSampleTime 1.6e-06 
 BW 1680 
@@ -15296,4 +15294,4 @@ num_samples 4000
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be sripped away for recalculating/verification)
 Type md5
-Hash 7e125592fac421087acb80410641490f
+Hash 14624a314a52720e0261f4ac59e862e8
