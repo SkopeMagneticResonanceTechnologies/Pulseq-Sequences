@@ -665,7 +665,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             
 
             %% PNS check
-            ascfile = fullfile('dependencies', specs.PNSfilename);
+            ascfile = fullfile('dependencies/asc', specs.PNSfilename);
             % hw = safe_hw_from_asc(ascfile);
             fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
             [ok, pns_norm, pns_comp, t_axis] = calcPNS_latest(obj.seq, ascfile);
