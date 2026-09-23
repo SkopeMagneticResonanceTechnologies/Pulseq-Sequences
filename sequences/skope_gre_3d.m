@@ -320,7 +320,35 @@ classdef skope_gre_3d < PulseqBase
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
 
-            obj.seq.write(strcat(filename,'.seq')); 
+            obj.seq.write(strcat(filename,'.seq'));  
+
+            %% PNS check
+            ascfile = fullfile('dependencies', specs.PNSfilename);
+            % hw = safe_hw_from_asc(ascfile);
+            fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
+            [ok, pns_norm, pns_comp, t_axis] = calcPNS_latest(obj.seq,ascfile);
+            maxPNS = max(pns_norm(1,:));
+            maxCNS = max(pns_norm(2,:));
+
+            if ok(1)
+                fprintf('PNS check passed successfully (%.1f %% < 100%%)\n', ...
+                    100*maxPNS);
+            else
+                fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
+                    100*maxPNS);
+            end
+            
+            if ok(2)
+                fprintf('CNS check passed successfully (%.1f %% < 100%%)\n', ...
+                    100*maxCNS);
+            else
+                fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
+                    100*maxCNS);
+            end
+
+
+            %% Gradient spectrum check
+            [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
 
             
         end    
