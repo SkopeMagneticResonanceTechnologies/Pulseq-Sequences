@@ -8,9 +8,13 @@ clear all
 close all
 clc
 
-%% Check if Pulseq module has been added
+%% Check if Pulseq and SAFE PNS prediction modules have been added
 if not(isfolder('pulseq/matlab'))
     error("Please run 'git submodule init' and 'git submodule update' to get the latest Pulseq scripts.")
+end
+
+if not(isfolder('safe_pns_prediction'))
+    error("SAFE PNS Prediction submodule not found. Please run 'git submodule init' and 'git submodule update'.")
 end
 
 %% Add Pulseq, sequences, methods and SAFE PNS
@@ -18,7 +22,7 @@ addpath('pulseq/matlab')
 addpath(genpath('methods'))
 addpath('sequences')
 addpath('safe_pns_prediction')
-addpath('dependencies/pulseq151')
+addpath('dependencies/pulseq_latest') % necessary for CNS and Gradient Spectrum computation
 
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m
@@ -279,7 +283,7 @@ paramsSeEpi2dDiff.readoutTime = 600e-6;%600e-6;
 paramsSeEpi2dDiff.addPhaseCorrLines = true;
 
 % ---- Fat Sat -----
-paramsSeEpi2dDiff.doPlayFatSat = false;
+paramsSeEpi2dDiff.doPlayFatSat = true;
 
 paramsSeEpi2dDiff.nSlices = 12;
 paramsSeEpi2dDiff.distanceFactorPercentage = 150; 
@@ -308,13 +312,13 @@ paramsSeEpi2dDiff.TR = 120e-3;
 % ---- Gradients and slew rate ----
 % paramsSeEpi2dDiff.maxGrad = 180;
 % paramsSeEpi2dDiff.maxSlew = 180;
-paramsSeEpi2dDiff.maxDiffGrad = 172; %140
-paramsSeEpi2dDiff.maxDiffSlew = 63; %50
+paramsSeEpi2dDiff.maxDiffGrad = 160; %140
+paramsSeEpi2dDiff.maxDiffSlew = 60; %50
 
 % RF pulses (fat/90/180) durations are changed in skope_se_epi_2d_diff.m
 
 % Sequence name
-moreName = '_nospoil_newfs_pulseq150';
+moreName = '_nospoil_newfs';
 paramsSeEpi2dDiff.seqSpecName = sprintf( ...
     '6dir_b2000_te%d_tr%d_%.1fmm_s%da%d_pf%d8%s', ...
     round(paramsSeEpi2dDiff.TE*1e3), ...

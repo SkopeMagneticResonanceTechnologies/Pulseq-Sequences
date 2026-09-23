@@ -1,3 +1,6 @@
 [submodule "pulseq"]
 	path = pulseq
 	url = https://github.com/pulseq/pulseq
+[submodule "safe_pns_prediction"]
+	path = safe_pns_prediction
+	url = https://github.com/filip-szczepankiewicz/safe_pns_prediction.git
