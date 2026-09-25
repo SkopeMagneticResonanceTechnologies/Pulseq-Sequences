@@ -344,7 +344,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
             
             % PE lines after the k-space center including the central line
             Ny_post = round(obj.Ny/2/obj.accFacPE + 1);
-
+               
+            % echoTrainLegth must be even, such that echoTrainLegth/2 = central line of kspace is an
+            % integer, necessary for the simulation of the sequence  
+            if mod(Ny_pre + Ny_post, 2)
+                Ny_pre = Ny_pre - 1;
+            end
             obj.echoTrainLength = Ny_pre + Ny_post;
             
             % Pre-phasing gradients
@@ -411,7 +416,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                   + obj.echoTrainLength * mr.calcDuration(obj.gx);
                   % + mr.calcDuration(obj.gxSpoil, obj.gzSpoil); 
             if obj.doPlayFatSat
-                minTR = minTR + mr.calcDuration(obj.gz_fs) + mr.calcDuration(obj.rf_fs) + mr.calcDuration(obj.gz_fs_pre);
+                minTR = minTR + mr.calcDuration(obj.gz_fs) + mr.calcDuration(obj.gz_fs_pre);
             end
 
             disp(['Minimal TR is ' num2str(minTR*1000) ' ms'])
@@ -608,12 +613,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq.setDefinition('TriggerToScannerAcqDelay', obj.triggerToScannerAcqDelay); 
 
             %% Parameters to be set on the user interface of the Field Camera            
-            % The number of actually acquired dynamics depends on the cameraInterleaveTR.
-            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
+            % The number of actually acquired dynamics depends on the CameraTrigIgnore.
             obj.seq.setDefinition('CameraNrSyncDynamics', obj.nSyncDynamics); 
-            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
+            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
+            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration); 
+            obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
-            obj.seq.setDefinition('CameraAqDelay', 0); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell);             
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]);
             obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.echoTrainLength]);
@@ -664,33 +669,36 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq.write(strcat(filename,'.seq')); 
             
 
-            %% PNS check
-            ascfile = fullfile('dependencies/asc', specs.PNSfilename);
-            % hw = safe_hw_from_asc(ascfile);
-            fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
-            [ok, pns_norm, pns_comp, t_axis] = calcPNS_latest(obj.seq, ascfile);
-            maxPNS = max(pns_norm(1,:));
-            maxCNS = max(pns_norm(2,:));
-
-            if ok(1)
-                fprintf('PNS check passed successfully (%.1f %% < 100%%)\n', ...
-                    100*maxPNS);
+            %% Safety checks
+            ascfile = fullfile('dependencies','asc', specs.HWfilename);
+            if isfile(ascfile)
+                % PNS
+                fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
+                [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+                maxPNS = max(pns_norm(1,:));
+                maxCNS = max(pns_norm(2,:));
+    
+                if ok(1)
+                    fprintf('PNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxPNS);
+                else
+                    fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxPNS);
+                end
+                
+                if ok(2)
+                    fprintf('CNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxCNS);
+                else
+                    fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxCNS);
+                end
+    
+                % Gradient spectrum check
+                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile); % waiting for pulseq 1.5.2
             else
-                fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
-                    100*maxPNS);
+                warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
             end
-            
-            if ok(2)
-                fprintf('CNS check passed successfully (%.1f %% < 100%%)\n', ...
-                    100*maxCNS);
-            else
-                fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
-                    100*maxCNS);
-            end
-
-
-            %% Gradient spectrum check
-            [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
 
         end
 

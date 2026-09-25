@@ -154,7 +154,10 @@ classdef skope_gre_3d < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
 
             %% Create non-selective pulse
-            obj.rf = mr.makeBlockPulse(obj.alpha*pi/180,obj.sys,'Duration',0.2e-3);
+            obj.rf = mr.makeBlockPulse(obj.alpha*pi/180,...
+                'system',obj.sys,...
+                'Duration',0.2e-3,...
+                'use','excitation');
             obj.rf_phase = 0;
             obj.rf_inc = 0;
 
@@ -293,12 +296,12 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('TriggerToScannerAcqDelay', obj.triggerToScannerAcqDelay);   
            
             %% Parameters to be set on the user interface of the Field Camera            
-            % The number of actually acquired dynamics depends on the cameraInterleaveTR.
-            obj.seq.setDefinition('CameraNrDynamics', obj.nTrig);  
+            % The number of actually acquired dynamics depends on the CameraTrigIgnore.
             obj.seq.setDefinition('CameraNrSyncDynamics', obj.nSyncDynamics); 
-            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
-            obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
-            obj.seq.setDefinition('CameraAqDelay', 0); 
+            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
+            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration); 
+            obj.seq.setDefinition('CameraAqDelay', 0);
+            obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
@@ -322,34 +325,36 @@ classdef skope_gre_3d < PulseqBase
 
             obj.seq.write(strcat(filename,'.seq'));  
 
-            %% PNS check
-            ascfile = fullfile('dependencies/asc', specs.PNSfilename);
-            % hw = safe_hw_from_asc(ascfile);
-            fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
-            [ok, pns_norm, pns_comp, t_axis] = calcPNS_latest(obj.seq,ascfile);
-            maxPNS = max(pns_norm(1,:));
-            maxCNS = max(pns_norm(2,:));
-
-            if ok(1)
-                fprintf('PNS check passed successfully (%.1f %% < 100%%)\n', ...
-                    100*maxPNS);
+            %% Safety checks
+            ascfile = fullfile('dependencies','asc', specs.HWfilename);
+            if isfile(ascfile)
+                % PNS
+                fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
+                [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+                maxPNS = max(pns_norm(1,:));
+                maxCNS = max(pns_norm(2,:));
+    
+                if ok(1)
+                    fprintf('PNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxPNS);
+                else
+                    fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxPNS);
+                end
+                
+                if ok(2)
+                    fprintf('CNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxCNS);
+                else
+                    fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxCNS);
+                end
+    
+                % Gradient spectrum check
+                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
             else
-                fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
-                    100*maxPNS);
+                warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
             end
-            
-            if ok(2)
-                fprintf('CNS check passed successfully (%.1f %% < 100%%)\n', ...
-                    100*maxCNS);
-            else
-                fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
-                    100*maxCNS);
-            end
-
-
-            %% Gradient spectrum check
-            [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
-
             
         end    
     end

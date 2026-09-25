@@ -97,16 +97,17 @@ classdef SequenceParams_Cima_X
                     obj.maxDiffSlew  = 120;
                     obj.distanceFactorPercentage = 150;
                 case 'gre3d'
-                    obj.fov          = [0.56 0.56 0.56]*1e-2*40053000/42577481;
+                    obj.fov          = [0.22 0.22 0.22];
                     obj.Nx           = 56;
                     obj.Ny           = 56;
                     obj.Nz           = 56;
                     obj.alpha        = 1;
-                    obj.TE           = [12.3 28.16]*1e-3 + 1e-3;
-                    obj.TR           = 100e-3;
-                    obj.readoutTime  = 7.84e-3;
-                    obj.maxGrad      = 35;
-                    obj.maxSlew      = 150;
+                    %obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
+                    obj.TE           = [5.2 9.7]*1e-3;
+                    obj.TR           = 50e-3;
+                    obj.readoutTime  = 20e-6 * obj.Nx;
+                    obj.maxGrad      = 190;
+                    obj.maxSlew      = 190;
                     obj.nDummy       = 50;
                     obj.distanceFactorPercentage = 200;
                 case 'spiral2d'
