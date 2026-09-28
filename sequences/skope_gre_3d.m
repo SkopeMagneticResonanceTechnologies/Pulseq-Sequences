@@ -1,5 +1,5 @@
 classdef skope_gre_3d < PulseqBase
-% This is a demo monopolar dual-echo gradient-echo sequence, which includes
+% This is a demo monopolar multi-echo gradient-echo sequence, which includes
 % synchronization scans for field-monitoring with a Skope Field Camera and
 % uses the LABEL extension. The member method plot() can be used to display
 % the generated sequence. 
@@ -69,6 +69,9 @@ classdef skope_gre_3d < PulseqBase
         % Trigger output channel
         triggerOutput;
 
+        % Acceleration factor (Phase)
+        accFacPE
+
     end
 
     methods
@@ -108,38 +111,20 @@ classdef skope_gre_3d < PulseqBase
                                 'rfDeadTime', 100e-6, ...
                                 'adcDeadTime', 10e-6);  
 
-            % Field of view [Unit: m]
-            obj.fov = seqParams.fov; 
-            
-            % % Number of readout samples
-            obj.Nx = seqParams.Nx; 
+            % Copy all sequence parameters
+            fieldNames = fields(seqParams);
+            for i = 1:numel(fieldNames)
+                fieldname = fieldNames{i};
+                if isprop(obj,fieldname)
+                    obj.(fieldname) = seqParams.(fieldname);
+                end
+            end
             
             % Number of phase encoding steps
             obj.Ny = obj.Nx; 
 
             % Number of phase encoding steps
             obj.Nz = obj.Nx; 
-            
-            % Flip angle [Unit: deg]
-            obj.alpha = seqParams.alpha;     
-                       
-            % Echo times [Unit: s] + one millisecond for phase estimation
-            obj.TE = seqParams.TE;
-            
-            % Excitation repetition time [Unit: s]
-            obj.TR = seqParams.TR;                       
-            
-            % ADC duration [Unit: s]
-            obj.readoutTime = seqParams.readoutTime;  
-
-            obj.sliceOrientation = seqParams.sliceOrientation;
-            obj.phaseEncDir = seqParams.phaseEncDir;
-
-            % Number of dummy shots for steady state
-            obj.nDummy = seqParams.nDummy;
-
-            % Set trigger output channel
-            obj.triggerOutput = seqParams.triggerOutput;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -166,6 +151,7 @@ classdef skope_gre_3d < PulseqBase
           
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1./obj.fov;
+            deltak(2) = deltak(2) * obj.accFacPE;
             obj.gx = mr.makeTrapezoid(  obj.axesOrder{1}, ...
                                         'FlatArea', obj.Nx*deltak(1), ...
                                         'FlatTime', obj.readoutTime, ...
@@ -177,11 +163,11 @@ classdef skope_gre_3d < PulseqBase
             obj.gxPre = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',-obj.gx.area/2,'Duration',Tpre);
             % Create flyback gradients
             nEchoes = length(obj.TE);
-            for i = 1:nEchoes-1
-                obj.gxFlyBack(i) = mr.makeTrapezoid(obj.axesOrder{1}, 'Area', -obj.gx.area, 'system', obj.sys);
-            end
+            obj.gxFlyBack = repmat( ...
+                mr.makeTrapezoid(obj.axesOrder{1}, 'Area', -obj.gx.area, 'system', obj.sys), ...
+                1, nEchoes-1);
             obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',obj.gx.area,'Duration',Tpre*2);
-            obj.phaseAreaY = ([(obj.Ny-1):-1:0]-obj.Ny/2)*deltak(2);
+            obj.phaseAreaY = ([(round(obj.Ny/obj.accFacPE)-1):-1:0]-round(obj.Ny/obj.accFacPE)/2)*deltak(2);
             obj.phaseAreaZ = ([(obj.Nz-1):-1:0]-obj.Nz/2)*deltak(3);
 
             %% Calculate minimal TEs
@@ -256,7 +242,7 @@ classdef skope_gre_3d < PulseqBase
     
             %% Drive magnetization to steady state
             for i=1:obj.nDummy
-                runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
+                runKernel(obj, floor(round(obj.Ny/obj.accFacPE)/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
             end
                         
             %% Calculate required camera acquisition duration
@@ -285,7 +271,7 @@ classdef skope_gre_3d < PulseqBase
             %% Actual imaging sequence
             % loop over phase encodes and define sequence blocks
             for par = 1:obj.Nz
-                for lin = 1:obj.Ny      
+                for lin = 1:round(obj.Ny/obj.accFacPE) 
                     % loop over slices
                     avg = 1;
                     obj = runKernel(obj, lin, par, avg, KernelMode.Imaging);   
@@ -293,7 +279,7 @@ classdef skope_gre_3d < PulseqBase
             end
 
             % Set number of expected external triggers
-            obj.nTrig = obj.nDummy + obj.Ny * obj.Nz;
+            obj.nTrig = obj.nDummy + round(obj.Ny/obj.accFacPE) * obj.Nz;
             
             %% check whether the timing of the sequence is correct
             [ok, error_report] = obj.seq.checkTiming;
@@ -327,6 +313,8 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
+            obj.seq.setDefinition('Encoding', [obj.Nx round(obj.Ny/obj.accFacPE) obj.Nz]);
+            obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);  
@@ -341,6 +329,10 @@ classdef skope_gre_3d < PulseqBase
             end
             
             filename = strcat('exports/',string(seqParams.scannerType),'/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));  
+            
+            if obj.accFacPE > 1  
+                filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+            end
 
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
