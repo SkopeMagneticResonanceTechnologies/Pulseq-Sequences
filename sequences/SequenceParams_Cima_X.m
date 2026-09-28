@@ -102,8 +102,8 @@ classdef SequenceParams_Cima_X
                     obj.Ny           = 56;
                     obj.Nz           = 56;
                     obj.alpha        = 1;
-                    %obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
-                    obj.TE           = [5.2 9.7]*1e-3;
+                    obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
+                    %obj.TE           = [5.2 9.7]*1e-3;
                     obj.TR           = 50e-3;
                     obj.readoutTime  = 20e-6 * obj.Nx;
                     obj.maxGrad      = 190;
