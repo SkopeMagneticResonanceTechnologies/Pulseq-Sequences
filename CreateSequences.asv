@@ -8,9 +8,13 @@ clear all
 close all
 clc
 
-%% Check if Pulseq module has been added
+%% Check if Pulseq and SAFE PNS prediction modules have been added
 if not(isfolder('pulseq/matlab'))
     error("Please run 'git submodule init' and 'git submodule update' to get the latest Pulseq scripts.")
+end
+
+if not(isfolder('safe_pns_prediction'))
+    error("SAFE PNS Prediction submodule not found. Please run 'git submodule init' and 'git submodule update'.")
 end
 
 %% Add Pulseq, sequences, methods and SAFE PNS
@@ -18,6 +22,7 @@ addpath('pulseq/matlab')
 addpath(genpath('methods'))
 addpath('sequences')
 addpath('safe_pns_prediction')
+addpath('dependencies/pulseq_latest') % necessary for CNS and Gradient Spectrum computation
 
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m
@@ -272,8 +277,8 @@ epi2d.test();
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
 paramsSeEpi2dDiff.fov = 0.22;
 paramsSeEpi2dDiff.accFacPE = 2;
-paramsSeEpi2dDiff.Nx = 140;%180;
-paramsSeEpi2dDiff.Ny = 140;%180;
+paramsSeEpi2dDiff.Nx = 148;%180;
+paramsSeEpi2dDiff.Ny = 148;%180;
 paramsSeEpi2dDiff.readoutTime = 600e-6;%600e-6;  
 paramsSeEpi2dDiff.addPhaseCorrLines = true;
 
@@ -293,47 +298,60 @@ end
 % paramsSeEpi2dDiff.nDummy = 1; %tmp
 
 % ---- PF OFF -----
-% paramsSeEpi2dDiff.TE = 73e-3;
-% paramsSeEpi2dDiff.TR = 5200e-3;
+%paramsSeEpi2dDiff.partFourierFactor = 8/8;
+%paramsSeEpi2dDiff.TE = 72e-3;
+%paramsSeEpi2dDiff.TR = 120e-3;
 % ---- PF OFF -----
 
 % ---- PF ON -----
-paramsSeEpi2dDiff.partFourierFactor = 1; %RR: realistic is a 6/8 %RS: must be more than 4/8
-paramsSeEpi2dDiff.TE = 80e-3;
+paramsSeEpi2dDiff.partFourierFactor = 7/8; %RR: realistic is a 6/8 %RS: must be more than 4/8
+paramsSeEpi2dDiff.TE = 62e-3;
 paramsSeEpi2dDiff.TR = 120e-3;
 % ---- PF ON -----
 
 % ---- Gradients and slew rate ----
-paramsSeEpi2dDiff.maxGrad = 180;
-paramsSeEpi2dDiff.maxSlew = 180;
-paramsSeEpi2dDiff.maxDiffGrad = 140;
-paramsSeEpi2dDiff.maxDiffSlew = 50;
+% paramsSeEpi2dDiff.maxGrad = 180;
+% paramsSeEpi2dDiff.maxSlew = 180;
+paramsSeEpi2dDiff.maxDiffGrad = 172;
+paramsSeEpi2dDiff.maxDiffSlew = 63;
+
+% ---- b-encoding from external file ----
+paramsSeEpi2dDiff.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
+paramsSeEpi2dDiff.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
+% obj.bDir must be 3 x N
+if size(paramsSeEpi2dDiff.bDir,1) ~= 3
+    if size(paramsSeEpi2dDiff.bDir,2) == 3
+        paramsSeEpi2dDiff.bDir = paramsSeEpi2dDiff.bDir.';
+    else
+        error('bDir must have size 3xN or Nx3.');
+    end
+end
+% obj.bFactor must be 1 x N
+paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:)';
+paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
+
 
 % RF pulses (fat/90/180) durations are changed in skope_se_epi_2d_diff.m
-
-% Generate the sequence
-seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Sequence name
 moreName = '';
 paramsSeEpi2dDiff.seqSpecName = sprintf( ...
-    '%ddir_b%d_te%d_tr%d_%.1fmm_s%da%d_pf%d8_sg%da%d%s', ...
-    size(paramsSeEpi2dDiff.bdir,1), ...
-    round(max(paramsSeEpi2dDiff.bFactor)), ...
+    '%ddir_b%d_te%d_tr%d_%.1fmm_pf%d8%s', ...
+    paramsSeEpi2dDiff.nbValues - 1, ...
+    max(paramsSeEpi2dDiff.bFactor), ...
     round(paramsSeEpi2dDiff.TE*1e3), ...
     round(paramsSeEpi2dDiff.TR*1e3), ...
     paramsSeEpi2dDiff.fov/paramsSeEpi2dDiff.Nx*1e3, ...
-    round(paramsSeEpi2dDiff.maxDiffSlew), ...
-    round(paramsSeEpi2dDiff.maxDiffGrad), ...
     round(paramsSeEpi2dDiff.partFourierFactor*8), ...
-    round(paramsSeEpi2dDiff.maxSlew), ...
-    round(paramsSeEpi2dDiff.maxGrad), ...
     moreName);
 
 fprintf('seqSpecName = %s\n', paramsSeEpi2dDiff.seqSpecName);
 
+% Generate the sequence
+seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
+
 % Plot sequence diagram for the first 5 to 20 s
-timeRange = [4 20];
+% timeRange = [4 20];
 % seepi2d.plot(timeRange);
 
 % Test sequence
@@ -377,16 +395,18 @@ seepi2d.plot(timeRange);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
+paramsGre3d.seqSpecName = 'dualecho_trigger_test';
+paramsGre3d.accFacPE = 1;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
 
 % Plot sequence information after sync 
-timeRange = [0 100e-3];
-gre3d.plot(timeRange);
+% timeRange = [0 100e-3];
+% gre3d.plot(timeRange);
 
 % Test sequence
-gre3d.test();
+% gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
 paramsOpc = SequenceParams('opc',scannerType);

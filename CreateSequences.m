@@ -315,12 +315,29 @@ paramsSeEpi2dDiff.TR = 120e-3;
 paramsSeEpi2dDiff.maxDiffGrad = 172;
 paramsSeEpi2dDiff.maxDiffSlew = 63;
 
+% ---- b-encoding from external file ----
+paramsSeEpi2dDiff.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
+paramsSeEpi2dDiff.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
+% obj.bDir must be N x 3
+if size(paramsSeEpi2dDiff.bDir,2) ~= 3
+    if size(paramsSeEpi2dDiff.bDir,1) == 3
+        paramsSeEpi2dDiff.bDir = paramsSeEpi2dDiff.bDir.';
+    else
+        error('bDir must have size N x 3 or 3 x N.');
+    end
+end
+% obj.bFactor must be N x 1
+paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:);
+paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
+
 % RF pulses (fat/90/180) durations are changed in skope_se_epi_2d_diff.m
 
 % Sequence name
 moreName = '';
 paramsSeEpi2dDiff.seqSpecName = sprintf( ...
-    '6dir_b2000_te%d_tr%d_%.1fmm_pf%d8%s', ...
+    '%ddir_b%d_te%d_tr%d_%.1fmm_pf%d8%s', ...
+    paramsSeEpi2dDiff.nbValues - 1, ...
+    max(paramsSeEpi2dDiff.bFactor), ...
     round(paramsSeEpi2dDiff.TE*1e3), ...
     round(paramsSeEpi2dDiff.TR*1e3), ...
     paramsSeEpi2dDiff.fov/paramsSeEpi2dDiff.Nx*1e3, ...
@@ -377,7 +394,7 @@ seepi2d.plot(timeRange);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
-paramsGre3d.seqSpecName = 'dualecho_test';
+paramsGre3d.seqSpecName = 'dualecho_trigger_test';
 paramsGre3d.accFacPE = 1;
 
 % Generate the sequence

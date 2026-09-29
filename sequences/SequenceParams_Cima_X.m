@@ -51,8 +51,8 @@ classdef SequenceParams_Cima_X
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 2000, 2000, 2000, 2000, 2000, 2000];
-                    obj.bDir         = [0,0,0;... % b0
+                    obj.bFactor = 2000 * [0, 1, 1, 1, 1, 1, 1];
+                    obj.bDir         =  [0,0,0;... % b0
                                         1,0,0;... % x
                                         0,1,0;... % y
                                         0,0,1;... % z

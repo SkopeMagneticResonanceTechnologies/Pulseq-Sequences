@@ -51,22 +51,22 @@ classdef SequenceParams_Cima_X
                     obj.accFacPE     = 1;
                     obj.addPhaseCorrLines = 1;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 2000, 2000, 2000, 2000./sqrt(2), 2000./sqrt(2), 2000./sqrt(2)];
-                    obj.bDir         = [0,0,0;... % b0
+                    %obj.bFactor = 2000 * [0, 1, 1, 1, 1, 1, 1];
+                    %obj.bDir         = [0,0,0;... % b0
                                         1,0,0;... % x
                                         0,1,0;... % y
                                         0,0,1;... % z
-                                        1,1,0;... % xy
-                                        0,1,1;... % yz
-                                        1,0,1;];  % xz
+                                        [1,1,0]./sqrt(2);... % xy
+                                        [0,1,1]./sqrt(2);... % yz
+                                        [1,0,1]./sqrt(2);];  % xz
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
                     obj.readoutTime  = 0.600e-3;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
                     %failed 65/180, try 40/180 and 60/160
-                    obj.maxDiffSlew  = 63; %60  
-                    obj.maxDiffGrad  = 172;
+                    obj.maxDiffSlew  = 60; %60  
+                    obj.maxDiffGrad  = 160;
                     obj.distanceFactorPercentage = 150;
                 case 'se_epi2d_diff_mb'
                     obj.TE           = 64e-3;
@@ -97,18 +97,20 @@ classdef SequenceParams_Cima_X
                     obj.maxDiffSlew  = 120;
                     obj.distanceFactorPercentage = 150;
                 case 'gre3d'
-                    obj.fov          = [0.56 0.56 0.56]*1e-2*40053000/42577481;
+                    obj.fov          = [0.22 0.22 0.22];
                     obj.Nx           = 56;
                     obj.Ny           = 56;
                     obj.Nz           = 56;
                     obj.alpha        = 1;
-                    obj.TE           = [12.3 28.16]*1e-3 + 1e-3;
-                    obj.TR           = 100e-3;
-                    obj.readoutTime  = 7.84e-3;
-                    obj.maxGrad      = 35;
-                    obj.maxSlew      = 150;
+                    %obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
+                    obj.TE           = [5.2 9.7]*1e-3;
+                    obj.TR           = 50e-3;
+                    obj.readoutTime  = 20e-6 * obj.Nx;
+                    obj.maxGrad      = 190;
+                    obj.maxSlew      = 190;
                     obj.nDummy       = 50;
                     obj.distanceFactorPercentage = 200;
+                    obj.accFacPE     = 1;
                 case 'spiral2d'
                     obj.fov          = 192e-3;
                     obj.Nx           = 192;

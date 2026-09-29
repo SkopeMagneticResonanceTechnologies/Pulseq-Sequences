@@ -479,13 +479,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
                     dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
                                                                                       
                     gAxis = g * bDirNorm(ja) * obj.axesSign(ja);
-                    assert(abs(gAxis)<=obj.sysDiff.maxGrad, 'Assertion for Diff max Grad failed.'); %g shall be smaller than max allowed G.
+                    assert(abs(gAxis)<=obj.sysDiff.maxGrad); %g shall be smaller than max allowed G.
                     
                     obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',gAxis,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
                     bAxis(ja)=bFactCalc(gAxis/obj.sys.gamma, tau, delta, Delta, obj);
                     gAxisMHz(ja) = gAxis / 1e6;
                 end
-                fprintf(['b-enc = %d, b = (%.1f, %.1f, %.1f) s/mm2, g = (%.1f, %.1f, %.1f) MHz/m\n'], i, bAxis, gAxisMHz);
+                
             end
             
             %% Time from trigger to scanner acquisition

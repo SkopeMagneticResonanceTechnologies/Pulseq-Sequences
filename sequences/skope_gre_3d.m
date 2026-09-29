@@ -233,7 +233,7 @@ classdef skope_gre_3d < PulseqBase
             assert(obj.fillTR >= 0, 'Assertion for TR failed.');
 
             %% Time from trigger to scanner acquisition
-            obj.triggerToScannerAcqDelay = obj.fillTE(1) + obj.gradFreeTime ...
+            obj.triggerToScannerAcqDelay = obj.gradFreeTime ...
                                            + mr.calcDuration(obj.gxPre) ...
                                            + obj.adc.delay;
 
@@ -246,7 +246,7 @@ classdef skope_gre_3d < PulseqBase
             end
                         
             %% Calculate required camera acquisition duration
-            obj.cameraAcqDuration = obj.fillTE(1) + obj.gradFreeTime ...
+            obj.cameraAcqDuration = obj.gradFreeTime ...
                                   + mr.calcDuration(obj.gxPre) ...
                                   + nEchoes * mr.calcDuration(obj.gx) ...
                                   + flyBackDuration ...      
@@ -385,17 +385,17 @@ classdef skope_gre_3d < PulseqBase
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
                 obj.rf.phaseOffset = mod(117*(lin^2+lin+2)*pi/180,2*pi);
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
-                obj.addBlock(obj.rf);
+                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1)));
             else
                 obj.rf.phaseOffset = 0;
                 obj.adc.phaseOffset = 0;
-                obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf)));
+                obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf) + obj.fillTE(1)));
             end                      
         
             %% External trigger and gradient-free interval
             % We send the trigger here always for the dummies to get a
             % steady state field probe signal
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime + obj.fillTE(1)));
+            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime));
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
