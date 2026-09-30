@@ -126,6 +126,34 @@ classdef SequenceParams_Cima_X
                     obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 150;
                     obj.nDummy       = 1;
+                case 'se_spiral_2d_diff'
+                    obj.fov          = 192e-3;
+                    obj.Nx           = 192;
+                    obj.Ny           = 16;
+                    obj.alpha        = 90;
+                    obj.thickness    = 3e-3;
+                    obj.nSlices      = 12;
+                    obj.TE           = 2.5e-3;
+                    obj.TR           = 140e-3;
+                    obj.readoutTime  = 8e-3;
+                    obj.mode         = 'multiShot';
+                    obj.maxGrad      = 190;
+                    obj.maxSlew      = 190;
+                    obj.distanceFactorPercentage = 150;
+                    obj.nDummy       = 1;
+                    obj.doPlayFatSat = 0;
+                    obj.bFactor = 2000 * [0, 1, 1, 1, 1, 1, 1];
+                    obj.bDir         =  [0,0,0;... % b0
+                                        1,0,0;... % x
+                                        0,1,0;... % y
+                                        0,0,1;... % z
+                                        [1,1,0]./sqrt(2);... % xy
+                                        [0,1,1]./sqrt(2);... % yz
+                                        [1,0,1]./sqrt(2);];  % xz
+                    obj.nbValues     = size(obj.bDir,1);
+                    obj.maxDiffSlew = 60;
+                    obj.maxDiffGrad = 160;
+                    obj.seqSpecName  = '';
                 otherwise
                     error('SequenceParams_Cima_X: unknown sequence "%s".', seqName)
             end

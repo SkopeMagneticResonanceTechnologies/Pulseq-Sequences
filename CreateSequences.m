@@ -22,7 +22,7 @@ addpath('pulseq/matlab')
 addpath(genpath('methods'))
 addpath('sequences')
 addpath('safe_pns_prediction')
-addpath('dependencies/pulseq_latest') % necessary for CNS and Gradient Spectrum computation
+addpath('dependencies/pulseq_latest') % necessary Gradient Spectrum computation (pulseq 1.5.1+)
 
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m
@@ -316,19 +316,19 @@ paramsSeEpi2dDiff.maxDiffGrad = 172;
 paramsSeEpi2dDiff.maxDiffSlew = 63;
 
 % ---- b-encoding from external file ----
-paramsSeEpi2dDiff.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
-paramsSeEpi2dDiff.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
-% obj.bDir must be N x 3
-if size(paramsSeEpi2dDiff.bDir,2) ~= 3
-    if size(paramsSeEpi2dDiff.bDir,1) == 3
-        paramsSeEpi2dDiff.bDir = paramsSeEpi2dDiff.bDir.';
-    else
-        error('bDir must have size N x 3 or 3 x N.');
-    end
-end
-% obj.bFactor must be N x 1
-paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:);
-paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
+% paramsSeEpi2dDiff.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
+% paramsSeEpi2dDiff.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
+% % obj.bDir must be N x 3
+% if size(paramsSeEpi2dDiff.bDir,2) ~= 3
+%     if size(paramsSeEpi2dDiff.bDir,1) == 3
+%         paramsSeEpi2dDiff.bDir = paramsSeEpi2dDiff.bDir.';
+%     else
+%         error('bDir must have size N x 3 or 3 x N.');
+%     end
+% end
+% % obj.bFactor must be N x 1
+% paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:);
+% paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
 
 % RF pulses (fat/90/180) durations are changed in skope_se_epi_2d_diff.m
 
@@ -354,7 +354,7 @@ seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 % seepi2d.plot(timeRange);
 
 % Test sequence
-% seepi2d.test();
+seepi2d.test();
 
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding (R2, MB2)

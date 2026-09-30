@@ -8,15 +8,21 @@ clear all
 close all
 clc
 
-%% Check if Pulseq module has been added
+%% Check if Pulseq and SAFE PNS prediction modules have been added
 if not(isfolder('pulseq/matlab'))
     error("Please run 'git submodule init' and 'git submodule update' to get the latest Pulseq scripts.")
+end
+
+if not(isfolder('safe_pns_prediction'))
+    error("SAFE PNS Prediction submodule not found. Please run 'git submodule init' and 'git submodule update'.")
 end
 
 %% Add Pulseq, sequences and methods
 addpath('pulseq/matlab')
 addpath('methods')
 addpath('sequences')
+addpath('safe_pns_prediction')
+addpath('dependencies/pulseq_latest') % necessary for CNS and Gradient Spectrum computation
 
 %% Define scanner type
 % 'Siemens 3T Cima.X', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
@@ -73,7 +79,7 @@ figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral tr
 
 
 %%
-paramsSpiral2d = SequenceParams('spiral2d',scannerType);
+paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
@@ -81,13 +87,46 @@ paramsSpiral2d.readoutTime = time_rv;
 paramsSpiral2d.mode = 'MS';
 % paramsSpiral2d.nSlices = 2;
 paramsSpiral2d.nDummy = 1;
+paramsSpiral2d.doPlayFatSat = true;
+paramsSpiral2d.maxDiffGrad = 172;
+paramsSpiral2d.maxDiffSlew = 63;
+paramsSpiral2d.TE = 70e-3;
+paramsSpiral2d.TR = 120e-3;
+
+% ---- b-encoding from external file ----
+% paramsSpiral2d.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
+% paramsSpiral2d.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
+% % obj.bDir must be N x 3
+% if size(paramsSpiral2d.bDir,2) ~= 3
+%     if size(paramsSpiral2d.bDir,1) == 3
+%         paramsSpiral2d.bDir = paramsSpiral2d.bDir.';
+%     else
+%         error('bDir must have size N x 3 or 3 x N.');
+%     end
+% end
+% % obj.bFactor must be N x 1
+% paramsSpiral2d.bFactor = paramsSpiral2d.bFactor(:);
+% paramsSpiral2d.nbValues = size(paramsSpiral2d.bDir,1);
+
+% Sequence name
+moreName = '';
+paramsSpiral2d.seqSpecName = sprintf( ...
+    '%ddir_b%d_te%d_tr%d_%.1fmm%s', ...
+    paramsSpiral2d.nbValues - 1, ...
+    max(paramsSpiral2d.bFactor), ...
+    round(paramsSpiral2d.TE*1e3), ...
+    round(paramsSpiral2d.TR*1e3), ...
+    res, ...
+    moreName);
+
+fprintf('seqSpecName = %s\n', paramsSpiral2d.seqSpecName);
 
 % Create sequence
-spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);
+spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-timeRange = [5.4 5.42];
-spiral2d.plot(timeRange);
+% timeRange = [5.4 5.42];
+% spiral2d.plot(timeRange);
 
 % Test sequence
 spiral2d.test();

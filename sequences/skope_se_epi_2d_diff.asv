@@ -103,9 +103,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
         % Pulseq slice refocusing gradient
         gzReph
 
-        gxSpoil
-        gzSpoil
-
         gx_fs
         gy_fs
         gx_fs_pre
@@ -366,16 +363,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
                                          'Duration', mr.calcDuration(obj.gxPre,obj.gyPre,obj.gzReph));
             obj.gyPre.amplitude = obj.gyPre.amplitude*obj.pe_enable;
 
-            %{ 
-            % gradient spoiling
-            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'Area', 2*obj.Nx*deltakx,'system', obj.sys);
-            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'Area',4/obj.thickness,'system', obj.sys);
-            spoilTime = 2*mr.calcDuration({obj.gxSpoil,obj.gzSpoil});
-
-            obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'system', obj.sys,'Duration',spoilTime,'Area',2*obj.Nx*deltakx);
-            obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'system', obj.sys,'Duration',spoilTime,'Area',4/obj.thickness);
-            %}
-
             obj.gxPre.amplitudeInit = obj.gxPre.amplitude; % keep track of initialized amplitude in case Nreadout EPI lobes is odd and swap UP-DOWN results wrong
             obj.gx.amplitudeInit = obj.gx.amplitude;
 
@@ -414,7 +401,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
                   + mr.calcDuration(obj.gz180) ...
                   + prepareTime ...
                   + obj.echoTrainLength * mr.calcDuration(obj.gx);
-                  % + mr.calcDuration(obj.gxSpoil, obj.gzSpoil); 
             if obj.doPlayFatSat
                 minTR = minTR + mr.calcDuration(obj.gz_fs) + mr.calcDuration(obj.gz_fs_pre);
             end
@@ -446,8 +432,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
                     tau = round(obj.sysDiff.maxGrad / obj.sysDiff.maxSlew,4); %ramp duration for diff gradients (shortest possible from specs) 
                     %Delta: distance between the two diffusion gradients
                     Delta = obj.delayTE1 + mr.calcDuration(obj.gz180); %function of TE and pulse duration
-                    %delta: duration of diffusion gradient, assuming it rectangular (ie: flattop + tau) (RR)
-                    % delta = round(sqrt(bFactor_max*1e6/((2*pi)^2 * obj.sysDiff.maxGrad^2 * (obj.delayTE1 - tau/2))),4);
                     %delta: duration of diffusion gradient, considering its trapezoidal shape and inverting the b formula (RS)
                     c = bFactor_max*1e6/((2*pi)^2*obj.sysDiff.maxGrad^2);
                     p = [1, -3*Delta, tau^2/2, -tau^3/10 + 3*c];
@@ -470,7 +454,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                     bDirNorm = [0 0 0];
                 end 
 
-                g = sqrt( bFactor*1e6/( (2*pi)^2*delta^2*(Delta-delta/3) ) ); % approximation
+                g = obj.sysDiff.maxGrad
                 
                 bAxis = zeros(1,3);
                 gAxisMHz = zeros(1,3);
@@ -479,13 +463,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
                     dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
                                                                                       
                     gAxis = g * bDirNorm(ja) * obj.axesSign(ja);
-                    assert(abs(gAxis)<=obj.sysDiff.maxGrad); %g shall be smaller than max allowed G.
+                    assert(abs(gAxis)<=obj.sysDiff.maxGrad, 'Assertion for Diff max Grad failed.'); %g shall be smaller than max allowed G.
                     
                     obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',gAxis,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
                     bAxis(ja)=bFactCalc(gAxis/obj.sys.gamma, tau, delta, Delta, obj);
                     gAxisMHz(ja) = gAxis / 1e6;
                 end
-                
+                fprintf(['b-enc = %d, b = (%.1f, %.1f, %.1f) s/mm2, g = (%.1f, %.1f, %.1f) MHz/m\n'], i, bAxis, gAxisMHz);
             end
             
             %% Time from trigger to scanner acquisition
