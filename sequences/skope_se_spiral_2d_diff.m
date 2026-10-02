@@ -4,7 +4,8 @@ classdef skope_se_spiral_2d_diff < PulseqBase
 % . The member method plot() can be used to display the generated sequence.
 % 
 % Notes:
-% - The sequence file is written into the current folder.
+% - The sequence is not adaptive, i.e. the parameters can't be changed, as
+%   the spiral waveform is taken as argument
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
 % - The x-axis was flipped because of a bug in the Siemens Pulseq 
@@ -58,8 +59,10 @@ classdef skope_se_spiral_2d_diff < PulseqBase
         % Pulseq diffusion gradients
         gDiff
 
-        % Pulseq spiral readout gradients
+        % Pulseq spiral readout gradient (x)
         gx
+
+        % Pulseq spiral readout gradient (y)
         gy
 
         % Pulseq slice selection gradient
@@ -80,7 +83,8 @@ classdef skope_se_spiral_2d_diff < PulseqBase
         % Refocussing gradients for spiral
         gxRefoc
         gyRefoc
-
+        
+        % Fat suppression gradients
         gx_fs
         gy_fs
         gx_fs_pre
@@ -364,7 +368,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
                     delta = min(real(delta_all( ...
                         abs(imag(delta_all)) < 1e-10 & ...
                         real(delta_all) > 0 )));
-                    delta = ceil(delta / obj.sysDiff.gradRasterTime) * obj.sysDiff.gradRasterTime;
+                    delta = obj.roundUpToGRT(delta);
                     bRef=bFactCalc(obj.sysDiff.maxGrad/obj.sys.gamma, tau, delta, Delta, obj);
                     disp(['Reference b-value for delta: ' num2str(bRef) 's/mm2'])                  
                     gDiff_flattime = delta-tau;
@@ -515,6 +519,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell);             
             obj.seq.setDefinition('Matrix', [n n]);
+            obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.Ny]);
             obj.seq.setDefinition('NrSpiralInterleaves', obj.Ny);
             obj.seq.setDefinition('SpiralSamplesPerInterleave', obj.adc.numSamples);
             obj.seq.setDefinition('InplaneAcceleration', 1);

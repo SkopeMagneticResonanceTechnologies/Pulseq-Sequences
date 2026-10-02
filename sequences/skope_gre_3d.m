@@ -171,7 +171,6 @@ classdef skope_gre_3d < PulseqBase
             obj.phaseAreaZ = ([(obj.Nz-1):-1:0]-obj.Nz/2)*deltak(3);
 
             %% Calculate minimal TEs
-            % First echo
             minTE = zeros(size(obj.TE));
             obj.fillTE = zeros(size(obj.TE));
             
@@ -279,6 +278,7 @@ classdef skope_gre_3d < PulseqBase
             end
 
             % Set number of expected external triggers
+            fprintf('nDummy = %d, round(Ny/accFacPE) = %d, Nz = %d', obj.nDummy, round(obj.Ny/obj.accFacPE), obj.Nz);
             obj.nTrig = obj.nDummy + round(obj.Ny/obj.accFacPE) * obj.Nz;
             
             %% check whether the timing of the sequence is correct
@@ -385,7 +385,7 @@ classdef skope_gre_3d < PulseqBase
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
                 obj.rf.phaseOffset = mod(117*(lin^2+lin+2)*pi/180,2*pi);
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
-                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1)));
+                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)));
             else
                 obj.rf.phaseOffset = 0;
                 obj.adc.phaseOffset = 0;

@@ -439,7 +439,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                     delta = min(real(delta_all( ...
                         abs(imag(delta_all)) < 1e-10 & ...
                         real(delta_all) > 0 )));
-                    delta = ceil(delta / obj.sysDiff.gradRasterTime) * obj.sysDiff.gradRasterTime;
+                    delta = obj.roundUpToGRT(delta);
                     bRef=bFactCalc(obj.sysDiff.maxGrad/obj.sys.gamma, tau, delta, Delta, obj);
                     disp(['Reference b-value for delta: ' num2str(bRef) 's/mm2'])                  
                     gDiff_flattime = delta-tau;
@@ -872,10 +872,6 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 end 
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
-
-            %% Spoiling
-            %spoilBlockContents = {obj.gxSpoil, obj.gzSpoil};
-            %obj.addBlock(spoilBlockContents{:});
 
             %% TR filling
             obj.addBlock(mr.makeDelay(obj.fillTR));

@@ -394,8 +394,8 @@ seepi2d.plot(timeRange);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
-paramsGre3d.seqSpecName = 'dualecho_trigger_test';
-paramsGre3d.accFacPE = 1;
+paramsGre3d.seqSpecName = '';
+paramsGre3d.accFacPE = 2;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
@@ -405,7 +405,7 @@ gre3d = skope_gre_3d(paramsGre3d);
 % gre3d.plot(timeRange);
 
 % Test sequence
-% gre3d.test();
+gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
 paramsOpc = SequenceParams('opc',scannerType);
