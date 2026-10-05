@@ -37,7 +37,8 @@ classdef SequenceParams
         mode = 'default';       % Allow to switch between different versions
         doPlayFatSat = false;   % Play out fat-saturation pulse (for EPI)
         nDummy = 0;             % Number of dummy pulses to reach steady state
-        accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI at the moment)
+        accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI and GRE3D at the moment)
+        accFac = 1;             % Acceleration factor [Spiral arms] (only used for spiral at the moment)
         multiBandFactor = 1
         partFourierFactor = 1
         

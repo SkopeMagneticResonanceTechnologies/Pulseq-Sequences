@@ -77,6 +77,16 @@ figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral tr
 % size(g_rv,1)
 %-------------------------------------------------------------------------
 
+%% 
+% see the difference between spiral arms = 8 and 16 (for undersampling purposes)
+Nitlv = 8;
+[k8,g8,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
+
+Nitlv = 16;
+[k16,g16,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
+plot(k8(:,1),k8(:,2))
+hold on
+plot(k16(:,1),k16(:,2))
 
 %%
 paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
@@ -87,6 +97,7 @@ paramsSpiral2d.readoutTime = time_rv;
 paramsSpiral2d.mode = 'MS';
 % paramsSpiral2d.nSlices = 2;
 paramsSpiral2d.nDummy = 1;
+paramsSpiral2d.accFac = 2;
 paramsSpiral2d.doPlayFatSat = true;
 paramsSpiral2d.maxDiffGrad = 172;
 paramsSpiral2d.maxDiffSlew = 63;

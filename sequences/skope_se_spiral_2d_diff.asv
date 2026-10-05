@@ -174,9 +174,6 @@ classdef skope_se_spiral_2d_diff < PulseqBase
                 end
             end
 
-            % undersampling
-            obj.Ny = round(obj.Ny/obj.accFac);
-
             % ADC dwelltime
             obj.adcDwelltime = 2e-6;
 
@@ -469,7 +466,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             
             % Dummy scans: repeated nDummy-times for no b-encoding
             for rep = 1:obj.nDummy %number of dummy volumes (i.e., they loop through the whole slice volume)
-                for lin = 1:obj.Ny
+                for lin = 1:accobj.Ny
                     for slc = 1:obj.nSlices
                         avg = 1;
                         obj = runKernel(obj, lin, slc, avg, rep, 1, KernelMode.Dummy); %bValue = 1 has no b-encoding

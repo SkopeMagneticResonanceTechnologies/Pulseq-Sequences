@@ -141,6 +141,7 @@ classdef SequenceParams_Cima_X
                     obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 150;
                     obj.nDummy       = 1;
+                    obj.accFac       = 1;
                     obj.doPlayFatSat = 0;
                     obj.bFactor = 2000 * [0, 1, 1, 1, 1, 1, 1];
                     obj.bDir         =  [0,0,0;... % b0
