@@ -617,6 +617,7 @@ classdef skope_epi_2d < PulseqBase
             obj.seq.setDefinition('Name', 'epi2d');
             obj.seq.setDefinition('TE', obj.TE);
             obj.seq.setDefinition('TR', obj.TR);
+            obj.seq.setDefinition('TRvolume', obj.TR * obj.nSlices);
 
             %% Parameters needed be added to the scanner data header for trajectory merging
             obj.seq.setDefinition('EchoSpacing', obj.echoSpacing);  
@@ -625,20 +626,21 @@ classdef skope_epi_2d < PulseqBase
 
             %% Parameters to be set on the user interface of the Field Camera            
             % The number of actually acquired dynamics depends on the cameraInterleaveTR.
-            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
             obj.seq.setDefinition('CameraNrSyncDynamics', obj.nSyncDynamics); 
-            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration);  
-            obj.seq.setDefinition('CameraInterleaveTR', obj.cameraInterleaveTR); 
-            obj.seq.setDefinition('CameraAqDelay', 0); 
+            obj.seq.setDefinition('CameraNrDynamics', ceil(obj.nTrig/obj.skipFactor));  
+            obj.seq.setDefinition('CameraAcqDuration', obj.cameraAcqDuration); 
+            obj.seq.setDefinition('CameraAqDelay', 0);
+            obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny]);
             obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.echoTrainLength]);
+            obj.seq.setDefinition('BW', round(1/obj.adc.dwell/obj.adc.numSamples));
             obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological); 
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);    
-            obj.seq.setDefinition('SequenceType', 'GRE');
+            obj.seq.setDefinition('SequenceType', 'EPI');
             obj.seq.setDefinition('SliceOrdering', 'INTERLEAVED');
             if obj.multiBandFactor > 1  
                 obj.seq.setDefinition('MultiBandFactor', obj.multiBandFactor);  

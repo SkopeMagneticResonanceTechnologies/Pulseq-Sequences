@@ -45,7 +45,7 @@ scannerType = 'Siemens 3T Cima.X';
 % % Test sequence
 % spiral2d.test();
 
-%% Create a multi-shot 2D spiral gradient-echo sequence with specific spiral waveform
+%% Create a multi-shot 2D spiral spin-echo sequence for diffusion with specific spiral waveform
 minTimeGradientDir = fullfile(fileparts(pwd), 'minTimeGradient', 'Matlab');
 if not(isfolder(minTimeGradientDir))
     error('Download https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz')
@@ -59,14 +59,14 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 Nitlv = 16;             % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 0.8;                % Resolution (in mm)
+res	= 0.8;              % Resolution (in mm)
 fov	= [22,22];          % Vector of fov (in cm)
 radius = [0,1];         % Vector of radius corresponding to the fov
 Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 5;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Smax = 5;               % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
-interpType = 'linear';   % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
+interpType = 'linear';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
 
 [k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
@@ -142,16 +142,16 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 % Test sequence
 spiral2d.test();
 
-%% Create a single-shot 2D spiral gradient-echo with specific spiral waveform
+%% Create a single-shot 2D spiral spin-echo sequence for diffusion with specific spiral waveform
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------
 Nitlv = 1;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 2;              % Resolution (in mm)
+res	= 2;                % Resolution (in mm)
 fov	= [22 22 22];       % Vector of fov (in cm)
 radius = [0,0.5,1];     % Vector of radius corresponding to the fov
-Gmax = 15;               % Max gradient (default 3 G/CM = 30 mT/m)
+Gmax = 15;              % Max gradient (default 3 G/CM = 30 mT/m)
 Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
@@ -166,23 +166,39 @@ figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral tr
 
 
 %%
-
-paramsSpiral2d = SequenceParams('spiral2d',scannerType);
+paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv; %from size(k_rv,1) * 1e-3
-paramsSpiral2d.mode = 'singleShot';
-paramsSpiral2d.seqSpecName = '2mm';
+paramsSpiral2d.mode = 'SS';
 paramsSpiral2d.nDummy = 1;
 % paramsSpiral2d.nSlices = 2;
+paramsSpiral2d.doPlayFatSat = true;
+paramsSpiral2d.maxDiffGrad = 172;
+paramsSpiral2d.maxDiffSlew = 63;
+paramsSpiral2d.TE = 70e-3;
+paramsSpiral2d.TR = 140e-3;
+
+% Sequence name
+moreName = '';
+paramsSpiral2d.seqSpecName = sprintf( ...
+    '%ddir_b%d_te%d_tr%d_%.1fmm%s', ...
+    paramsSpiral2d.nbValues - 1, ...
+    max(paramsSpiral2d.bFactor), ...
+    round(paramsSpiral2d.TE*1e3), ...
+    round(paramsSpiral2d.TR*1e3), ...
+    res, ...
+    moreName);
+
+fprintf('seqSpecName = %s\n', paramsSpiral2d.seqSpecName);
 
 % Create sequence
-spiral2d = skope_spiral_2d(paramsSpiral2d,g_rv);
+spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-timeRange = [5.4 5.49];
-spiral2d.plot(timeRange);
+% timeRange = [5.4 5.49];
+% spiral2d.plot(timeRange);
 
 % Test sequence
 spiral2d.test();
