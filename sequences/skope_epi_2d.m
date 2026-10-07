@@ -349,11 +349,16 @@ classdef skope_epi_2d < PulseqBase
             obj.gz_blipdowndown.waveform = obj.gz_blipdowndown.waveform * obj.pe_enable;
             
             %% Phase encoding and partial Fourier         
-            % PE steps prior to ky=0, excluding the central line
-            Ny_pre = round(obj.partFourierFactor*obj.Ny/2/obj.accFacPE-1); 
+            Ny_pre = round((2*obj.partFourierFactor - 1)*(obj.Ny/2/obj.accFacPE - 1)); 
             
             % PE lines after the k-space center including the central line
             Ny_post = round(obj.Ny/2/obj.accFacPE + 1);
+               
+            % echoTrainLegth must be even, such that echoTrainLegth/2 = central line of kspace is an
+            % integer, necessary for the simulation of the sequence  
+            if mod(Ny_pre + Ny_post, 2)
+                Ny_pre = Ny_pre - 1;
+            end
             obj.echoTrainLength = Ny_pre + Ny_post;
             
             % Pre-phasing gradients
@@ -649,7 +654,7 @@ classdef skope_epi_2d < PulseqBase
 
             %% Echo spacing check to comply with scanner forbidden bands
              if isfield(specs,'forbiddenBandsEchoSpacingLimits')
-                 for i=1:1:size(specs.forbiddenBandsEchoSpacingLimits,2)
+                 for i=1:1:size(specs.forbiddenBandsEchoSpacingLimits,1)
                     if obj.echoSpacing>=specs.forbiddenBandsEchoSpacingLimits(i,1) && obj.echoSpacing<=specs.forbiddenBandsEchoSpacingLimits(i,2)
                         error(['Forbidden echo spacing (' num2str(obj.echoSpacing*1000,2) ' ms) for ' seqParams.scannerType ' gradient coil.'])
                     end
@@ -767,12 +772,14 @@ classdef skope_epi_2d < PulseqBase
                 end
             end
 
+            obj.addBlock(mr.makeDelay(obj.fillTE - obj.gradFreeTime));
+       
             if mode==KernelMode.Sync || mode==KernelMode.Imaging || mode==KernelMode.Reference
-                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.fillTE));
+                obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime));
             else
-               obj.addBlock(mr.makeDelay(obj.fillTE)); 
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
             end
-            
+
             if obj.addPhaseCorrLines
                
                 % Start with flip gx amplitude
