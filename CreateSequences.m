@@ -64,8 +64,8 @@ paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
 paramsEpi2d.Nx = 74;
 paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 25e-3;
-paramsEpi2d.TR = 60e-3;
+paramsEpi2d.TE = 40e-3;
+paramsEpi2d.TR = 100e-3;
 paramsEpi2d.readoutTime = 500e-6; 
 paramsEpi2d.thickness = 3e-3;
 
@@ -396,6 +396,8 @@ seepi2d.plot(timeRange);
 paramsGre3d = SequenceParams('gre3d',scannerType);
 paramsGre3d.seqSpecName = '';
 paramsGre3d.accFacPE = 2;
+% ---- Fat Sat -----
+paramsGre3d.doPlayFatSat = true;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);

@@ -103,6 +103,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
         % Pulseq slice refocusing gradient
         gzReph
 
+        % Fat suppresion gradients
         gx_fs
         gy_fs
         gx_fs_pre
@@ -699,7 +700,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 error('Expected a kernel mode argument')
             end
 
-             %% Set ONCE-flag to avoid repeating sync and dummy scans
+            %% Set ONCE-flag to avoid repeating sync and dummy scans
             if mode == KernelMode.Sync || mode==KernelMode.Dummy
                 % ONCE=1 marks the blocks that are only executed in the first repetition
                 obj.addBlock(mr.makeLabel('SET','ONCE', 1));
