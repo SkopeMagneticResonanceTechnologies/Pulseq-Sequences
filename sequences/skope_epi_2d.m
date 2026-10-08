@@ -618,6 +618,8 @@ classdef skope_epi_2d < PulseqBase
             end
             
             %% Prepare sequence export
+            obj.seq.setDefinition(' Units of time - seconds', '');
+            obj.seq.setDefinition(' Units of length - meters', '');
             obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('Name', 'epi2d');
             obj.seq.setDefinition('TE', obj.TE);

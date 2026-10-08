@@ -65,8 +65,8 @@ classdef SequenceParams_Cima_X
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
                     %failed 65/180, try 40/180 and 60/160
-                    obj.maxDiffSlew  = 60; %60  
-                    obj.maxDiffGrad  = 160;
+                    obj.maxDiffSlew  = 63; %60  
+                    obj.maxDiffGrad  = 172;
                     obj.distanceFactorPercentage = 150;
                 case 'se_epi2d_diff_mb'
                     obj.TE           = 64e-3;
@@ -103,12 +103,13 @@ classdef SequenceParams_Cima_X
                     obj.Nz           = 56;
                     obj.alpha        = 1;
                     obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
+                    obj.TR           = 55e-3;
                     %obj.TE           = [5.2 9.7]*1e-3;
-                    obj.TR           = 51e-3;
+                    %obj.TR           = 25e-3;
                     obj.readoutTime  = 20e-6 * obj.Nx;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
-                    obj.nDummy       = 50;
+                    obj.nDummy       = 1;               %Total number of readout dummies = nDummy*Ny
                     obj.distanceFactorPercentage = 200;
                     obj.accFacPE     = 1;
                 case 'spiral2d'
@@ -152,8 +153,8 @@ classdef SequenceParams_Cima_X
                                         [0,1,1]./sqrt(2);... % yz
                                         [1,0,1]./sqrt(2);];  % xz
                     obj.nbValues     = size(obj.bDir,1);
-                    obj.maxDiffSlew = 60;
-                    obj.maxDiffGrad = 160;
+                    obj.maxDiffSlew = 63;
+                    obj.maxDiffGrad = 172;
                     obj.seqSpecName  = '';
                 otherwise
                     error('SequenceParams_Cima_X: unknown sequence "%s".', seqName)

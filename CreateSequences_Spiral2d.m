@@ -59,11 +59,11 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 Nitlv = 16;             % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 0.8;              % Resolution (in mm)
+res	= 1.2;              % Resolution (in mm)
 fov	= [22,22];          % Vector of fov (in cm)
 radius = [0,1];         % Vector of radius corresponding to the fov
-Gmax = 4;               % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 5;               % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Gmax = 10;               % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 10;               % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
 interpType = 'linear';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
@@ -79,14 +79,14 @@ figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral tr
 
 %% 
 % see the difference between spiral arms = 8 and 16 (for undersampling purposes)
-Nitlv = 8;
-[k8,g8,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
-
-Nitlv = 16;
-[k16,g16,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
-plot(k8(:,1),k8(:,2))
-hold on
-plot(k16(:,1),k16(:,2))
+% Nitlv = 8;
+% [k8,g8,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
+% 
+% Nitlv = 16;
+% [k16,g16,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
+% plot(k8(:,1),k8(:,2))
+% hold on
+% plot(k16(:,1),k16(:,2))
 
 %%
 paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
@@ -97,11 +97,9 @@ paramsSpiral2d.readoutTime = time_rv;
 paramsSpiral2d.mode = 'MS';
 % paramsSpiral2d.nSlices = 2;
 paramsSpiral2d.nDummy = 1;
-paramsSpiral2d.accFac = 2;
+paramsSpiral2d.accFac = 1;
 paramsSpiral2d.doPlayFatSat = true;
-paramsSpiral2d.maxDiffGrad = 172;
-paramsSpiral2d.maxDiffSlew = 63;
-paramsSpiral2d.TE = 70e-3;
+paramsSpiral2d.TE = 34e-3;
 paramsSpiral2d.TR = 120e-3;
 
 % ---- b-encoding from external file ----
@@ -140,7 +138,7 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 % spiral2d.plot(timeRange);
 
 % Test sequence
-spiral2d.test();
+% spiral2d.test();
 
 %% Create a single-shot 2D spiral spin-echo sequence for diffusion with specific spiral waveform
 %-------------------------------------------------------------------------
@@ -148,11 +146,11 @@ spiral2d.test();
 %-------------------------------------------------------------------------
 Nitlv = 1;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
-res	= 2;                % Resolution (in mm)
+res	= 1;                % Resolution (in mm)
 fov	= [22 22 22];       % Vector of fov (in cm)
 radius = [0,0.5,1];     % Vector of radius corresponding to the fov
 Gmax = 15;              % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Smax = 9.5;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
 interpType = 'cubic';   % Type of interpolation used to interpolate the fov accept: linear, cubic, spline
@@ -175,10 +173,8 @@ paramsSpiral2d.mode = 'SS';
 paramsSpiral2d.nDummy = 1;
 % paramsSpiral2d.nSlices = 2;
 paramsSpiral2d.doPlayFatSat = true;
-paramsSpiral2d.maxDiffGrad = 172;
-paramsSpiral2d.maxDiffSlew = 63;
-paramsSpiral2d.TE = 70e-3;
-paramsSpiral2d.TR = 140e-3;
+paramsSpiral2d.TE = 35e-3;
+paramsSpiral2d.TR = 210e-3;
 
 % Sequence name
 moreName = '';
@@ -201,4 +197,4 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 % spiral2d.plot(timeRange);
 
 % Test sequence
-spiral2d.test();
+% spiral2d.test();

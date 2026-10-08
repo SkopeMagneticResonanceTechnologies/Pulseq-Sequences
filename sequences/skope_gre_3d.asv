@@ -63,6 +63,22 @@ classdef skope_gre_3d < PulseqBase
         % RF phase increment
         rf_inc
 
+        % Fat suppression gradients
+        rf_fs
+
+        gx_fs
+        gy_fs
+        gz_fs
+        gx_fs_pre
+        gy_fs_pre
+        gz_fs_pre
+
+         % Fat shift [Unit: ppm]
+        sat_ppm = -3.45;
+
+        % Play out fat saturation pulse
+        doPlayFatSat = false; 
+
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
@@ -120,8 +136,8 @@ classdef skope_gre_3d < PulseqBase
                 end
             end
             
-            % Number of phase encoding steps
-            obj.Ny = obj.Nx; 
+            % Number of phase encoding steps with undersampling
+            obj.Ny = round(obj.Nx/obj.accFacPE); 
 
             % Number of phase encoding steps
             obj.Nz = obj.Nx; 
@@ -129,14 +145,55 @@ classdef skope_gre_3d < PulseqBase
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
                 = GetAxesOrderAndSign(obj.sliceOrientation,obj.phaseEncDir);
-            
-            %% Sync scans
-            obj.nSyncDynamics = 0;
 
+            % Readout time
             Tpre = obj.readoutTime;
 
             %% Create a new sequence object
             obj.seq = mr.Sequence(obj.sys);  
+
+            %% Create fat-sat pulse 
+            if obj.doPlayFatSat
+                sat_freq = obj.sat_ppm * 1e-6 * obj.sys.B0 * obj.sys.gamma;
+                obj.rf_fs = mr.makeGaussPulse(  110*pi/180, ...
+                                                'system', obj.sys, ...
+                                                'Duration', 5e-3, ... % 8
+                                                'dwell', 10e-6,...
+                                                'bandwidth', abs(sat_freq), ...
+                                                'freqOffset', sat_freq, ...
+                                                'use', 'saturation');
+    
+                % Compensate for the frequency-offset induced phase  
+                obj.rf_fs.phaseOffset = -2*pi * obj.rf_fs.freqOffset * mr.calcRfCenter(obj.rf_fs);  
+    
+                % Spoil up to 0.1mm
+                % with a limited amplitude 8mT/m
+                g_fs = mr.convert(8,'mT/m','Hz/m','gamma',42576000);
+
+                obj.gz_fs_pre = mr.makeTrapezoid(obj.axesOrder{3}, obj.sys, ...
+                                             'Area', -0.1/1e-4, ...
+                                             'maxGrad', g_fs); 
+                obj.gx_fs_pre = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
+                                             'Area', -0.1/1e-4, ...
+                                             'maxGrad', g_fs); 
+                obj.gy_fs_pre = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
+                                             'Area', -0.1/1e-4, ...
+                                             'maxGrad', g_fs);  
+
+                obj.gz_fs = mr.makeTrapezoid(obj.axesOrder{3}, obj.sys, ...
+                                             'delay', mr.calcDuration(obj.rf_fs), ...
+                                             'Area', 0.1/1e-4, ...
+                                             'maxGrad', g_fs); 
+                obj.gx_fs = mr.makeTrapezoid(obj.axesOrder{1}, obj.sys, ...
+                                             'delay', mr.calcDuration(obj.rf_fs), ...
+                                             'Area', 0.1/1e-4, ...
+                                             'maxGrad', g_fs); 
+                obj.gy_fs = mr.makeTrapezoid(obj.axesOrder{2}, obj.sys, ...
+                                             'delay', mr.calcDuration(obj.rf_fs), ...
+                                             'Area', 0.1/1e-4, ...
+                                             'maxGrad', g_fs); 
+
+            end
 
             %% Create non-selective pulse
             obj.rf = mr.makeBlockPulse(obj.alpha*pi/180,...
@@ -167,7 +224,7 @@ classdef skope_gre_3d < PulseqBase
                 mr.makeTrapezoid(obj.axesOrder{1}, 'Area', -obj.gx.area, 'system', obj.sys), ...
                 1, nEchoes-1);
             obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',obj.gx.area,'Duration',Tpre*2);
-            obj.phaseAreaY = ([(round(obj.Ny/obj.accFacPE)-1):-1:0]-round(obj.Ny/obj.accFacPE)/2)*deltak(2);
+            obj.phaseAreaY = ([(obj.Ny-1):-1:0]-obj.Ny/2)*deltak(2);
             obj.phaseAreaZ = ([(obj.Nz-1):-1:0]-obj.Nz/2)*deltak(3);
 
             %% Calculate minimal TEs
@@ -225,6 +282,9 @@ classdef skope_gre_3d < PulseqBase
                   + nEchoes * mr.calcDuration(obj.gx) ...
                   + flyBackDuration ...      
                   + mr.calcDuration(obj.gxSpoil);
+            if obj.doPlayFatSat
+                minTR = minTR + mr.calcDuration(obj.gz_fs) + mr.calcDuration(obj.gz_fs_pre);
+            end
             
             disp(['Minimal TR is ' num2str(minTR*1000) ' ms']);
             
@@ -238,11 +298,7 @@ classdef skope_gre_3d < PulseqBase
 
             %% Prepare trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
-    
-            %% Drive magnetization to steady state
-            for i=1:obj.nDummy
-                runKernel(obj, floor(round(obj.Ny/obj.accFacPE)/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
-            end
+
                         
             %% Calculate required camera acquisition duration
             obj.cameraAcqDuration = obj.gradFreeTime ...
@@ -254,9 +310,9 @@ classdef skope_gre_3d < PulseqBase
             %% Synchronization
             if obj.nSyncDynamics > 0
                 for avg = 1:obj.nSyncDynamics
-                    slc = 1;
+                    par = 1;
                     lin = 1;
-                    obj = runKernel(obj, lin, slc, avg, false);
+                    obj = runKernel(obj, lin, par, avg, KernelMode.Sync);
                 end
             
                 %% Add pause and reset flags
@@ -264,22 +320,32 @@ classdef skope_gre_3d < PulseqBase
                     warning('The pause between the synchronization and imaging scans should be equal or larger than 4 seconds. The current value is okay for simulation purposes.');
                 end
             
-                obj.addBlock({mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','SLC', 0), mr.makeLabel('SET','AVG', 0)});
+                obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','PAR', 0), mr.makeLabel('SET','AVG', 0));
+            end
+
+            %% Drive magnetization to steady state with dummies
+            for i=1:obj.nDummy
+                runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
             end
 
             %% Actual imaging sequence
             % loop over phase encodes and define sequence blocks
             for par = 1:obj.Nz
-                for lin = 1:round(obj.Ny/obj.accFacPE) 
+                for lin = 1:obj.Ny 
                     % loop over slices
                     avg = 1;
                     obj = runKernel(obj, lin, par, avg, KernelMode.Imaging);   
                 end
             end
 
-            % Set number of expected external triggers
-            fprintf('nDummy = %d, round(Ny/accFacPE) = %d, Nz = %d', obj.nDummy, round(obj.Ny/obj.accFacPE), obj.Nz);
-            obj.nTrig = obj.nDummy + round(obj.Ny/obj.accFacPE) * obj.Nz;
+            %% Set number of expected external triggers
+            obj.nTrig = obj.Ny * obj.Nz;
+
+            %% Calculate Camera Interleave TR (blank time)
+            obj.CalculateInterleaveTR(obj.TR);	 
+
+            fprintf('dummies = %d, Ny = %d, Nz = %d, nTrig = %d\n', obj.nDummy, obj.Ny, obj.Nz, obj.nDummy + obj.Ny * obj.Nz);
+            fprintf('skip factor = %d => NrDynamics = %d\n', obj.skipFactor, ceil(obj.nTrig/obj.skipFactor));
             
             %% check whether the timing of the sequence is correct
             [ok, error_report] = obj.seq.checkTiming;
@@ -291,9 +357,6 @@ classdef skope_gre_3d < PulseqBase
                 fprintf([error_report{:}]);
                 fprintf('\n');
             end
-            
-            %% Calculate Camera Interleave TR (blank time)
-            obj.CalculateInterleaveTR(obj.TR);	        
 
             %% Prepare sequence export
             obj.seq.setDefinition('Name', 'gre3d');
@@ -313,7 +376,7 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
             obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
-            obj.seq.setDefinition('Encoding', [obj.Nx round(obj.Ny/obj.accFacPE) obj.Nz]);
+            obj.seq.setDefinition('Encoding', [obj.Nx obj.Ny obj.Nz]);
             obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
@@ -330,6 +393,10 @@ classdef skope_gre_3d < PulseqBase
             
             filename = strcat('exports/',string(seqParams.scannerType),'/skope_gre_3d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));  
             
+            if obj.doPlayFatSat == 1
+                filename = strcat(filename, '_fs');
+            end
+
             if obj.accFacPE > 1  
                 filename = strcat(filename, '_R', num2str(obj.accFacPE));  
             end
@@ -375,27 +442,46 @@ classdef skope_gre_3d < PulseqBase
     end
 
     methods (Access=private)               
-        function obj = runKernel(obj, lin, par, avg, KernelMode.)
+        function obj = runKernel(obj, lin, par, avg, mode)
 
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
             end
+
+            %% Set ONCE-flag to avoid repeating sync and dummy scans
+            if mode == KernelMode.Sync || mode==KernelMode.Dummy
+                % ONCE=1 marks the blocks that are only executed in the first repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 1));
+            else
+                % Blocks with ONCE=0 are executed on every repetition
+                obj.addBlock(mr.makeLabel('SET','ONCE', 0));
+            end
         
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
+                if obj.doPlayFatSat
+                    obj.addBlock(obj.gz_fs_pre, obj.gx_fs_pre, obj.gy_fs_pre);
+                    obj.addBlock(obj.rf_fs, obj.gz_fs, obj.gx_fs, obj.gy_fs);
+                end
                 obj.rf.phaseOffset = mod(117*(lin^2+lin+2)*pi/180,2*pi);
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
                 obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)));
             else
+                if obj.doPlayFatSat
+                    obj.addBlock(obj.gz_fs_pre, obj.gx_fs_pre, obj.gy_fs_pre);
+                    obj.addBlock(obj.gz_fs, obj.gx_fs, obj.gy_fs);
+                end
                 obj.rf.phaseOffset = 0;
                 obj.adc.phaseOffset = 0;
                 obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf) + obj.fillTE(1)));
             end                      
         
             %% External trigger and gradient-free interval
-            % We send the trigger here always for the dummies to get a
-            % steady state field probe signal
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime));
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.gradFreeTime)); 												   
+            else
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
+            end
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
@@ -418,15 +504,21 @@ classdef skope_gre_3d < PulseqBase
                          {mr.makeLabel('SET','PAR', par-1)}, ...        
                          {mr.makeLabel('SET','AVG', avg-1)}];
 
-            %% First readout gradient
-            obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+            %% Readout gradients
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                % First echo
+                obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+                % Remaining echoes 
+                for i = 2:length(obj.TE)
+                    obj.addBlock(obj.gxFlyBack(i-1));
+                    obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', i-1), labels{:});
+                end
+            else 
+                obj.addBlock(obj.gx, mr.makeLabel('SET','ECO', 0), labels{:});
+            end
           
             %% Remaining echoes
-            for i = 2:length(obj.TE)
-                obj.addBlock(obj.gxFlyBack(i-1));
-                obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', i-1), labels{:});
-            end
-
+            
             %% Negative Phase encoding
             gyPre.amplitude = -gyPre.amplitude;
             gzPre.amplitude = -gzPre.amplitude;

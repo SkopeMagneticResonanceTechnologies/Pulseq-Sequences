@@ -507,6 +507,8 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             end
             
             %% Prepare sequence export
+            obj.seq.setDefinition(' Units of time - seconds', '');
+            obj.seq.setDefinition(' Units of length - meters', '');
             obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('Name', 'spir2d');
             obj.seq.setDefinition('TE', obj.TE);

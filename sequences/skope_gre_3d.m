@@ -36,10 +36,10 @@ classdef skope_gre_3d < PulseqBase
         % Pulseq readout gradient
         gx
 
-        % Pulseq slice selection gradient
+        % Pulseq partition selection gradient
         gz
 
-        % Pulseq slice refocusing gradient
+        % Pulseq partition refocusing gradient
         gzReph
 
         % Pulseq read rewinding gradient
@@ -48,7 +48,7 @@ classdef skope_gre_3d < PulseqBase
         % Pulseq read spoiling gradient
         gxSpoil
 
-        % Pulseq slice spoiling gradient
+        % Pulseq partition spoiling gradient
         gzSpoil
 
         % Phase encoding moments
@@ -320,26 +320,36 @@ classdef skope_gre_3d < PulseqBase
                     warning('The pause between the synchronization and imaging scans should be equal or larger than 4 seconds. The current value is okay for simulation purposes.');
                 end
             
-                obj.addBlock(mr.makeDelay(obj.preScanPause), mr.makeLabel('SET','LIN', 0), mr.makeLabel('SET','PAR', 0), mr.makeLabel('SET','AVG', 0));
+                obj.addBlock(mr.makeDelay(obj.preScanPause), ...
+                    mr.makeLabel('SET','LIN', 0), ...
+                    mr.makeLabel('SET','PAR', 0), ...
+                    mr.makeLabel('SET','AVG', 0), ...
+                    mr.makeLabel('SET','ECO', 0));
             end
 
-            %% Drive magnetization to steady state with dummies
-            for i=1:obj.nDummy
-                runKernel(obj, floor(obj.Ny/2), floor(obj.Nz/2), 1, KernelMode.Dummy);
+            %% Drive magnetization to steady state with Ny dummies
+            for rep = 1:obj.nDummy
+                for i = 1:obj.Ny
+                    lin = i;
+                    par = 1;
+                    obj = runKernel(obj, lin, par, 1, KernelMode.Dummy);
+                end
             end
-
             %% Actual imaging sequence
             % loop over phase encodes and define sequence blocks
             for par = 1:obj.Nz
                 for lin = 1:obj.Ny 
-                    % loop over slices
+                    % loop over partitions
                     avg = 1;
                     obj = runKernel(obj, lin, par, avg, KernelMode.Imaging);   
                 end
             end
 
-            % Set number of expected external triggers
-            obj.nTrig = obj.nDummy + obj.Ny * obj.Nz;
+            %% Set the number of imaging triggers
+            obj.nTrig = obj.Ny * obj.Nz;
+
+            %% Calculate Camera Interleave TR (blank time)
+            obj.CalculateInterleaveTR(obj.TR);	 
             
             %% check whether the timing of the sequence is correct
             [ok, error_report] = obj.seq.checkTiming;
@@ -351,11 +361,10 @@ classdef skope_gre_3d < PulseqBase
                 fprintf([error_report{:}]);
                 fprintf('\n');
             end
-            
-            %% Calculate Camera Interleave TR (blank time)
-            obj.CalculateInterleaveTR(obj.TR);	        
 
             %% Prepare sequence export
+            obj.seq.setDefinition(' Units of time - seconds', '');
+            obj.seq.setDefinition(' Units of length - meters', '');
             obj.seq.setDefinition('Name', 'gre3d');
             obj.seq.setDefinition('FOV', obj.fov);
             obj.seq.setDefinition('TR', obj.TR);
@@ -372,7 +381,7 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
-            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny obj.Nz]); 
+            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny*obj.accFacPE obj.Nz]); 
             obj.seq.setDefinition('Encoding', [obj.Nx obj.Ny obj.Nz]);
             obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
@@ -460,9 +469,11 @@ classdef skope_gre_3d < PulseqBase
                     obj.addBlock(obj.gz_fs_pre, obj.gx_fs_pre, obj.gy_fs_pre);
                     obj.addBlock(obj.rf_fs, obj.gz_fs, obj.gx_fs, obj.gy_fs);
                 end
-                obj.rf.phaseOffset = mod(117*(lin^2+lin+2)*pi/180,2*pi);
+                obj.rf.phaseOffset = obj.rf_phase * pi/180;
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
                 obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)));
+                obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360);
+                obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360);
             else
                 if obj.doPlayFatSat
                     obj.addBlock(obj.gz_fs_pre, obj.gx_fs_pre, obj.gy_fs_pre);
@@ -474,9 +485,11 @@ classdef skope_gre_3d < PulseqBase
             end                      
         
             %% External trigger and gradient-free interval
-            % We send the trigger here always for the dummies to get a
-            % steady state field probe signal
-            obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime));
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                obj.addBlock(obj.extTrigger,mr.makeDelay(obj.gradFreeTime)); 												   
+            else
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
+            end
 
             %% Read-prewinding and phase encoding gradients
             gyPre = mr.makeTrapezoid(obj.axesOrder{2}, ...
@@ -494,20 +507,30 @@ classdef skope_gre_3d < PulseqBase
             %seq.addBlock(mr.makeDelay(1)); % older scanners like Trio may need this
             % dummy delay to keep up with timing
 
-            %% Set labels
-            labels = [  {mr.makeLabel('SET','LIN', lin-1)}, ...
+            %% Readout gradients
+            if mode==KernelMode.Sync || mode==KernelMode.Imaging
+                % Set labels
+                labels = [  {mr.makeLabel('SET','LIN', lin-1)}, ...
                          {mr.makeLabel('SET','PAR', par-1)}, ...        
                          {mr.makeLabel('SET','AVG', avg-1)}];
 
-            %% First readout gradient
-            obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
-          
-            %% Remaining echoes
-            for i = 2:length(obj.TE)
-                obj.addBlock(obj.gxFlyBack(i-1));
-                obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', i-1), labels{:});
+                % First echo
+                obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', 0), labels{:});
+                % Remaining echoes 
+                for i = 2:length(obj.TE)
+                    obj.addBlock(obj.gxFlyBack(i-1));
+                    obj.addBlock(obj.gx, obj.adc, mr.makeLabel('SET','ECO', i-1), labels{:});
+                end
+            else 
+                % First echo
+                obj.addBlock(obj.gx);
+                % Remaining echoes 
+                for i = 2:length(obj.TE)
+                    obj.addBlock(obj.gxFlyBack(i-1));
+                    obj.addBlock(obj.gx);
+                end
             end
-
+          
             %% Negative Phase encoding
             gyPre.amplitude = -gyPre.amplitude;
             gzPre.amplitude = -gzPre.amplitude;

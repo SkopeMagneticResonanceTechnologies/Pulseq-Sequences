@@ -64,8 +64,8 @@ paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
 paramsEpi2d.Nx = 74;
 paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 40e-3;
-paramsEpi2d.TR = 100e-3;
+paramsEpi2d.TE = 25e-3;
+paramsEpi2d.TR = 50e-3;
 paramsEpi2d.readoutTime = 500e-6; 
 paramsEpi2d.thickness = 3e-3;
 
@@ -277,9 +277,9 @@ epi2d.test();
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
 paramsSeEpi2dDiff.fov = 0.22;
 paramsSeEpi2dDiff.accFacPE = 2;
-paramsSeEpi2dDiff.Nx = 148;%180;
-paramsSeEpi2dDiff.Ny = 148;%180;
-paramsSeEpi2dDiff.readoutTime = 600e-6;%600e-6;  
+paramsSeEpi2dDiff.Nx = 180;%148;
+paramsSeEpi2dDiff.Ny = 180;%148;
+paramsSeEpi2dDiff.readoutTime = 650e-6;%600e-6;  
 paramsSeEpi2dDiff.addPhaseCorrLines = true;
 
 % ---- Fat Sat -----
@@ -305,15 +305,9 @@ end
 
 % ---- PF ON -----
 paramsSeEpi2dDiff.partFourierFactor = 7/8; %RR: realistic is a 6/8 %RS: must be more than 4/8
-paramsSeEpi2dDiff.TE = 62e-3;
-paramsSeEpi2dDiff.TR = 120e-3;
+paramsSeEpi2dDiff.TE = 75e-3;
+paramsSeEpi2dDiff.TR = 125e-3;
 % ---- PF ON -----
-
-% ---- Gradients and slew rate ----
-% paramsSeEpi2dDiff.maxGrad = 180;
-% paramsSeEpi2dDiff.maxSlew = 180;
-paramsSeEpi2dDiff.maxDiffGrad = 172;
-paramsSeEpi2dDiff.maxDiffSlew = 63;
 
 % ---- b-encoding from external text file ----
 % paramsSeEpi2dDiff.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
@@ -394,10 +388,10 @@ seepi2d.plot(timeRange);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
-paramsGre3d.seqSpecName = '';
-paramsGre3d.accFacPE = 2;
+paramsGre3d.seqSpecName = '8echoes';
+paramsGre3d.accFacPE = 1;
 % ---- Fat Sat -----
-paramsGre3d.doPlayFatSat = true;
+paramsGre3d.doPlayFatSat = false;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
@@ -407,7 +401,7 @@ gre3d = skope_gre_3d(paramsGre3d);
 % gre3d.plot(timeRange);
 
 % Test sequence
-gre3d.test();
+% gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
 paramsOpc = SequenceParams('opc',scannerType);
