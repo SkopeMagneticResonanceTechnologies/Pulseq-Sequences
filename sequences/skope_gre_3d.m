@@ -453,15 +453,6 @@ classdef skope_gre_3d < PulseqBase
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
             end
-
-            %% Set ONCE-flag to avoid repeating sync and dummy scans
-            if mode == KernelMode.Sync || mode==KernelMode.Dummy
-                % ONCE=1 marks the blocks that are only executed in the first repetition
-                obj.addBlock(mr.makeLabel('SET','ONCE', 1));
-            else
-                % Blocks with ONCE=0 are executed on every repetition
-                obj.addBlock(mr.makeLabel('SET','ONCE', 0));
-            end
         
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging

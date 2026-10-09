@@ -22,7 +22,7 @@ classdef skope_epi_2d < PulseqBase
         % A flag to quickly disable phase encoding (1/0) as needed for the delay calibration
         pe_enable = 1             
 
-        % Partial Fourier factor: 1: full sampling 0: start with ky=0
+        % Partial Fourier factor: 1: full sampling 0.5: start with ky=0
         partFourierFactor = 1 
 
         % Add phase correction lines

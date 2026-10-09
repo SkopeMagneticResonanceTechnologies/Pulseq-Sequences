@@ -443,17 +443,17 @@ classdef skope_gre_2d < PulseqBase
             
             %% Slice refocusing gradient
             obj.addBlock(obj.gzReph);
+            obj.addBlock(mr)
         
             %% External trigger and gradient-free interval
             if mode==KernelMode.Sync || mode==KernelMode.Imaging
                 if obj.doMonitoringDuringRF
                     obj.addBlock(mr.makeDelay(obj.fillTE(1)));
                 else
-                    obj.addBlock(mr.makeDelay(obj.fillTE(1)));
                     obj.addBlock(obj.extTrigger, mr.makeDelay(obj.gradFreeTime));
                 end
             else
-                obj.addBlock(mr.makeDelay(obj.fillTE(1) + obj.gradFreeTime));
+                obj.addBlock(mr.makeDelay(obj.gradFreeTime));
             end          
 
             %% Read-prewinding and phase encoding gradients

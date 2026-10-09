@@ -49,6 +49,8 @@ if invivo
     % GRE has currently no fat saturation pulse 
 end
 
+paramsGre2d.doMonitoringDuringRF = true;
+
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
 
@@ -348,7 +350,7 @@ seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 % seepi2d.plot(timeRange);
 
 % Test sequence
-seepi2d.test();
+% seepi2d.test();
 
 
 %% Create a 2D spin-echo EPI sequence with diffusion encoding (R2, MB2)
