@@ -64,6 +64,9 @@ classdef skope_spiral_2d < PulseqBase
         % Phase increment for RF spoiling
         rfSpoilingInc = 117 
 
+        % undersampling factor
+        accFac
+
         mode = 'default';
 
     end
@@ -112,44 +115,17 @@ classdef skope_spiral_2d < PulseqBase
             % ADC dwelltime
             obj.adcDwelltime = 2e-6;
 
-            % Field of view [Unit: m]
-            obj.fov = seqParams.fov; 
+            % Copy all sequence parameters
+            fieldNames = fields(seqParams);
+            for i = 1:numel(fieldNames)
+                fieldname = fieldNames{i};
+                if isprop(obj,fieldname)
+                    obj.(fieldname) = seqParams.(fieldname);
+                end
+            end
 
-            % Number of readout samples
-            obj.Nx = seqParams.Nx; 
-
-            % Number of spiral arms
-            obj.Ny = seqParams.Ny; 
-                       
-            % Flip angle [Unit: deg]
-            obj.alpha = seqParams.alpha;     
-            
-            % Slice thickness [Unit: m]
-            obj.thickness = seqParams.thickness; 
-
-            % Number of slices
-            obj.nSlices = seqParams.nSlices;
-            
-            % Echo times [Unit: s]
-            obj.TE = seqParams.TE;
-
-            % Excitation repetition time [Unit: s]
-            obj.TR = seqParams.TR;                       
-            
-            % ADC duration [Unit: s]
-            obj.readoutTime = seqParams.readoutTime;  
-
-            obj.sliceOrientation = seqParams.sliceOrientation;
-            obj.phaseEncDir = seqParams.phaseEncDir;
-
-            % Single or multi shot
-            obj.mode = seqParams.mode;
-
-            % Dummy scans
-            obj.nDummy = seqParams.nDummy;
-
-            % Slice distance factor
-            obj.distanceFactorPercentage = seqParams.distanceFactorPercentage;
+            % Number of spiral arms considering undersampling
+            obj.Ny = round(obj.Ny/obj.accFac); 
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -354,7 +330,7 @@ classdef skope_spiral_2d < PulseqBase
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell);
             obj.seq.setDefinition('Matrix', [n n]);
             obj.seq.setDefinition('EncodingMatrix', [obj.adc.numSamples obj.Ny]);
-            obj.seq.setDefinition('InplaneAcceleration', 1);
+            obj.seq.setDefinition('InplaneAcceleration', obj.accFac);
             obj.seq.setDefinition('SliceShifts', obj.slicePositionChronological);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
@@ -376,11 +352,47 @@ classdef skope_spiral_2d < PulseqBase
             
             filename = strcat('exports/',string(seqParams.scannerType),'/skope_spiral_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir),'_',string(obj.mode));  
 
+            if obj.accFac > 1  
+                filename = strcat(filename, '_R', num2str(obj.accFac));  
+            end
+
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
 
             obj.seq.write(strcat(filename,'.seq'));  
+
+            %% Safety checks
+            ascfile = fullfile('dependencies','asc', specs.HWfilename);
+            if isfile(ascfile)
+                % PNS
+                fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
+                [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+                maxPNS = max(pns_norm(1,:));
+                maxCNS = max(pns_norm(2,:));
+    
+                if ok(1)
+                    fprintf('PNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxPNS);
+                else
+                    fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxPNS);
+                end
+                
+                if ok(2)
+                    fprintf('CNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxCNS);
+                else
+                    fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxCNS);
+                end
+    
+                % Gradient spectrum check
+                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile); % waiting for pulseq 1.5.2
+            else
+                warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
+            end
+
 
         end
     end

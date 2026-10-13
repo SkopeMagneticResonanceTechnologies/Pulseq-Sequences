@@ -462,17 +462,19 @@ classdef skope_gre_3d < PulseqBase
                 end
                 obj.rf.phaseOffset = obj.rf_phase * pi/180;
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
-                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)));
+                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)), mr.makeLabel('SET','PMC', false), mr.makeLabel('SET','AVG',avg-1));
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360);
                 obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360);
-            else
+            elseif mode == KernelMode.Sync
                 if obj.doPlayFatSat
                     obj.addBlock(obj.gz_fs_pre, obj.gx_fs_pre, obj.gy_fs_pre);
                     obj.addBlock(obj.gz_fs, obj.gx_fs, obj.gy_fs);
                 end
                 obj.rf.phaseOffset = 0;
                 obj.adc.phaseOffset = 0;
-                obj.addBlock(mr.makeDelay(mr.calcDuration(obj.rf) + obj.fillTE(1)));
+                obj.addBlock(mr.makeLabel('SET','PMC',true), mr.makeLabel('SET','AVG',avg-1), mr.makeDelay(mr.calcDuration(obj.rf) + obj.fillTE(1)));
+            else 
+                error('Unkown kernel mode')
             end                      
         
             %% External trigger and gradient-free interval

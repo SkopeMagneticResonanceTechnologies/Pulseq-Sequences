@@ -358,6 +358,8 @@ classdef skope_gre_2d < PulseqBase
             obj.CalculateInterleaveTR(obj.TR);	        
 
             %% Prepare sequence export
+            obj.seq.setDefinition(' Units of time - seconds', '');
+            obj.seq.setDefinition(' Units of length - meters', '');
             obj.seq.setDefinition('Name', 'gre2d');
             obj.seq.setDefinition('FOV', [obj.fov obj.fov obj.thickness*obj.nSlices*(1+obj.distanceFactorPercentage/100)]);
             obj.seq.setDefinition('TR', obj.TR);

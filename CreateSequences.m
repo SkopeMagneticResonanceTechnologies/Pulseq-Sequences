@@ -49,7 +49,7 @@ if invivo
     % GRE has currently no fat saturation pulse 
 end
 
-paramsGre2d.doMonitoringDuringRF = true;
+paramsGre2d.doMonitoringDuringRF = false;
 
 % Generate the sequence
 gre2d = skope_gre_2d(paramsGre2d);
@@ -390,8 +390,8 @@ seepi2d.plot(timeRange);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
-paramsGre3d.seqSpecName = '8echoes';
-paramsGre3d.accFacPE = 1;
+paramsGre3d.seqSpecName = '2echoes';
+paramsGre3d.accFacPE = 2;
 % ---- Fat Sat -----
 paramsGre3d.doPlayFatSat = false;
 
