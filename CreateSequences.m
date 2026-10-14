@@ -392,8 +392,9 @@ seepi2d.plot(timeRange);
 paramsGre3d = SequenceParams('gre3d',scannerType);
 paramsGre3d.seqSpecName = '2echoes';
 paramsGre3d.accFacPE = 2;
+paramsGre3d.accFacZ = 2;
 % ---- Fat Sat -----
-paramsGre3d.doPlayFatSat = false;
+paramsGre3d.doPlayFatSat = true;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);

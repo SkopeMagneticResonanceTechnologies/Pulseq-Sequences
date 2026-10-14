@@ -88,6 +88,9 @@ classdef skope_gre_3d < PulseqBase
         % Acceleration factor (Phase)
         accFacPE
 
+        % Acceleration factor (Partition)
+        accFacZ
+
     end
 
     methods
@@ -125,7 +128,9 @@ classdef skope_gre_3d < PulseqBase
                                 'SlewUnit', 'T/m/s', ...
                                 'rfRingdownTime', 20e-6, ...
                                 'rfDeadTime', 100e-6, ...
-                                'adcDeadTime', 10e-6);  
+                                'adcDeadTime', 10e-6, ...
+                                'B0', specs.B0 ...
+            ); 
 
             % Copy all sequence parameters
             fieldNames = fields(seqParams);
@@ -136,11 +141,11 @@ classdef skope_gre_3d < PulseqBase
                 end
             end
             
-            % Number of phase encoding steps with undersampling
+            % Number of phase encoding steps with in-plane acceleration
             obj.Ny = round(obj.Nx/obj.accFacPE); 
 
-            % Number of phase encoding steps
-            obj.Nz = obj.Nx; 
+            % Number of phase encoding steps with partition acceleration
+            obj.Nz = round(obj.Nx/obj.accFacZ); 
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -192,7 +197,6 @@ classdef skope_gre_3d < PulseqBase
                                              'delay', mr.calcDuration(obj.rf_fs), ...
                                              'Area', 0.1/1e-4, ...
                                              'maxGrad', g_fs); 
-
             end
 
             %% Create non-selective pulse
@@ -209,6 +213,7 @@ classdef skope_gre_3d < PulseqBase
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1./obj.fov;
             deltak(2) = deltak(2) * obj.accFacPE;
+            deltak(3) = deltak(3) * obj.accFacZ;
             obj.gx = mr.makeTrapezoid(  obj.axesOrder{1}, ...
                                         'FlatArea', obj.Nx*deltak(1), ...
                                         'FlatTime', obj.readoutTime, ...
@@ -381,9 +386,10 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
-            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny*obj.accFacPE obj.Nz]); 
+            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny*obj.accFacPE obj.Nz*obj.accFacZ]); 
             obj.seq.setDefinition('Encoding', [obj.Nx obj.Ny obj.Nz]);
             obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
+            obj.seq.setDefinition('PartitionAcceleration', obj.accFacZ);
             obj.seq.setDefinition('readDir_SCT', readDir_SCT);
             obj.seq.setDefinition('phaseDir_SCT', phaseDir_SCT);
             obj.seq.setDefinition('sliceDir_SCT', sliceDir_SCT);  
@@ -405,6 +411,10 @@ classdef skope_gre_3d < PulseqBase
 
             if obj.accFacPE > 1  
                 filename = strcat(filename, '_R', num2str(obj.accFacPE));  
+            end
+
+            if obj.accFacZ > 1  
+                filename = strcat(filename, '_RZ', num2str(obj.accFacZ));  
             end
 
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)

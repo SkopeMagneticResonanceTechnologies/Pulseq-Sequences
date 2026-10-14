@@ -39,6 +39,7 @@ classdef SequenceParams
         nDummy = 0;             % Number of dummy pulses to reach steady state
         accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI and GRE3D at the moment)
         accFac = 1;             % Acceleration factor [Spiral arms] (only used for spiral at the moment)
+        accFacZ = 1;            % Acceleration factor [Partition] (only used for GRE3D at the moment)
         multiBandFactor = 1
         partFourierFactor = 1
         
