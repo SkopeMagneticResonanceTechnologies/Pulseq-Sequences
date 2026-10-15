@@ -61,168 +61,16 @@ gre2d.plot(timeRange);
 % Test sequence
 gre2d.test();
 
-%% Create a 2D echo-planar imaging (EPI) sequence
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.Nx = 74;
-paramsEpi2d.Ny = 74;
-paramsEpi2d.TE = 25e-3;
-paramsEpi2d.TR = 50e-3;
-paramsEpi2d.readoutTime = 500e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
-
-%% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration
-paramsEpi2d = SequenceParams('epi2d',scannerType);
-paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 2;
-paramsEpi2d.Nx = 120;
-paramsEpi2d.Ny = 120;
-paramsEpi2d.TE = 25e-3;
-paramsEpi2d.TR = 60e-3;
-paramsEpi2d.readoutTime = 500e-6; 
-paramsEpi2d.thickness = 3e-3;
-
-paramsEpi2d.nSlices = 12;
-paramsEpi2d.distanceFactorPercentage = 150; 
-if invivo
-    paramsEpi2d.nSlices = 44;
-    paramsEpi2d.distanceFactorPercentage = 10;
-    paramsEpi2d.seqSpecName = 'invivo';
-    paramsEpi2d.doPlayFatSat = true;
-end
-
-% Generate the sequence
-epi2d = skope_epi_2d(paramsEpi2d);
-
-% Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-epi2d.plot(timeRange);
-
-% Test sequence
-epi2d.test();
-
-% %% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 2-fold multi-band excitation
-% paramsEpi2d = SequenceParams('epi2d',scannerType);
-% paramsEpi2d.fov = 0.22;
-% paramsEpi2d.accFacPE = 1;
-% paramsEpi2d.multiBandFactor = 2;
-% paramsEpi2d.Nx = 74;
-% paramsEpi2d.Ny = 74;
-% paramsEpi2d.TE = 30e-3;
-% paramsEpi2d.TR = 80e-3;
-% paramsEpi2d.readoutTime = 500e-6; 
-% paramsEpi2d.thickness = 3e-3;
-% 
-% paramsEpi2d.nSlices = 12;
-% paramsEpi2d.distanceFactorPercentage = 150; 
-% if invivo
-%     paramsEpi2d.nSlices = 44;
-%     paramsEpi2d.distanceFactorPercentage = 10;
-%     paramsEpi2d.seqSpecName = 'invivo';
-%     paramsEpi2d.doPlayFatSat = true;
-% end
-% 
-% % Generate the sequence
-% epi2d = skope_epi_2d(paramsEpi2d);
-% 
-% % Plot sequence diagram for the first 10 s
-% timeRange = [0 10];
-% epi2d.plot(timeRange);
-% 
-% % Test sequence
-% epi2d.test();
-% 
-% %% Create a 2D echo-planar imaging (EPI) sequence with no acceleration and 4-fold multi-band excitation
-% paramsEpi2d = SequenceParams('epi2d',scannerType);
-% paramsEpi2d.fov = 0.22;
-% paramsEpi2d.accFacPE = 1;
-% paramsEpi2d.multiBandFactor = 4;
-% paramsEpi2d.Nx = 74;
-% paramsEpi2d.Ny = 74;
-% paramsEpi2d.TE = 35e-3;
-% paramsEpi2d.TR = 80e-3;
-% paramsEpi2d.readoutTime = 500e-6; 
-% paramsEpi2d.thickness = 3e-3;
-% 
-% paramsEpi2d.nSlices = 12;
-% paramsEpi2d.distanceFactorPercentage = 150; 
-% if invivo
-%     paramsEpi2d.nSlices = 44;
-%     paramsEpi2d.distanceFactorPercentage = 10;
-%     paramsEpi2d.seqSpecName = 'invivo';
-%     paramsEpi2d.doPlayFatSat = true;
-% end
-% 
-% % Generate the sequence
-% epi2d = skope_epi_2d(paramsEpi2d);
-% 
-% % Plot sequence diagram for the first 10 s
-% timeRange = [0 10];
-% epi2d.plot(timeRange);
-% 
-% % Test sequence
-% epi2d.test();
-% 
-% %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold inplane acceleration and 4-fold multi-band excitation
-% paramsEpi2d = SequenceParams('epi2d',scannerType);
-% paramsEpi2d.fov = 0.22;
-% paramsEpi2d.accFacPE = 2;
-% paramsEpi2d.multiBandFactor = 4;
-% paramsEpi2d.Nx = 74;
-% paramsEpi2d.Ny = 74;
-% paramsEpi2d.TE = 35e-3;
-% paramsEpi2d.TR = 80e-3;
-% paramsEpi2d.readoutTime = 500e-6; 
-% paramsEpi2d.thickness = 3e-3;
-% 
-% paramsEpi2d.nSlices = 12;
-% paramsEpi2d.distanceFactorPercentage = 150; 
-% if invivo
-%     paramsEpi2d.nSlices = 44;
-%     paramsEpi2d.distanceFactorPercentage = 10;
-%     paramsEpi2d.seqSpecName = 'invivo';
-%     paramsEpi2d.doPlayFatSat = true;
-% end
-% 
-% % Generate the sequence
-% epi2d = skope_epi_2d(paramsEpi2d);
-% 
-% % Plot sequence diagram for the first 10 s
-% timeRange = [0 10];
-% epi2d.plot(timeRange);
-% 
-% % Test sequence
-% epi2d.test();
-
 %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration and 2-fold multi-band excitation
 paramsEpi2d = SequenceParams('epi2d',scannerType);
 paramsEpi2d.fov = 0.22;
-paramsEpi2d.accFacPE = 2;
+paramsEpi2d.accFacPE = 2; %3
 paramsEpi2d.multiBandFactor = 2;
-paramsEpi2d.Nx = 120;
-paramsEpi2d.Ny = 120;
+paramsEpi2d.Nx = 120; %130
+paramsEpi2d.Ny = 120; %130
 paramsEpi2d.TE = 25e-3;
 paramsEpi2d.TR = 60e-3;
-paramsEpi2d.readoutTime = 500e-6; 
+paramsEpi2d.readoutTime = 500e-6; %660
 paramsEpi2d.thickness = 3e-3;
 
 paramsEpi2d.nSlices = 12;
@@ -244,37 +92,7 @@ epi2d.plot(timeRange);
 % Test sequence
 epi2d.test();
 
-% %% EPI with acceleration factor 3 and higher resolution
-% paramsEpi2d = SequenceParams('epi2d',scannerType);
-% paramsEpi2d.fov = 0.22;
-% paramsEpi2d.accFacPE = 3;
-% paramsEpi2d.Nx = 130;
-% paramsEpi2d.Ny = 130;
-% paramsEpi2d.TE = 25e-3;
-% paramsEpi2d.TR = 60e-3;
-% paramsEpi2d.readoutTime = 660e-6; 
-% paramsEpi2d.thickness = 3e-3;
-% 
-% paramsEpi2d.nSlices = 12;
-% paramsEpi2d.distanceFactorPercentage = 150; 
-% if invivo
-%     paramsEpi2d.nSlices = 44;
-%     paramsEpi2d.distanceFactorPercentage = 10;
-%     paramsEpi2d.seqSpecName = 'invivo';
-%     paramsEpi2d.doPlayFatSat = true;
-% end
-% 
-% % Generate the sequence
-% epi2d = skope_epi_2d(paramsEpi2d);
-% 
-% % Plot sequence diagram for the first 10 s
-% timeRange = [0 10]; 
-% epi2d.plot(timeRange);
-% 
-% % Test sequence
-% epi2d.test();
-
-%% Create a 2D spin-echo EPI sequence with diffusion encoding
+%% Create a 2D spin-echo EPI sequence with diffusion encoding and 2-fold in-plane acceleration
 % navigator is by default disabled here
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType);
 paramsSeEpi2dDiff.fov = 0.22;
@@ -296,9 +114,6 @@ if invivo
     paramsSeEpi2dDiff.doPlayFatSat = true;
 end
 
-% paramsSeEpi2dDiff.nSlices = 2; %tmp
-% paramsSeEpi2dDiff.nDummy = 1; %tmp
-
 % ---- PF OFF -----
 %paramsSeEpi2dDiff.partFourierFactor = 8/8;
 %paramsSeEpi2dDiff.TE = 72e-3;
@@ -306,9 +121,9 @@ end
 % ---- PF OFF -----
 
 % ---- PF ON -----
-paramsSeEpi2dDiff.partFourierFactor = 7/8; %RR: realistic is a 6/8 %RS: must be more than 4/8
-paramsSeEpi2dDiff.TE = 75e-3;
-paramsSeEpi2dDiff.TR = 125e-3;
+paramsSeEpi2dDiff.partFourierFactor = 7/8; %RS: must be more than 4/8
+paramsSeEpi2dDiff.TE = 71e-3; % 71
+paramsSeEpi2dDiff.TR = 117e-3; % 117
 % ---- PF ON -----
 
 % ---- b-encoding from external text file ----
@@ -326,16 +141,12 @@ paramsSeEpi2dDiff.TR = 125e-3;
 % paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:);
 % paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
 
-% RF pulses (fat/90/180) durations are changed in skope_se_epi_2d_diff.m
-
 % Sequence name
 moreName = '';
 paramsSeEpi2dDiff.seqSpecName = sprintf( ...
-    '%ddir_b%d_te%d_tr%d_%.1fmm_pf%d8%s', ...
+    '%ddir_b%d_%.1fmm_pf%d8%s', ...
     paramsSeEpi2dDiff.nbValues - 1, ...
     max(paramsSeEpi2dDiff.bFactor), ...
-    round(paramsSeEpi2dDiff.TE*1e3), ...
-    round(paramsSeEpi2dDiff.TR*1e3), ...
     paramsSeEpi2dDiff.fov/paramsSeEpi2dDiff.Nx*1e3, ...
     round(paramsSeEpi2dDiff.partFourierFactor*8), ...
     moreName);
@@ -345,56 +156,100 @@ fprintf('seqSpecName = %s\n', paramsSeEpi2dDiff.seqSpecName);
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
-% Plot sequence diagram for the first 5 to 20 s
+% Plot sequence diagram for the first 4 to 20 s
 % timeRange = [4 20];
 % seepi2d.plot(timeRange);
 
 % Test sequence
-% seepi2d.test();
+seepi2d.test();
 
-
-%% Create a 2D spin-echo EPI sequence with diffusion encoding (R2, MB2)
-% navigator is by default disabled here
-paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff_mb',scannerType);
-paramsSeEpi2dDiff.fov = 0.22;
-paramsSeEpi2dDiff.accFacPE = 2;
-paramsSeEpi2dDiff.multiBandFactor = 2;
-paramsSeEpi2dDiff.Nx = 100;
-paramsSeEpi2dDiff.Ny = 100;
-paramsSeEpi2dDiff.readoutTime = 500e-6;  
-
-paramsSeEpi2dDiff.nSlices = 12;
-paramsSeEpi2dDiff.distanceFactorPercentage = 150; 
-if invivo
-    paramsSeEpi2dDiff.nSlices = 44;
-    paramsSeEpi2dDiff.distanceFactorPercentage = 10;
-    paramsSeEpi2dDiff.seqSpecName = 'invivo';
-    paramsSeEpi2dDiff.doPlayFatSat = true;
+%% Create a multi-shot 2D spin-echo spiral sequence with diffusion encoding and spiral arms undersampling with specific spiral waveform
+minTimeGradientDir = fullfile(fileparts(pwd), 'minTimeGradient', 'Matlab');
+if not(isfolder(minTimeGradientDir))
+    error('Download https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz')
 end
+addpath(genpath(minTimeGradientDir))
+%-------------------------------------------------------------------------
+% Compute trajectory
+%-------------------------------------------------------------------------
+Nitlv = 4;              % Number of interleves
+r = 0;                  % rv/riv Indicates type of solution
+res	= 1.2;              % Resolution (in mm)
+fov	= [22,22];          % Vector of fov (in cm)
+radius = [0,1];         % Vector of radius corresponding to the fov
+Gmax = 10;              % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
+ds = [];                % Step size for integration
+interpType = 'linear';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
 
-paramsSeEpi2dDiff.nSlices = 4; %tmp
-% paramsSeEpi2dDiff.nDummy = 1; %tmp
+[k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
-paramsSeEpi2dDiff.TE = 80e-3;
-paramsSeEpi2dDiff.TR = 120e-3;
+% Convert gradient to mT/m
+g_rv = [0,0; g_rv(:,1:2); 0,0] * 10;
+figure, plot(g_rv), xlabel('datapoints'), ylabel('gradients [mt/m]'), title('Gradient waveforms')
+figure, plot(k_rv(:,1), k_rv(:,2)), xlabel('kx'), ylabel('ky'), title('Spiral trajectory')
+% size(g_rv,1)
+%-------------------------------------------------------------------------
 
-% Generate the sequence
-seepi2d = skope_se_epi_2d_diff_mb(paramsSeEpi2dDiff);
+paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
+paramsSpiral2d.Ny = Nitlv;
+paramsSpiral2d.Nx = ceil(fov(1)./res);
+paramsSpiral2d.fov = fov(1)*1e-2; 
+paramsSpiral2d.readoutTime = time_rv; 
+paramsSpiral2d.mode = 'MS';
+% paramsSpiral2d.nSlices = 2;
+paramsSpiral2d.nDummy = 1;
+paramsSpiral2d.accFac = 1;
+paramsSpiral2d.doPlayFatSat = true;
+paramsSpiral2d.TE = 31e-3; 
+paramsSpiral2d.TR = 75e-3; 
 
-% Plot sequence diagram for the first 5 to 20 s
-timeRange = [5 20];
-seepi2d.plot(timeRange);
+% ---- b-encoding from external file ----
+% paramsSpiral2d.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
+% paramsSpiral2d.bFactor = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bval.txt');
+% % obj.bDir must be N x 3
+% if size(paramsSpiral2d.bDir,2) ~= 3
+%     if size(paramsSpiral2d.bDir,1) == 3
+%         paramsSpiral2d.bDir = paramsSpiral2d.bDir.';
+%     else
+%         error('bDir must have size N x 3 or 3 x N.');
+%     end
+% end
+% % obj.bFactor must be N x 1
+% paramsSpiral2d.bFactor = paramsSpiral2d.bFactor(:);
+% paramsSpiral2d.nbValues = size(paramsSpiral2d.bDir,1);
+
+% Sequence name
+moreName = '';
+paramsSpiral2d.seqSpecName = sprintf( ...
+     moreName);
+%    '%ddir_b%d_te%d_tr%d_%.1fmm%s', ...
+%    paramsSpiral2d.nbValues - 1, ...
+%    max(paramsSpiral2d.bFactor), ...
+%    round(paramsSpiral2d.TE*1e3), ...
+%    round(paramsSpiral2d.TR*1e3), ...
+%    res, ...
+   
+fprintf('seqSpecName = %s\n', paramsSpiral2d.seqSpecName);
+
+% Create sequence
+spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
+
+% Plot sequence information after sync 
+% timeRange = [5.4 5.42];
+% spiral2d.plot(timeRange);
 
 % Test sequence
-% seepi2d.test();
+spiral2d.test();
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
-paramsGre3d.seqSpecName = '2echoes';
+paramsGre3d.seqSpecName = '8echoes';
 paramsGre3d.accFacPE = 2;
-paramsGre3d.accFacZ = 2;
+paramsGre3d.accFacZ = 1;
 % ---- Fat Sat -----
-paramsGre3d.doPlayFatSat = true;
+paramsGre3d.doPlayFatSat = false;
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
@@ -404,7 +259,7 @@ gre3d = skope_gre_3d(paramsGre3d);
 % gre3d.plot(timeRange);
 
 % Test sequence
-% gre3d.test();
+gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
 paramsOpc = SequenceParams('opc',scannerType);

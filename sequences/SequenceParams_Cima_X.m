@@ -98,14 +98,14 @@ classdef SequenceParams_Cima_X
                     obj.distanceFactorPercentage = 150;
                 case 'gre3d'
                     obj.fov          = [0.22 0.22 0.22];
-                    obj.Nx           = 56;
-                    obj.Ny           = 56;
-                    obj.Nz           = 56;
+                    obj.Nx           = 112;
+                    obj.Ny           = 112;
+                    obj.Nz           = 112;
                     obj.alpha        = 1;
-                    %obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
-                    %obj.TR           = 55e-3;
-                    obj.TE           = [5.2 9.7]*1e-3;
-                    obj.TR           = 25e-3;
+                    obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
+                    obj.TR           = 55e-3;
+                    %obj.TE           = [5.2 9.7]*1e-3;
+                    %obj.TR           = 25e-3;
                     obj.readoutTime  = 20e-6 * obj.Nx;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;

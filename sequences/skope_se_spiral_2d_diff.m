@@ -310,7 +310,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             % gradient spoiling and refocussing
             obj.gxRefoc = mr.makeTrapezoid(obj.axesOrder{1},'Area',mx,'system', obj.sys);
             obj.gyRefoc = mr.makeTrapezoid(obj.axesOrder{2},'Area',my,'system', obj.sys);            
-            refocTime = max([mr.calcDuration(obj.gxRefoc),mr.calcDuration(obj.gyRefoc)]);
+            refocTime = 2 * max([mr.calcDuration(obj.gxRefoc),mr.calcDuration(obj.gyRefoc)]); % double the max time to lower the PNS
 
             % Stretch gradients
             obj.gxRefoc = mr.makeTrapezoid(obj.axesOrder{1},'Area',mx,'system', obj.sys, 'Duration',refocTime);
