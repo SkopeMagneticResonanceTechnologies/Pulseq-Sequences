@@ -28,6 +28,7 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.B0 = 2.89;            
             specs.forbiddenBandsEchoSpacingLimits = [0.66e-3, 1.0e-3;... %[1250,500]Hz
                                                      1.54e-3, 1.83e-3 ]; %[596,100] Hz
+            specs.HWfilename = 'HWfile.asc';
         % 5T 
         case 'United 5T uMR Jupiter'
             specs.type = scannerType;            
@@ -37,7 +38,8 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.forbiddenBandsEchoSpacingLimits = [0.62e-3, 0.70e-3;...
                                                      0.80e-3, 0.88e-3;...
                                                      0.98e-3, 1.05e-3;...
-                                                     1.09e-3, 1.17e-3 ];    
+                                                     1.09e-3, 1.17e-3 ];
+            specs.HWfilename = 'HWfile.asc';
         % 7T 
         case 'Siemens 7T Terra SC72CD'
             specs.type = scannerType;            
@@ -46,6 +48,7 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.B0 = 6.98;
             specs.forbiddenBandsEchoSpacingLimits = [0.63e-3, 0.74e-3;...
                                                      1.20e-3, 1.47e-3 ];
+            specs.HWfilename = 'HWfile.asc';
 
         case 'Siemens 7T Terra.X'
             specs.type = scannerType;            
@@ -56,6 +59,7 @@ function specs = GetMRSystemSpecs(scannerType)
                                                      0.400e-3, 0.556e-3;...
                                                      0.833e-3, 1.000e-3;...
                                                      1.266e-3, 1.476e-3 ];
+            specs.HWfilename = 'HWfile.asc';
         % 9.4T
         case 'Siemens 9.4T SC72CD'
             specs.type = scannerType;            
@@ -64,6 +68,7 @@ function specs = GetMRSystemSpecs(scannerType)
             specs.B0 = 9.385;    
             specs.forbiddenBandsEchoSpacingLimits = [0.63e-3, 0.74e-3;...
                                                      1.20e-3, 1.47e-3 ];
+            specs.HWfilename = 'HWfile.asc';
         otherwise
             error('Unknown scanner type');
     end

@@ -109,6 +109,8 @@ classdef skope_se_spiral_2d_diff < PulseqBase
         nbValues
 
         mode = 'default'
+        
+        TriggerDuration
 
     end
 
@@ -192,7 +194,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(300e-6);
+            obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -319,7 +321,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             obj.gyRefoc = mr.makeTrapezoid(obj.axesOrder{2},'Area',my,'system', obj.sys, 'Duration',refocTime);
 
             %% Create external trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
 
             %% Calculate minimal TE
             TE1 = obj.TE/2;

@@ -72,17 +72,20 @@ classdef skope_gre_3d < PulseqBase
         gy_fs_pre
         gz_fs_pre
 
-         % Fat shift [Unit: ppm]
+        % Fat shift [Unit: ppm]
         sat_ppm = -3.45;
 
         % Play out fat saturation pulse
-        doPlayFatSat = false; 
+        doPlayFatSat = false;
 
         % Phase increment for RF spoiling
-        rfSpoilingInc = 117 
+        rfSpoilingInc = 117; 
 
         % Trigger output channel
-        triggerOutput;
+        triggerOutput
+
+        % Trigger Duration
+        TriggerDuration
 
         % Acceleration factor (Phase)
         accFacPE
@@ -207,7 +210,7 @@ classdef skope_gre_3d < PulseqBase
             obj.rf_inc = 0;
 
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(200e-6);
+            obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
           
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1./obj.fov;
@@ -301,7 +304,7 @@ classdef skope_gre_3d < PulseqBase
                                            + obj.adc.delay;
 
             %% Prepare trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
 
                         
             %% Calculate required camera acquisition duration

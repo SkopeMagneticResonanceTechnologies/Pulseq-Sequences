@@ -58,14 +58,16 @@ classdef skope_gre_2d < PulseqBase
         rf_inc
 
         % Phase increment for RF spoiling
-        rfSpoilingInc = 117 
+        rfSpoilingInc = 117; 
 
         % Play out trigger earlier to compensate for field measurement latency
         triggerLatency = 150e-6;
 
-        doMonitoringDuringRF;
+        doMonitoringDuringRF
 
         triggerOutput
+        
+        TriggerDuration
 
     end
 
@@ -104,50 +106,18 @@ classdef skope_gre_2d < PulseqBase
                                 'SlewUnit', 'T/m/s', ...
                                 'rfRingdownTime', 20e-6, ...
                                 'rfDeadTime', 100e-6, ...
-                                'adcDeadTime', 10e-6);  
+                                'adcDeadTime', 10e-6, ...
+                                'B0', specs.B0 ...
+            );  
 
-            % Field of view [Unit: m]
-            obj.fov = seqParams.fov; 
-
-            % Number of readout samples
-            obj.Nx = seqParams.Nx; 
-
-            % Number of phase encoding steps
-            obj.Ny = seqParams.Ny; 
-                       
-            % Flip angle [Unit: deg]
-            obj.alpha = seqParams.alpha;     
-            
-            % Slice thickness [Unit: m]
-            obj.thickness = seqParams.thickness; 
-
-            % Number of slices
-            obj.nSlices = seqParams.nSlices;
-            
-            % Echo times [Unit: s]
-            obj.TE = seqParams.TE;
-
-            % Excitation repetition time [Unit: s]
-            obj.TR = seqParams.TR;                       
-            
-            % ADC duration [Unit: s]
-            obj.readoutTime = seqParams.readoutTime;  
-
-            % Slice orientation and phase-encoding direction
-            obj.sliceOrientation = seqParams.sliceOrientation;
-            obj.phaseEncDir = seqParams.phaseEncDir;
-
-            % Number of dummies to reach steady-state
-            obj.nDummy = seqParams.nDummy;
-
-            % Perform monitoring during RF
-            obj.doMonitoringDuringRF = seqParams.doMonitoringDuringRF;
-
-            % Set trigger output channel
-            obj.triggerOutput = seqParams.triggerOutput;
-
-            % Slice distance factor in percent
-            obj.distanceFactorPercentage = seqParams.distanceFactorPercentage;
+            % Copy all sequence parameters
+            fieldNames = fields(seqParams);
+            for i = 1:numel(fieldNames)
+                fieldname = fieldNames{i};
+                if isprop(obj,fieldname)
+                    obj.(fieldname) = seqParams.(fieldname);
+                end
+            end
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -160,7 +130,7 @@ classdef skope_gre_2d < PulseqBase
             if obj.doMonitoringDuringRF
                 obj.gradFreeTime = 0;
             else
-                obj.gradFreeTime = obj.roundUpToGRT(200e-6);
+                obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
             end                      
 
             %% Create alpha-degree slice selection pulse and gradient
@@ -239,10 +209,10 @@ classdef skope_gre_2d < PulseqBase
                 triggerDelay = obj.gz.flatTime/2 + obj.gz.riseTime - obj.triggerLatency; 
                 assert(triggerDelay>=0,'Trigger delay must be larger than zero.');
                 obj.extTrigger = mr.makeDigitalOutputPulse( obj.triggerOutput, ...
-                                                            'duration', obj.sys.gradRasterTime, ...
+                                                            'duration', obj.TriggerDuration, ...
                                                             'delay',triggerDelay);
             else
-                obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
+                obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
             end
 
             %% Calculate minimal TR

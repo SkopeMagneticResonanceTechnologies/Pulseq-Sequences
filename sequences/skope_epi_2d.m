@@ -109,6 +109,9 @@ classdef skope_epi_2d < PulseqBase
         % Set trigger output channel
         triggerOutput
 
+        % Trigger duration
+        TriggerDuration
+
         % Slice-select gradient plateau amplitude (Hz/m) of the SMS pulse;
         % use as gzSMSAmplitude * slicePosition to compute RF frequency offsets.
         gzSMSAmplitude = 0
@@ -187,7 +190,7 @@ classdef skope_epi_2d < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(200e-6);
+            obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -393,7 +396,7 @@ classdef skope_epi_2d < PulseqBase
 
 
             %% Create external trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
 
             %% Calculate minimal TE
             if obj.addPhaseCorrLines

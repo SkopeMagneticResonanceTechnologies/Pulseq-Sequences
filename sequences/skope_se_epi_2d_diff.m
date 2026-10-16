@@ -128,6 +128,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
         bDir
 
         nbValues
+
+        TriggerDuration
     end
 
     methods
@@ -199,7 +201,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.seq = mr.Sequence(obj.sys);  
             
             %% Time for probe excitation
-            obj.gradFreeTime = obj.roundUpToGRT(300e-6);
+            obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -370,7 +372,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
 
   
             %% Create external trigger
-            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.sys.gradRasterTime);
+            obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
 
             %% Calculate minimal TE
             if obj.addPhaseCorrLines

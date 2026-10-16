@@ -21,6 +21,7 @@ classdef SequenceParams_Cima_X
                     obj.nDummy       = 5;
                     obj.doMonitoringDuringRF = false;
                     obj.distanceFactorPercentage = 150;
+                    obj.gradFreeTime = 200e-6;
                 case 'epi2d'
                     obj.TE           = 25e-3;
                     obj.TR           = 60e-3;
@@ -40,6 +41,7 @@ classdef SequenceParams_Cima_X
                     obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 150;
                     obj.doPlayFatSat = true;
+                    obj.gradFreeTime = 200e-6;
                 case 'se_epi2d_diff'
                     obj.TE           = 71e-3;
                     obj.TR           = 117e-3;
@@ -72,6 +74,7 @@ classdef SequenceParams_Cima_X
                     obj.maxDiffSlew  = 63; %60  
                     obj.maxDiffGrad  = 172;
                     obj.distanceFactorPercentage = 150;
+                    obj.gradFreeTime = 300e-6;
                 case 'se_spiral_2d_diff'
                     obj.fov          = 192e-3;
                     obj.Nx           = 192;
@@ -98,8 +101,9 @@ classdef SequenceParams_Cima_X
                                         [0,1,1]./sqrt(2);... % yz
                                         [1,0,1]./sqrt(2);];  % xz
                     obj.nbValues     = size(obj.bDir,1);
-                    obj.maxDiffSlew = 63;
-                    obj.maxDiffGrad = 172;
+                    obj.maxDiffSlew  = 63;
+                    obj.maxDiffGrad  = 172;
+                    obj.gradFreeTime = 300e-6;
                 case 'gre3d'
                     obj.fov          = [0.22 0.22 0.22];
                     obj.Nx           = 112;
@@ -120,6 +124,7 @@ classdef SequenceParams_Cima_X
                     obj.accFacPE     = 2;
                     obj.accFacZ      = 1;
                     obj.doPlayFatSat = true;
+                    obj.gradFreeTime = 200e-6;
                 otherwise
                     error('SequenceParams_Cima_X: unknown sequence "%s".', seqName)
             end
