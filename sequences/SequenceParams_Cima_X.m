@@ -13,7 +13,7 @@ classdef SequenceParams_Cima_X
                     obj.alpha        = 7;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
-                    obj.TE           = [6 12] * 1e-3;
+                    obj.TE           = [7 14] * 1e-3;
                     obj.TR           = 25e-3;
                     obj.readoutTime  = 3.2e-3;
                     obj.maxGrad      = 28;

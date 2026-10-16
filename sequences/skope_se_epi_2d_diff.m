@@ -1,26 +1,27 @@
 classdef skope_se_epi_2d_diff < PulseqBase
 % This is a spin echo EPI demo sequence with diffusion encoding gradients, 
 % which includes synchronization scans for field-monitoring with a Skope Field Camera 
-% and uses ramp-sampling to provide an efficient readout. T
-% he member method plot() can be used to display the generated sequence.
+% and uses ramp-sampling to provide an efficient readout. The
+% member method plot() can be used to display the generated sequence.
 % 
 % Notes:
-% - The sequence file is written into the current folder.
 % - The k-space trajectory during the synchronization scans will not be
 %   correctly shown by the member method plot().
 % - The x-axis was flipped because of a bug in the Siemens Pulseq 
 %   interpreter 1.4.0. 
-% - dummy scans are played out before every bencoding volume
-% - the diffusion encoding allows for:
-% i. definition of the b-encoding vector of magnitude
-%       e.g.: obj.bFactor=[0, 1000, 1000, 1000];
-% ii. definition of the b-encoding vector of directions 
-% e.g.: obj.bDir = [0,0,0; 1,0,0; 0,1,1]; % equals to b0, x and y,z cross terms
+% - Dummy scans are played out before every bencoding volume
+% - The diffusion encoding allows for:
+%       i. Definition of the b-encoding vector of magnitude
+%           e.g.: obj.bFactor=[0, 1000, 1000, 1000];
+%       ii. Definition of the b-encoding vector of directions 
+%           e.g.: obj.bDir = [0,0,0; 1,0,0; 0,1,1]; % equals to b0, x and y,z cross terms
+%       iii. Use b-encoding vectors of magnitude and directions from an
+%       external file
 %
 % Example:
-%  epi = skope_se_epi_2d_diff(sequenceParams);
-%  epi.plot();
-%  epi.test();
+%  seepi2d = skope_se_epi_2d_diff(sequenceParams);
+%  seepi2d.plot();
+%  seepi2d.test();
 %
 % See also PulseqBase
 
@@ -658,7 +659,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
             end
 
             obj.seq.write(strcat(filename,'.seq')); 
-            
+            disp(['Storing sequence file "', char(filename), '.seq"'])
 
             %% Safety checks
             ascfile = fullfile('dependencies','asc', specs.HWfilename);

@@ -14,7 +14,7 @@ if not(isfolder('pulseq/matlab'))
 end
 
 if not(isfolder('safe_pns_prediction'))
-    error("SAFE PNS Prediction submodule not found. Please run 'git submodule init' and 'git submodule update'.")
+    error("Please run 'git submodule init' and 'git submodule update' to get SAFE PNS Prediction scripts.")
 end
 
 %% Add Pulseq, sequences, methods and SAFE PNS
@@ -35,12 +35,13 @@ invivo = false;
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d',scannerType);
-paramsGre2d.fov = 0.22;
-paramsGre2d.Nx = 80;
-paramsGre2d.Ny = 80;
-paramsGre2d.thickness = 3e-3;
+paramsGre2d.fov = 0.24;
+paramsGre2d.Nx = 120;
+paramsGre2d.Ny = 120;
+paramsGre2d.readoutTime = 4.8e-3;
+paramsGre2d.thickness = 2e-3;
 
-paramsGre2d.nSlices = 12;
+paramsGre2d.nSlices = 36;
 paramsGre2d.distanceFactorPercentage = 150;
 if invivo
     paramsGre2d.nSlices = 44;
@@ -141,18 +142,6 @@ paramsSeEpi2dDiff.TR = 117e-3; % 117
 % paramsSeEpi2dDiff.bFactor = paramsSeEpi2dDiff.bFactor(:);
 % paramsSeEpi2dDiff.nbValues = size(paramsSeEpi2dDiff.bDir,1);
 
-% Sequence name
-moreName = '';
-paramsSeEpi2dDiff.seqSpecName = sprintf( ...
-    '%ddir_b%d_%.1fmm_pf%d8%s', ...
-    paramsSeEpi2dDiff.nbValues - 1, ...
-    max(paramsSeEpi2dDiff.bFactor), ...
-    paramsSeEpi2dDiff.fov/paramsSeEpi2dDiff.Nx*1e3, ...
-    round(paramsSeEpi2dDiff.partFourierFactor*8), ...
-    moreName);
-
-fprintf('seqSpecName = %s\n', paramsSeEpi2dDiff.seqSpecName);
-
 % Generate the sequence
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
@@ -172,16 +161,16 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------
-Nitlv = 4;              % Number of interleves
+Nitlv = 3;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
 res	= 1.2;              % Resolution (in mm)
-fov	= [22,22];          % Vector of fov (in cm)
-radius = [0,1];         % Vector of radius corresponding to the fov
-Gmax = 10;              % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+fov	= [44,22,22];          % Vector of fov (in cm)
+radius = [0,0.5,1];         % Vector of radius corresponding to the fov
+Gmax = 20;              % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 10.5;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
-interpType = 'linear';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
+interpType = 'cubic';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
 
 [k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
@@ -200,10 +189,10 @@ paramsSpiral2d.readoutTime = time_rv;
 paramsSpiral2d.mode = 'MS';
 % paramsSpiral2d.nSlices = 2;
 paramsSpiral2d.nDummy = 1;
-paramsSpiral2d.accFac = 1;
+paramsSpiral2d.accFac = 3;
 paramsSpiral2d.doPlayFatSat = true;
 paramsSpiral2d.TE = 31e-3; 
-paramsSpiral2d.TR = 75e-3; 
+paramsSpiral2d.TR = 86e-3; 
 
 % ---- b-encoding from external file ----
 % paramsSpiral2d.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
@@ -219,19 +208,6 @@ paramsSpiral2d.TR = 75e-3;
 % % obj.bFactor must be N x 1
 % paramsSpiral2d.bFactor = paramsSpiral2d.bFactor(:);
 % paramsSpiral2d.nbValues = size(paramsSpiral2d.bDir,1);
-
-% Sequence name
-moreName = '';
-paramsSpiral2d.seqSpecName = sprintf( ...
-     moreName);
-%    '%ddir_b%d_te%d_tr%d_%.1fmm%s', ...
-%    paramsSpiral2d.nbValues - 1, ...
-%    max(paramsSpiral2d.bFactor), ...
-%    round(paramsSpiral2d.TE*1e3), ...
-%    round(paramsSpiral2d.TR*1e3), ...
-%    res, ...
-   
-fprintf('seqSpecName = %s\n', paramsSpiral2d.seqSpecName);
 
 % Create sequence
 spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);

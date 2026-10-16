@@ -11,9 +11,9 @@ classdef skope_gre_2d < PulseqBase
 %   correctly shown by the member method plot().
 %
 % Example:
-%  gre = skope_gre_2d(sequenceParams);
-%  gre.plot();
-%  gre.test();
+%  gre2d = skope_gre_2d(sequenceParams);
+%  gre2d.plot();
+%  gre2d.test();
 %
 % See also PulseqBase
 
@@ -403,6 +403,38 @@ classdef skope_gre_2d < PulseqBase
 
             obj.seq.write(strcat(filename,'.seq')); 
             disp(['Storing sequence file "', char(filename), '.seq"'])
+
+            %% Safety checks
+            ascfile = fullfile('dependencies','asc', specs.HWfilename);
+            if isfile(ascfile)
+                % PNS
+                fprintf('PNS and CNS computation: using hardware file %s \n', ascfile);
+                [ok, pns_norm, pns_comp, t_axis] = obj.seq.calcPNS(ascfile);
+                maxPNS = max(pns_norm(1,:));
+                maxCNS = max(pns_norm(2,:));
+    
+                if ok(1)
+                    fprintf('PNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxPNS);
+                else
+                    fprintf('PNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxPNS);
+                end
+                
+                if ok(2)
+                    fprintf('CNS check passed successfully (%.1f%% < 100%%)\n', ...
+                        100*maxCNS);
+                else
+                    fprintf('CNS check failed (%.1f %% >= 100%%)\n', ...
+                        100*maxCNS);
+                end
+    
+                % Gradient spectrum check
+                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
+            else
+                warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
+            end
+            
             
         end    
     end

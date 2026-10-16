@@ -1,7 +1,7 @@
 classdef skope_se_spiral_2d_diff < PulseqBase
 % This is a spin echo spiral demo sequence with diffusion encoding gradients, 
-% which includes synchronization scans for field-monitoring with a Skope Field Camera 
-% . The member method plot() can be used to display the generated sequence.
+% which includes synchronization scans for field-monitoring with a Skope Field Camera.
+% The member method plot() can be used to display the generated sequence.
 % 
 % Notes:
 % - The sequence is not adaptive, i.e. the parameters can't be changed, as
@@ -10,17 +10,19 @@ classdef skope_se_spiral_2d_diff < PulseqBase
 %   correctly shown by the member method plot().
 % - The x-axis was flipped because of a bug in the Siemens Pulseq 
 %   interpreter 1.4.0. 
-% - dummy scans are played out for no b-encoding
-% - the diffusion encoding allows for:
-% i. definition of the b-encoding vector of magnitude
-%       e.g.: obj.bFactor=[0, 1000, 1000, 1000];
-% ii. definition of the b-encoding vector of directions 
-% e.g.: obj.bDir = [0,0,0; 1,0,0; 0,1,1]; % equals to b0, x and y,z cross terms
+% - Dummy scans are played out for no b-encoding
+% - The diffusion encoding allows for:
+%       i. Definition of the b-encoding vector of magnitude
+%           e.g.: obj.bFactor=[0, 1000, 1000, 1000];
+%       ii. Definition of the b-encoding vector of directions 
+%           e.g.: obj.bDir = [0,0,0; 1,0,0; 0,1,1]; % equals to b0, x and y,z cross terms
+%       iii. Use b-encoding vectors of magnitude and directions from an
+%       external file
 %
 % Example:
-%  spiral = skope_se_spiral_2d_diff(sequenceParams, waveform);
-%  spiral.plot();
-%  spiral.test();
+%  spiral2d = skope_se_spiral_2d_diff(sequenceParams, waveform);
+%  spiral2d.plot();
+%  spiral2d.test();
 %
 % See also PulseqBase
 
@@ -275,13 +277,13 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             obj.gspiral = waveform.' * obj.sys.gamma / 1000;
             obj.gx = mr.makeArbitraryGrad(obj.axesOrder{1},obj.gspiral(1,:), ...
                 'system', obj.sys, ...
-                'first', 0, ...
-                'last', 0);
+                'first', obj.gspiral(1,1), ...
+                'last', obj.gspiral(1,end));
             
             obj.gy = mr.makeArbitraryGrad(obj.axesOrder{2},obj.gspiral(2,:), ...
                 'system', obj.sys, ...
-                'first', 0, ...
-                'last', 0);
+                'first', obj.gspiral(2,1), ...
+                'last', obj.gspiral(2,end));
             durADC = mr.calcDuration(obj.gx);
 
             % Let's make the number of samples divisible by 8 and 10
@@ -567,7 +569,7 @@ classdef skope_se_spiral_2d_diff < PulseqBase
             end
 
             obj.seq.write(strcat(filename,'.seq')); 
-            
+            disp(['Storing sequence file "', char(filename), '.seq"'])
 
             %% Safety checks
             ascfile = fullfile('dependencies','asc', specs.HWfilename);

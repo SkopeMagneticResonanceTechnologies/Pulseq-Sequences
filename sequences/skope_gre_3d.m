@@ -5,7 +5,6 @@ classdef skope_gre_3d < PulseqBase
 % the generated sequence. 
 % 
 % Notes:
-% - The sequence file is written into the current folder.
 % - The TR refers to the excitation repetition time in this example and not
 %   the slice TR.
 % - The k-space trajectory during the synchronization scans will not be
@@ -14,9 +13,9 @@ classdef skope_gre_3d < PulseqBase
 %   interpreter 1.4.0. 
 %
 % Example:
-%  gre = skope_gre_3d(sequenceParams);
-%  gre.plot();
-%  gre.test();
+%  gre3d = skope_gre_3d(sequenceParams);
+%  gre3d.plot();
+%  gre3d.test();
 %
 % See also PulseqBase
 
@@ -421,7 +420,8 @@ classdef skope_gre_3d < PulseqBase
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
 
-            obj.seq.write(strcat(filename,'.seq'));  
+            obj.seq.write(strcat(filename,'.seq')); 
+            disp(['Storing sequence file "', char(filename), '.seq"'])
 
             %% Safety checks
             ascfile = fullfile('dependencies','asc', specs.HWfilename);
