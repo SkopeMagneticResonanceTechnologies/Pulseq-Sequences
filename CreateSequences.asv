@@ -14,7 +14,7 @@ if not(isfolder('pulseq/matlab'))
 end
 
 if not(isfolder('safe_pns_prediction'))
-    error("Please run 'git submodule init' and 'git submodule update' to get SAFE PNS Prediction s.")
+    error("Please run 'git submodule init' and 'git submodule update' to get SAFE PNS Prediction scripts.")
 end
 
 %% Add Pulseq, sequences, methods and SAFE PNS
@@ -161,13 +161,13 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------
-Nitlv = 3;              % Number of interleves
+Nitlv = 8;              % Number of interleves
 r = 0;                  % rv/riv Indicates type of solution
 res	= 1.2;              % Resolution (in mm)
 fov	= [44,22,22];          % Vector of fov (in cm)
-radius = [0,0.5,1];         % Vector of radius corresponding to the fov
+radius = [0,0.24,1];         % Vector of radius corresponding to the fov
 Gmax = 20;              % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 10.5;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Smax = 10;              % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;              % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                % Step size for integration
 interpType = 'cubic';  % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
@@ -217,7 +217,7 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 % spiral2d.plot(timeRange);
 
 % Test sequence
-% spiral2d.test();
+spiral2d.test();
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence
 paramsGre3d = SequenceParams('gre3d',scannerType);
