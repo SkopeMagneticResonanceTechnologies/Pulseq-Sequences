@@ -30,14 +30,14 @@ addpath('dependencies/pulseq_latest') % necessary Gradient Spectrum computation 
 scannerType = 'Siemens 3T Cima.X';
 
 %% Acquire more slices for in vivo scans and activate fat saturation
-invivo = false;
+invivo = true;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d',scannerType);
 
 if invivo
-    paramsGre2d.nSlices = 44;
+    paramsGre2d.nSlices = 75;
     paramsGre2d.distanceFactorPercentage = 10;
     paramsGre2d.seqSpecName = 'invivo';
     % GRE has currently no fat saturation pulse 
@@ -79,7 +79,7 @@ epi2d.test();
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType); 
 
 if invivo
-    paramsSeEpi2dDiff.nSlices = 44;
+    paramsSeEpi2dDiff.nSlices = 120;
     paramsSeEpi2dDiff.distanceFactorPercentage = 10;
     paramsSeEpi2dDiff.seqSpecName = 'invivo';
     paramsSeEpi2dDiff.doPlayFatSat = true;
@@ -104,8 +104,8 @@ end
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence diagram for the first 4 to 20 s
-timeRange = [4 20];
-seepi2d.plot(timeRange);
+% timeRange = [4 20];
+% seepi2d.plot(timeRange);
 
 % Test sequence
 seepi2d.test();
@@ -119,16 +119,16 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 % Compute trajectory
 %-------------------------------------------------------------------------
-Nitlv = 2;                  % Number of interleves
+Nitlv = 3;                  % Number of interleves
 r = 0;                      % rv/riv Indicates type of solution
 res	= 1.2;                  % Resolution (in mm)
 fov	= [22 22];              % Vector of fov (in cm)
 radius = [0 1];             % Vector of radius corresponding to the fov
 Gmax = 20;                  % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 10;                  % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Smax = 7;                   % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;                  % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                    % Step size for integration
-interpType = 'linear';       % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
+interpType = 'linear';      % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
 
 [k_rv,g_rv,s_rv,time_rv,Ck_rv] = vdSpiralDesign(Nitlv, r, res,fov,radius,Gmax,Smax,T,ds,interpType);
 
@@ -144,11 +144,13 @@ paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv; 
-paramsSpiral2d.mode = 'MS';
-% paramsSpiral2d.nSlices = 2;
-paramsSpiral2d.accFac = 2;
-paramsSpiral2d.TE = 31e-3; 
-paramsSpiral2d.TR = 105e-3; 
+
+if invivo
+    paramsSpiral2d.nSlices = 120;
+    paramsSpiral2d.distanceFactorPercentage = 10;
+    paramsSpiral2d.seqSpecName = 'invivo';
+    paramsSpiral2d.doPlayFatSat = true;
+end
 
 % ---- b-encoding from external file ----
 % paramsSpiral2d.bDir = readmatrix('C:\My folders\Pulseq-Sequences\dependencies\bencoding\decompressed_dwepi_R2_MB2_PF_1.5mm_64b2000_20260724095017_6_bvec.txt');
@@ -175,8 +177,15 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 % Test sequence
 spiral2d.test();
 
-%% Create a 3D mono-polar dual-echo gradient-echo sequence
+%% Create a 3D mono-polar dual-echo gradient-echo sequence with 2-fold in-plane acceleration and 2-fold partition acceleration
 paramsGre3d = SequenceParams('gre3d',scannerType);
+
+if invivo
+    paramsSeEpi2dDiff.nSlices = 44;
+    paramsSeEpi2dDiff.distanceFactorPercentage = 10;
+    paramsSeEpi2dDiff.seqSpecName = 'invivo';
+    paramsSeEpi2dDiff.doPlayFatSat = true;
+end
 
 % Generate the sequence
 gre3d = skope_gre_3d(paramsGre3d);
