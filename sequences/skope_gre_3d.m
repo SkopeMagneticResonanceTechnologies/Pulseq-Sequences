@@ -452,7 +452,8 @@ classdef skope_gre_3d < PulseqBase
                 end
     
                 % Gradient spectrum check
-                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile);
+                fprintf('Gradient Spectrum computation: using hardware file %s \n', ascfile);
+                [R, Rax, F] = obj.seq.gradSpectrum(ascfile);
             else
                 warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
             end

@@ -599,7 +599,8 @@ classdef skope_se_spiral_2d_diff < PulseqBase
                 end
     
                 % Gradient spectrum check
-                [R, Rax, F] = gradSpectrum_latest(obj.seq,ascfile); % waiting for pulseq 1.5.2
+                fprintf('Gradient Spectrum computation: using hardware file %s \n', ascfile);
+                [R, Rax, F] = obj.seq.gradSpectrum(ascfile);
             else
                 warning('Hardware .asc file not found in dependencies/asc. PNS/CNS and Gradient Spectrum checks were skipped.')
             end

@@ -22,7 +22,6 @@ addpath('pulseq/matlab')
 addpath(genpath('methods'))
 addpath('sequences')
 addpath('safe_pns_prediction')
-addpath('dependencies/pulseq_latest') % necessary Gradient Spectrum computation (pulseq 1.5.1+)
 
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m
@@ -30,7 +29,7 @@ addpath('dependencies/pulseq_latest') % necessary Gradient Spectrum computation 
 scannerType = 'Siemens 3T Cima.X';
 
 %% Acquire more slices for in vivo scans and activate fat saturation
-invivo = true;
+invivo = false;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
@@ -108,7 +107,7 @@ seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 % seepi2d.plot(timeRange);
 
 % Test sequence
-seepi2d.test();
+% seepi2d.test();
 
 %% Create a multi-shot 2D spin-echo spiral sequence with diffusion encoding and spiral arms undersampling with specific spiral waveform
 minTimeGradientDir = fullfile(fileparts(pwd), 'minTimeGradient', 'Matlab');
@@ -171,8 +170,8 @@ end
 spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-% timeRange = [5.4 5.42];
-% spiral2d.plot(timeRange);
+timeRange = [5.4 5.42];
+spiral2d.plot(timeRange);
 
 % Test sequence
 spiral2d.test();

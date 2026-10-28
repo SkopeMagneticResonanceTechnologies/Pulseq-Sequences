@@ -8,11 +8,11 @@ classdef SequenceParams_Terra_X
             switch lower(seqName)
                 case 'gre2d'
                     obj.fov          = 220e-3;
-                    obj.Nx           = 128;
-                    obj.Ny           = 128;
+                    obj.Nx           = 80;
+                    obj.Ny           = 80;
                     obj.alpha        = 7;
                     obj.thickness    = 3e-3;
-                    obj.nSlices      = 20;
+                    obj.nSlices      = 12;
                     obj.TE           = [6 12] * 1e-3;
                     obj.TR           = 25e-3;
                     obj.readoutTime  = 3.2e-3;
@@ -20,36 +20,39 @@ classdef SequenceParams_Terra_X
                     obj.maxSlew      = 190;
                     obj.nDummy       = 10;
                     obj.doMonitoringDuringRF = 0;
-                    obj.distanceFactorPercentage = 200;
+                    obj.distanceFactorPercentage = 150;
                 case 'epi2d'
-                    obj.TE           = 33e-3;
-                    obj.TR           = 130e-3;
+                    obj.fov          = 220e-3;
+                    obj.TE           = 25e-3;
+                    obj.TR           = 80e-3;
                     obj.alpha        = 90;
-                    obj.fov          = 200e-3;
-                    obj.Nx           = 96;
-                    obj.Ny           = 96;
+                    obj.Nx           = 120;
+                    obj.Ny           = 120;
                     obj.thickness    = 3e-3;
-                    obj.nSlices      = 20;
+                    obj.nSlices      = 12;
                     obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep         = 1;
                     obj.addPhaseCorrLines = 1;
-                    obj.readoutTime  = 0.800e-3;
+                    obj.readoutTime  = 500e-6;
                     obj.maxGrad      = 130;
                     obj.maxSlew      = 190;
-                    obj.distanceFactorPercentage = 200;
+                    obj.distanceFactorPercentage = 150;
+                    obj.accFacPE = 2;
+                    obj.multiBandFactor = 2;
                 case 'se_epi2d_diff'
-                   obj.TE           = 64e-3;
-                    obj.TR           = 130e-3;
+                    obj.TE           = 65e-3;
+                    obj.TR           = 140e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
-                    obj.Nx           = 80;
-                    obj.Ny           = 80;
+                    obj.Nx           = 120;
+                    obj.Ny           = 120;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
                     obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
                     obj.nRep         = 1;
-                    obj.accFacPE     = 1;
-                    obj.addPhaseCorrLines = 1;
+                    obj.accFacPE     = 3;
+                    obj.addPhaseCorrLines = true;
+                    obj.partFourierFactor = 7/8;
                     obj.doPlayFatSat = 0;
                     obj.bFactor      = [0, 2000, 2000, 2000, 2000./sqrt(2), 2000./sqrt(2), 2000./sqrt(2)];
                     obj.bDir         = [0,0,0;... % b0
@@ -61,7 +64,7 @@ classdef SequenceParams_Terra_X
                                         1,0,1;];  % xz
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
-                    obj.readoutTime  = 0.600e-3;
+                    obj.readoutTime  = 500e-6;
                     obj.maxGrad      = 130;
                     obj.maxSlew      = 190;
                     obj.maxDiffSlew  = 15;

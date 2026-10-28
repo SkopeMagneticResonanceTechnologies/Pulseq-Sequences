@@ -44,7 +44,7 @@ classdef SequenceParams_Cima_X
                     obj.gradFreeTime = 200e-6;
                 case 'se_epi2d_diff'
                     obj.TE           = 85e-3;
-                    obj.TR           = 200e-3;
+                    obj.TR           = 132e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
                     obj.Nx           = 182;
@@ -68,7 +68,7 @@ classdef SequenceParams_Cima_X
                     obj.bFactor = [0; repelem(bvals(:),6)]; % b = 0 and the other values
                     obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
                     obj.nbValues     = size(obj.bDir,1);
-                    obj.seqSpecName  = 'allb';
+                    obj.seqSpecName  = '';
                     obj.readoutTime  = 0.650e-3;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
@@ -80,8 +80,8 @@ classdef SequenceParams_Cima_X
                     obj.alpha        = 90;
                     obj.thickness    = 1.2e-3;
                     obj.nSlices      = 30;
-                    obj.TE           = 47e-3;
-                    obj.TR           = 200e-3;
+                    obj.TE           = 55e-3;
+                    obj.TR           = 117e-3;
                     obj.mode         = 'MS';
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
@@ -103,7 +103,7 @@ classdef SequenceParams_Cima_X
                     obj.maxDiffSlew  = 63;
                     obj.maxDiffGrad  = 172;
                     obj.gradFreeTime = 300e-6;
-                    obj.seqSpecName = 'VD44';
+                    obj.seqSpecName = '';
                 case 'gre3d'
                     obj.fov          = [0.22 0.22 0.22];
                     obj.Nx           = 112;

@@ -8,8 +8,8 @@ classdef SequenceParams_uM_Jupiter_5T
             switch lower(seqName)
                 case 'gre2d'
                     obj.fov          = 220e-3;
-                    obj.Nx           = 128;
-                    obj.Ny           = 128;
+                    obj.Nx           = 80;
+                    obj.Ny           = 80;
                     obj.alpha        = 7;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
@@ -22,28 +22,30 @@ classdef SequenceParams_uM_Jupiter_5T
                     obj.doMonitoringDuringRF = 0;
                     obj.distanceFactorPercentage = 150;
                 case 'epi2d'
-                    obj.TE           = 33e-3;
-                    obj.TR           = 130e-3;
+                    obj.TE           = 25e-3;
+                    obj.TR           = 60e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
-                    obj.Nx           = 96;
-                    obj.Ny           = 96;
+                    obj.Nx           = 120;
+                    obj.Ny           = 120;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
                     obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices (without FM trigger)
                     obj.nRep         = 1;
                     obj.addPhaseCorrLines = 1;
-                    obj.readoutTime  = 0.500e-3;
+                    obj.readoutTime  = 500e-6;
                     obj.maxGrad      = 110;
                     obj.maxSlew      = 190;
                     obj.distanceFactorPercentage = 150;
+                    obj.accFacPE = 2;
+                    obj.multiBandFactor = 2;
                 case 'se_epi2d_diff'
                     obj.TE           = 64e-3;
                     obj.TR           = 130e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
-                    obj.Nx           = 80;
-                    obj.Ny           = 80;
+                    obj.Nx           = 128;
+                    obj.Ny           = 128;
                     obj.thickness    = 3e-3;
                     obj.nSlices      = 12;
                     obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
@@ -60,7 +62,7 @@ classdef SequenceParams_uM_Jupiter_5T
                                         1,0,1;];  % xz
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
-                    obj.readoutTime  = 0.600e-3;
+                    obj.readoutTime  = 500e-6;
                     obj.maxGrad      = 110;
                     obj.maxSlew      = 190;
                     obj.maxDiffSlew  = 120;
