@@ -170,11 +170,11 @@ end
 spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 
 % Plot sequence information after sync 
-timeRange = [5.4 5.42];
-spiral2d.plot(timeRange);
+% timeRange = [5.4 5.42];
+% spiral2d.plot(timeRange);
 
 % Test sequence
-spiral2d.test();
+% spiral2d.test();
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence with 2-fold in-plane acceleration and 2-fold partition acceleration
 paramsGre3d = SequenceParams('gre3d',scannerType);

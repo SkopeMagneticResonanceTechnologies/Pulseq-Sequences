@@ -159,8 +159,11 @@ classdef skope_se_epi_2d_diff < PulseqBase
             if seqParams.maxSlew > specs.maxSlew
                 error('Scanner does not support requested slew rate.');
             end
-             if seqParams.maxDiffSlew > specs.maxSlew
+            if seqParams.maxDiffSlew > specs.maxSlew
                 error('Scanner does not support requested Diffusion slew rate.');
+            end
+            if seqParams.maxDiffGrad > specs.maxGrad
+                error('Scanner does not support requested Diffusion gradient.');
             end
 
             % Set system limits
