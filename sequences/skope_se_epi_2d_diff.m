@@ -111,6 +111,15 @@ classdef skope_se_epi_2d_diff < PulseqBase
         gy_fs_pre
         gz_fs_pre
 
+        % Spoiler gradients
+        % gxSpoil
+        % gzSpoil
+
+        % crush gradients (act as spoiler gradients for b=0)
+        g_crush_x
+        g_crush_y
+        g_crush_z
+
         % Echo train length
         echoTrainLength
 
@@ -130,6 +139,12 @@ classdef skope_se_epi_2d_diff < PulseqBase
         nbValues
 
         TriggerDuration
+
+        % Maximum RMS gradient over one TR
+        maxGrmsTR = 0
+        maxGrmsTRIndex = 0
+        maxGrmsBValue = 0
+        trCounter = 0
     end
 
     methods
@@ -373,6 +388,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
             obj.gxPre.amplitudeInit = obj.gxPre.amplitude; % keep track of initialized amplitude in case Nreadout EPI lobes is odd and swap UP-DOWN results wrong
             obj.gx.amplitudeInit = obj.gx.amplitude;
 
+            %% Gradient spoiling
+            %obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'Area', 2*obj.Nx*deltakx,'system', obj.sys);
+            %obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'Area',4/obj.thickness,'system', obj.sys);
+            %spoilTime = 2*mr.calcDuration({obj.gxSpoil,obj.gzSpoil});
+
+            %obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},'system', obj.sys,'Duration',spoilTime,'Area',2*obj.Nx*deltakx);
+            %obj.gzSpoil = mr.makeTrapezoid(obj.axesOrder{3},'system', obj.sys,'Duration',spoilTime,'Area',4/obj.thickness);
   
             %% Create external trigger
             obj.extTrigger = mr.makeDigitalOutputPulse(obj.triggerOutput,'duration', obj.TriggerDuration);
@@ -408,6 +430,7 @@ classdef skope_se_epi_2d_diff < PulseqBase
                   + mr.calcDuration(obj.gz180) ...
                   + prepareTime ...
                   + obj.echoTrainLength * mr.calcDuration(obj.gx);
+                  %+ mr.calcDuration(obj.gxSpoil, obj.gzSpoil);
             if obj.doPlayFatSat
                 minTR = minTR + mr.calcDuration(obj.gz_fs) + mr.calcDuration(obj.gz_fs_pre);
             end
@@ -429,10 +452,10 @@ classdef skope_se_epi_2d_diff < PulseqBase
             %               <  delta  >
             %               <             Delta            >    
 
-            for i = 1:seqParams.nbValues %i=1 always b0
+            for i = 1:seqParams.nbValues
                 bFactor = seqParams.bFactor(i);
-                
-                if i<2 %run this once
+
+                if i<2 % run this once
                     % estimate timing for diffusion gradients when bFactor is max
                     bFactor_max = max(seqParams.bFactor);
                     % for the max bvalue applied to one axis, calculate the min duration of the gradient
@@ -448,37 +471,52 @@ classdef skope_se_epi_2d_diff < PulseqBase
                         real(delta_all) > 0 )));
                     delta = obj.roundUpToGRT(delta);
                     bRef=bFactCalc(obj.sysDiff.maxGrad/obj.sys.gamma, tau, delta, Delta, obj);
-                    disp(['Reference b-value for delta: ' num2str(bRef) 's/mm2'])                  
+                    disp(['Reference b-value for delta: ' num2str(bRef) 's/mm2'])  
                     gDiff_flattime = delta-tau;
                     %is the gradient fitting the delays we have
                     assert(delta+tau<=obj.delayTE2, 'Assertion for delayTE2 failed.'); 
                     assert(delta+tau<=obj.delayTE1, 'Assertion for delayTE1 failed.'); 
                 end
-                
-                if bFactor > 0
+
+                if bFactor == 0 % b = 0 needs some small crusher gradients as well
+                    g_crush_ampl = mr.convert(33,'mT/m','Hz/m','gamma',42576000);
+                    obj.g_crush_x = mr.makeTrapezoid(...
+                        obj.axesOrder{1}, ...
+                        'system',obj.sys, ...
+                        'Area',0.21/1e-4, ...
+                        'maxGrad', g_crush_ampl);
+                    obj.g_crush_y = obj.g_crush_x;
+                    obj.g_crush_y.channel = obj.axesOrder{2};
+                    obj.g_crush_y.amplitude = -obj.g_crush_y.amplitude;
+                    obj.g_crush_z = obj.g_crush_x;
+                    obj.g_crush_z.channel = obj.axesOrder{3};
+                    b0 = bFactCalc(g_crush_ampl/obj.sys.gamma, obj.g_crush_x.riseTime, obj.g_crush_x.riseTime + obj.g_crush_x.flatTime, mr.calcDuration(obj.g_crush_x) + mr.calcDuration(obj.gz180), obj);
+                    bAxis = repmat(b0, 1, 3);
+                    gAxisMHz = repmat(g_crush_ampl / 1e6, 1, 3);
+                    assert(mr.calcDuration(obj.g_crush_x) < tau + delta, 'Crusher gradients around pi pulse are longer than DW gradients');
+
+                elseif bFactor > 0 % b-encoding values
                     bDirNorm = obj.bDir(i,:) / norm(obj.bDir(i,:)); % make sure directions are normalized
-                else 
-                    bDirNorm = [0 0 0];
-                end 
-
-                g = obj.sysDiff.maxGrad * sqrt(bFactor/bRef);
+                    g = obj.sysDiff.maxGrad * sqrt(bFactor/bRef);
                 
-                bAxis = zeros(1,3);
-                gAxisMHz = zeros(1,3);
-
-                for ja = 1:3 %axis index
-                    dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
-                                                                                      
-                    gAxis = g * bDirNorm(ja) * obj.axesSign(ja);
-                    assert(abs(gAxis)<=obj.sysDiff.maxGrad, 'Assertion for Diff max Grad failed.'); %g shall be smaller than max allowed G.
-                    
-                    obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',gAxis,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
-                    bAxis(ja)=bFactCalc(gAxis/obj.sys.gamma, tau, delta, Delta, obj);
-                    gAxisMHz(ja) = gAxis / 1e6;
+                    bAxis = zeros(1,3);
+                    gAxisMHz = zeros(1,3);
+    
+                    for ja = 1:3 %axis index
+                        dir = obj.axesOrder{ja}; % 1:x, 2:y, 3:z
+                                                                                          
+                        gAxis = g * bDirNorm(ja) * obj.axesSign(ja);
+                        assert(abs(gAxis)<=obj.sysDiff.maxGrad, 'Assertion for Diff max Grad failed.'); %g shall be smaller than max allowed G.
+                        
+                        obj.gDiff{i,ja}=mr.makeTrapezoid(dir,'amplitude',gAxis,'riseTime',tau,'flatTime',gDiff_flattime,'system',obj.sysDiff);
+                        bAxis(ja)=bFactCalc(gAxis/obj.sys.gamma, tau, delta, Delta, obj);
+                        gAxisMHz(ja) = gAxis / 1e6;
+                    end
                 end
-                fprintf(['b-enc = %d, b = (%.1f, %.1f, %.1f) s/mm2, g = (%.1f, %.1f, %.1f) MHz/m\n'], i, bAxis, gAxisMHz);
+                fprintf(['b-enc = %d, b = (%.1f, %.1f, %.1f) s/mm2, G = (%.1f, %.1f, %.1f) MHz/m\n'], ...
+                    i, bAxis, gAxisMHz);
             end
-            
+                        
             %% Time from trigger to scanner acquisition
             % if obj.addPhaseCorrLines %gxPre and gyPre are split when navigator is ON
             %     obj.triggerToScannerAcqDelay = mr.calcDuration(obj.gxPre) ...
@@ -546,7 +584,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 for avg = 1:obj.nSyncDynamics
                     slc = 1;
                     rep = 1;
-                    obj = runKernel(obj, slc, avg, rep, 1, KernelMode.Sync);
+                    bValue = 1;
+                    isb0 = obj.bFactor(bValue)==0;
+                    obj = runKernel(obj, slc, avg, rep, bValue, isb0, KernelMode.Sync);
                 end
                 
                 %% Add pause and reset flags
@@ -564,7 +604,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
             for rep=1:obj.nDummy %number of dummy volumes (i.e., they loop through the whole slice volume)
                 for slc = 1:obj.nSlices
                     avg = 1;
-                    obj = runKernel(obj, slc, avg, rep, 1, KernelMode.Dummy); %bValue = 1 has no b-encoding
+                    bValue = 1;
+                    isb0 = obj.bFactor(bValue)==0;
+                    obj = runKernel(obj, slc, avg, rep, bValue, isb0, KernelMode.Dummy); %bValue = 1 has no b-encoding
                 end
             end
 
@@ -573,7 +615,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 for rep=1:obj.nRep
                     for slc = 1:obj.nSlices
                         avg = 1;
-                        obj = runKernel(obj, slc, avg, rep, bValue, KernelMode.Imaging);
+                        isb0 = obj.bFactor(bValue)==0;
+                        obj = runKernel(obj, slc, avg, rep, bValue, isb0, KernelMode.Imaging);
                     end
                 end
             end
@@ -667,6 +710,8 @@ classdef skope_se_epi_2d_diff < PulseqBase
             disp(['Storing sequence file "', char(filename), '.seq"'])
 
             %% Safety checks
+            fprintf('----------- Safety checks -----------\n');
+            fprintf('Maximum Grms = %.1f mT/m at TR index = %d for b-value = %.0f s/mm2\n', obj.maxGrmsTR, obj.maxGrmsTRIndex, obj.maxGrmsBValue);
             ascfile = fullfile('dependencies','asc', specs.HWfilename);
             if isfile(ascfile)
                 % PNS
@@ -703,11 +748,14 @@ classdef skope_se_epi_2d_diff < PulseqBase
     end
 
     methods (Access=private)               
-        function obj = runKernel(obj, slc, avg, rep, bValue, mode)
+        function obj = runKernel(obj, slc, avg, rep, bValue, isb0, mode)
 
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
             end
+
+            % Remember the first block of the current TR
+            firstBlock = numel(obj.seq.blockEvents) + 1;
 
             %% Set ONCE-flag to avoid repeating sync and dummy scans
             if mode == KernelMode.Sync || mode==KernelMode.Dummy
@@ -721,6 +769,9 @@ classdef skope_se_epi_2d_diff < PulseqBase
             % signs of EPI readout gradients and prephaser initialized
             obj.gxPre.amplitude = obj.gxPre.amplitudeInit; 
             obj.gx.amplitude = obj.gx.amplitudeInit;
+            
+            % TR ID label
+            obj.addBlock(mr.makeLabel('INC','TRID', 1));
 
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging
@@ -801,12 +852,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.addBlock(obj.gxPre);
             end
                 
-            % if bValue<2 % b0
-            %     obj.addBlock(mr.makeDelay(obj.delayTE1));
-            % else % nonzero b-encoding               
-            obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-            obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
-            % end
+            if isb0 % b0
+                 obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.g_crush_x)));
+                 obj.addBlock(obj.g_crush_x, obj.g_crush_y, obj.g_crush_z);
+            else % nonzero b-encoding               
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+                obj.addBlock(mr.makeDelay(obj.delayTE1-mr.calcDuration(obj.gDiff{2,1}))); 
+            end
 
             if mode==KernelMode.Dummy || mode==KernelMode.Imaging              
                 obj.rf180.freqOffset=obj.gz180.amplitude * obj.slicePositionChronological(slc); 
@@ -816,12 +868,13 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.addBlock(obj.gz180);
             end
             
-            % if bValue<2 % b0
-            %     obj.addBlock(mr.makeDelay(obj.delayTE2));
-            % else % nonzero b-encoding 
-            obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
-            obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
-            % end
+            if isb0 % b0
+                obj.addBlock(obj.g_crush_x, obj.g_crush_y, obj.g_crush_z);
+                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.g_crush_x)));
+            else % nonzero b-encoding 
+                obj.addBlock(obj.gDiff{bValue,1}, obj.gDiff{bValue,2}, obj.gDiff{bValue,3});
+                obj.addBlock(mr.makeDelay(obj.delayTE2-mr.calcDuration(obj.gDiff{2,1})));                
+            end
 
 
             if mode==KernelMode.Sync || mode==KernelMode.Imaging
@@ -883,10 +936,36 @@ classdef skope_se_epi_2d_diff < PulseqBase
                 obj.gx.amplitude = -obj.gx.amplitude;   % Reverse polarity of read gradient
             end
 
+            %% Spoiling
+            %spoilBlockContents = {obj.gxSpoil, obj.gzSpoil};
+            %obj.addBlock(spoilBlockContents{:});
+
             %% TR filling
             obj.addBlock(mr.makeDelay(obj.fillTR));
             
- 
+            %% Calculate Grms for the current TR
+            lastBlock = numel(obj.seq.blockEvents);
+            gradEnergy = 0;
+            trDuration = 0;
+            for ib = firstBlock:lastBlock
+                block = obj.seq.getBlock(ib);
+                trDuration = trDuration + block.blockDuration;
+                % Sum the gradient energy from all three axes
+                gradEnergy = gradEnergy ...
+                    + calculateGradientEnergy(block.gx) ...
+                    + calculateGradientEnergy(block.gy) ...
+                    + calculateGradientEnergy(block.gz);
+            end
+            Grms = sqrt(gradEnergy / trDuration);
+            % Convert Hz/m to mT/m
+            Grms = Grms / obj.sys.gamma * 1e3;
+            % Update maximum Grms
+            obj.trCounter = obj.trCounter + 1;
+            if Grms > obj.maxGrmsTR
+                obj.maxGrmsTR = Grms;
+                obj.maxGrmsTRIndex = obj.trCounter;
+                obj.maxGrmsBValue = obj.bFactor(bValue);
+            end
         end
     end
 
@@ -895,4 +974,24 @@ end
 function b=bFactCalc(G, tau, delta, Delta, obj)
     gamma = obj.sys.gamma*2*pi;
     b = (gamma)^2 * G^2 * ( delta^2 * (Delta-delta/3) + tau^3/30 - tau^2*delta/6 ) *1e-6;
+end
+
+function energy = calculateGradientEnergy(grad)
+    energy = 0;
+    if isempty(grad)
+        return
+    end
+    switch grad.type
+        case 'trap'
+            % Analytical integration of a trapezoidal gradient
+            energy = grad.amplitude^2 * ...
+                (grad.flatTime + ...
+                (grad.riseTime + grad.fallTime)/3);
+        case 'grad'
+            % Numerical integration of an arbitrary gradient
+            dt = 10e-6; % Pulseq gradient raster time
+            energy = sum(grad.waveform.^2) * dt;
+        otherwise
+            error('Unknown gradient type: %s', grad.type);
+    end
 end

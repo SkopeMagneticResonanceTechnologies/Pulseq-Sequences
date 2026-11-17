@@ -761,6 +761,9 @@ classdef skope_epi_2d < PulseqBase
                 obj.addBlock(mr.makeLabel('SET','SMS', false));
             end
 
+            % TR ID label
+            obj.addBlock(mr.makeLabel('INC','TRID', 1));
+
             %% RF and ADC settings
             if mode==KernelMode.Dummy || mode==KernelMode.Reference || mode==KernelMode.Imaging 
                 if obj.doPlayFatSat

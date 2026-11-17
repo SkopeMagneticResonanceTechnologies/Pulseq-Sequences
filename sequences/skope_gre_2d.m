@@ -416,6 +416,9 @@ classdef skope_gre_2d < PulseqBase
             if not(isa(mode, 'KernelMode'))
                 error('Expected a kernel mode argument')
             end
+
+            % TR ID label
+            obj.addBlock(mr.makeLabel('INC','TRID', 1));
         
            %% RF and ADC settings
             if mode==KernelMode.Dummy

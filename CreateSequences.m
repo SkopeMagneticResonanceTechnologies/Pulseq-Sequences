@@ -76,6 +76,7 @@ epi2d.test();
 %% Create a 2D spin-echo EPI sequence with diffusion encoding and 2-fold in-plane acceleration
 % Get default sequence parameters
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType); 
+paramsSeEpi2dDiff.seqSpecName = 'test';
 
 if invivo
     paramsSeEpi2dDiff.nSlices = 120;
@@ -103,11 +104,11 @@ end
 seepi2d = skope_se_epi_2d_diff(paramsSeEpi2dDiff);
 
 % Plot sequence diagram for the first 4 to 20 s
-% timeRange = [4 20];
-% seepi2d.plot(timeRange);
+%timeRange = [4 20];
+%seepi2d.plot(timeRange);
 
 % Test sequence
-% seepi2d.test();
+%seepi2d.test();
 
 %% Create a multi-shot 2D spin-echo spiral sequence with diffusion encoding and spiral arms undersampling with specific spiral waveform
 minTimeGradientDir = fullfile(fileparts(pwd), 'minTimeGradient', 'Matlab');
@@ -123,8 +124,8 @@ r = 0;                      % rv/riv Indicates type of solution
 res	= 1.2;                  % Resolution (in mm)
 fov	= [22 22];              % Vector of fov (in cm)
 radius = [0 1];             % Vector of radius corresponding to the fov
-Gmax = 20;                  % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 7;                   % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Gmax = 20; %8 or 20                   % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 7; % 11/10.5 or 7                  % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;                  % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                    % Step size for integration
 interpType = 'linear';      % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
@@ -142,7 +143,8 @@ paramsSpiral2d = SequenceParams('se_spiral_2d_diff',scannerType);
 paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
-paramsSpiral2d.readoutTime = time_rv; 
+paramsSpiral2d.readoutTime = time_rv;
+paramsSpiral2d.seqSpecName = 'test';
 
 if invivo
     paramsSpiral2d.nSlices = 120;
