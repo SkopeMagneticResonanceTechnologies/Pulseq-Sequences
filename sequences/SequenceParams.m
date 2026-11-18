@@ -99,6 +99,12 @@ classdef SequenceParams
                     obj.maxGrad = 40;
                     obj.maxSlew = 200;
                     return
+                case 'grad_heat'
+                    obj.TR = 1;
+                    obj.maxGrad = 190;
+                    obj.maxSlew = 190;
+                    obj.triggerOutput = 'ext1';
+                    return
             end
 
             % ---- Imaging sequences: delegate fully to scanner class -----
