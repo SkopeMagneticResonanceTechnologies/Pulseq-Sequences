@@ -12,7 +12,7 @@ classdef SequenceParams_Cima_X
                     obj.Ny           = 120;
                     obj.alpha        = 7;
                     obj.thickness    = 2e-3;
-                    obj.nSlices      = 48;
+                    obj.nSlices      = 36;
                     obj.TE           = [7 14] * 1e-3;
                     obj.TR           = 25e-3;
                     obj.readoutTime  = 4.8e-3;
@@ -43,8 +43,8 @@ classdef SequenceParams_Cima_X
                     obj.doPlayFatSat = true;
                     obj.gradFreeTime = 200e-6;
                 case 'se_epi2d_diff'
-                    obj.TE           = 74e-3;
-                    obj.TR           = 115e-3;
+                    obj.TE           = 84e-3;
+                    obj.TR           = 122e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
                     obj.Nx           = 146;
@@ -58,7 +58,7 @@ classdef SequenceParams_Cima_X
                     obj.addPhaseCorrLines = true;
                     obj.doPlayFatSat = true;
                     %bvals = [2000 4000 6000 8000 10000];
-                    bvals = [10000];
+                    bvals = [10000 10000 10000 10000 10000 10000];
                     dirs = [
                         1,0,0;                  % x 
                         0,1,0;                  % y
@@ -66,22 +66,22 @@ classdef SequenceParams_Cima_X
                         [1,1,0]/sqrt(2);        % xy
                         [0,1,1]/sqrt(2);        % yz
                         [1,0,1]/sqrt(2)];       % xz
-                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
-                    %obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
-                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
-                    %obj.bDir = [repmat(dirs,numel(bvals),1)];
+                    %obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
+                    %obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
+                    obj.bDir = [repmat(dirs,numel(bvals),1)];
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
                     obj.readoutTime  = 0.600e-3;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
-                    obj.maxDiffSlew  = 65; 
-                    obj.maxDiffGrad  = 190;
+                    obj.maxDiffSlew  = 63; 
+                    obj.maxDiffGrad  = 172;
                     obj.distanceFactorPercentage = 150;
                     obj.gradFreeTime = 300e-6;
                 case 'se_spiral_2d_diff'
-                    obj.TE           = 50e-3;
-                    obj.TR           = 200e-3;
+                    obj.TE           = 53e-3;
+                    obj.TR           = 95e-3;
                     obj.alpha        = 90;
                     obj.thickness    = 1.5e-3;
                     obj.nSlices      = 30;
@@ -93,7 +93,7 @@ classdef SequenceParams_Cima_X
                     obj.accFac       = 3;
                     obj.doPlayFatSat = true;
                     %bvals = [2000 4000 6000 8000 10000];
-                    bvals = [2000 5000 10000];
+                    bvals = [10000 10000 10000 10000 10000 10000];
                     dirs = [
                         1,0,0;                  % x 
                         0,1,0;                  % y
@@ -101,10 +101,10 @@ classdef SequenceParams_Cima_X
                         [1,1,0]/sqrt(2);        % xy
                         [0,1,1]/sqrt(2);        % yz
                         [1,0,1]/sqrt(2)];       % xz
-                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
-                    %obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
-                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
-                    %obj.bDir = [repmat(dirs,numel(bvals),1)];
+                    %obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
+                    %obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
+                    obj.bDir = [repmat(dirs,numel(bvals),1)];
                     obj.nbValues     = size(obj.bDir,1);
                     obj.maxDiffSlew  = 63;
                     obj.maxDiffGrad  = 172;

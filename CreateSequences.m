@@ -28,7 +28,7 @@ addpath('safe_pns_prediction')
 % 'Siemens 3T Cima.X', 'Siemens 3T Connectom', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
 scannerType = 'Siemens 3T Cima.X';
 
-%% Acquire more slices for in vivo scans and activate fat saturation
+%% Acquire more and closer slices for in vivo scans and activate fat saturation
 invivo = false;
 
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
@@ -76,10 +76,9 @@ epi2d.test();
 %% Create a 2D spin-echo EPI sequence with diffusion encoding and 2-fold in-plane acceleration
 % Get default sequence parameters
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType); 
-paramsSeEpi2dDiff.seqSpecName = 'test';
 
 if invivo
-    paramsSeEpi2dDiff.nSlices = 120;
+    paramsSeEpi2dDiff.nSlices = 96;
     paramsSeEpi2dDiff.distanceFactorPercentage = 10;
     paramsSeEpi2dDiff.seqSpecName = 'invivo';
     paramsSeEpi2dDiff.doPlayFatSat = true;
@@ -121,11 +120,11 @@ addpath(genpath(minTimeGradientDir))
 %-------------------------------------------------------------------------
 Nitlv = 3;                  % Number of interleves
 r = 0;                      % rv/riv Indicates type of solution
-res	= 1.2;                  % Resolution (in mm)
+res	= 1.5;                  % Resolution (in mm)
 fov	= [22 22];              % Vector of fov (in cm)
 radius = [0 1];             % Vector of radius corresponding to the fov
-Gmax = 20; %8 or 20                   % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 7; % 11/10.5 or 7                  % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Gmax = 8;                   % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 10.5;                % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;                  % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                    % Step size for integration
 interpType = 'linear';      % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
@@ -144,10 +143,9 @@ paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv;
-paramsSpiral2d.seqSpecName = 'test';
 
 if invivo
-    paramsSpiral2d.nSlices = 120;
+    paramsSpiral2d.nSlices = 96;
     paramsSpiral2d.distanceFactorPercentage = 10;
     paramsSpiral2d.seqSpecName = 'invivo';
     paramsSpiral2d.doPlayFatSat = true;
