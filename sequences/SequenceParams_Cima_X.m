@@ -129,6 +129,7 @@ classdef SequenceParams_Cima_X
                     obj.distanceFactorPercentage = 200;
                     obj.accFacPE     = 2;
                     obj.accFacZ      = 2;
+                    obj.fullySampledZ = 0.5;
                     obj.doPlayFatSat = false;
                     obj.gradFreeTime = 200e-6;
                 otherwise

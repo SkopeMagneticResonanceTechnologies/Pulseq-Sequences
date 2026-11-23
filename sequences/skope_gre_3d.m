@@ -92,6 +92,7 @@ classdef skope_gre_3d < PulseqBase
 
         % Acceleration factor (Partition)
         accFacZ
+        fullySampledZ
 
     end
 
@@ -146,8 +147,8 @@ classdef skope_gre_3d < PulseqBase
             % Number of phase encoding steps with in-plane acceleration
             obj.Ny = round(obj.Nx/obj.accFacPE); 
 
-            % Number of phase encoding steps with partition acceleration
-            obj.Nz = round(obj.Nx/obj.accFacZ); 
+            % Number of phase encoding steps before partition acceleration
+            Nzfull = obj.Nx;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -214,8 +215,7 @@ classdef skope_gre_3d < PulseqBase
           
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1./obj.fov;
-            deltak(2) = deltak(2) * obj.accFacPE;
-            deltak(3) = deltak(3) * obj.accFacZ;
+            deltak(2) = deltak(2) * obj.accFacPE; % phase encoding acceleration
             obj.gx = mr.makeTrapezoid(  obj.axesOrder{1}, ...
                                         'FlatArea', obj.Nx*deltak(1), ...
                                         'FlatTime', obj.readoutTime, ...
@@ -232,7 +232,38 @@ classdef skope_gre_3d < PulseqBase
                 1, nEchoes-1);
             obj.gxSpoil = mr.makeTrapezoid(obj.axesOrder{1},obj.sys,'Area',obj.gx.area,'Duration',Tpre*2);
             obj.phaseAreaY = ([(obj.Ny-1):-1:0]-obj.Ny/2)*deltak(2);
-            obj.phaseAreaZ = ([(obj.Nz-1):-1:0]-obj.Nz/2)*deltak(3);
+
+            %% Variable density partition acceleration
+            % Example:
+            % accFacZ     = 2
+            % centerFrac  = 1/3
+            %
+            % kz:
+            %      Outer region             Fully sampled center        Outer region
+            %     (R = accFacZ)                  (R = 1)                (R = accFacZ)
+            %
+            %  -kmax                                                                    +kmax
+            %    |------------------------------------------------------------------------|
+            %
+            %    . x . x . x . x . x . x | x x x x x x x x x x x x | x . x . x . x . x . x .
+            %
+            %    <--(1-fullySampledZ)/2-> <-----fullySampledZ-----> <-(1-fullySampledZ)/2-->
+            %
+            %  x = acquired kz partition
+            %  . = skipped kz partition
+            %
+            %  fullySampledZ = fraction of central kz lines acquired fully
+            %  accFacZ       = acceleration factor applied only outside the center
+
+            kz_all = (-(NzFull/2):(NzFull/2-1));
+            centerWidth = round(obj.fullySampledZ*NzFull);
+            idxCenter = abs(kz_all) < centerWidth/2;
+            idxOuter  = ~idxCenter;
+            Rz_outer = obj.accFacZ;
+            kz_sampled = [kz_all(idxCenter), kz_all(idxOuter & mod(abs(kz_all),Rz_outer)==0)];
+            kz_sampled = sort(kz_sampled);
+            obj.Nz = numel(kz_sampled); % this is the final number of partitions acquired
+            obj.phaseAreaZ = kz_sampled * (deltak(3));
 
             %% Calculate minimal TEs
             minTE = zeros(size(obj.TE));

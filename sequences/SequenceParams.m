@@ -40,6 +40,7 @@ classdef SequenceParams
         accFacPE = 1;           % Acceleration factor [Phase] (only used for EPI and GRE3D at the moment)
         accFac = 1;             % Acceleration factor [Spiral arms] (only used for spiral at the moment)
         accFacZ = 1;            % Acceleration factor [Partition] (only used for GRE3D at the moment)
+        fullySampledZ = 0.5;    % Fraction of central kz lines acquired fully in partition acceleration (only used for GRE3D at the moment)
         multiBandFactor = 1;    % Multiband factor (only used for EPI at the moment)
         partFourierFactor = 1;  % Partial Fourier factor (only used for EPI at the moment)
         gradFreeTime = 200e-6;  % Free Time after probes excitation
