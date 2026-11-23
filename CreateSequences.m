@@ -190,11 +190,11 @@ end
 gre3d = skope_gre_3d(paramsGre3d);
 
 % Plot sequence information after sync 
-timeRange = [0 100e-3];
-gre3d.plot(timeRange);
+% timeRange = [0 100e-3];
+% gre3d.plot(timeRange);
 
 % Test sequence
-gre3d.test();
+% gre3d.test();
 
 %% Create off-resonance and position calibration sequence for all possible trigger output channels
 paramsOpc = SequenceParams('opc',scannerType);

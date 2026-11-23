@@ -143,12 +143,14 @@ classdef skope_gre_3d < PulseqBase
                     obj.(fieldname) = seqParams.(fieldname);
                 end
             end
+
+            %obj.readoutTime = obj.roundUpToGRT(obj.readoutTime);
             
             % Number of phase encoding steps with in-plane acceleration
-            obj.Ny = round(obj.Nx/obj.accFacPE); 
+            obj.Ny = round(obj.Ny/obj.accFacPE); 
 
             % Number of phase encoding steps before partition acceleration
-            Nzfull = obj.Nx;
+            NzFull = obj.Nz;
 
             %% Axes order
             [obj.axesOrder, obj.axesSign, readDir_SCT, phaseDir_SCT, sliceDir_SCT] ...
@@ -419,7 +421,7 @@ classdef skope_gre_3d < PulseqBase
             obj.seq.setDefinition('CameraAqDelay', 0);
             obj.seq.setDefinition('CameraTrigIgnore', obj.cameraInterleaveTR); 
             obj.seq.setDefinition('AdcSampleTime', obj.adc.dwell); 
-            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny*obj.accFacPE obj.Nz*obj.accFacZ]); 
+            obj.seq.setDefinition('Matrix', [obj.Nx obj.Ny*obj.accFacPE NzFull]); 
             obj.seq.setDefinition('Encoding', [obj.Nx obj.Ny obj.Nz]);
             obj.seq.setDefinition('InplaneAcceleration', obj.accFacPE);
             obj.seq.setDefinition('PartitionAcceleration', obj.accFacZ);

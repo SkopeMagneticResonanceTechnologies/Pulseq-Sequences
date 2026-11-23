@@ -111,25 +111,21 @@ classdef SequenceParams_Cima_X
                     obj.gradFreeTime = 300e-6;
                     obj.seqSpecName = '';
                 case 'gre3d'
-                    obj.fov          = [0.22 0.22 0.22];
-                    obj.Nx           = 112;
-                    obj.Ny           = 112;
-                    obj.Nz           = 112;
-                    obj.alpha        = 1;
-                    %obj.TE           = [5.2 9.7 14.2 18.7 23.2 27.7 32.2 36.7]*1e-3;
-                    %obj.TR           = 55e-3;
-                    %obj.seqSpecName  = '8ech';
-                    obj.TE           = [5.2 9.7]*1e-3;
-                    obj.TR           = 27e-3;
-                    obj.seqSpecName  = '2ech';
-                    obj.readoutTime  = 20e-6 * obj.Nx;
+                    obj.fov          = [0.256 0.224 0.176];
+                    obj.Nx           = 256;
+                    obj.Ny           = 224;
+                    obj.Nz           = 160;
+                    obj.alpha        = 15;
+                    obj.TE           = [6.7 11.9 17.2 22.4 27.6 32.9]*1e-3;
+                    obj.TR           = 43e-3;
+                    obj.readoutTime  = 12.5e-6 * obj.Nx;
                     obj.maxGrad      = 190;
                     obj.maxSlew      = 190;
                     obj.nDummy       = 1;               %Total number of readout dummies = nDummy*Ny
                     obj.distanceFactorPercentage = 200;
                     obj.accFacPE     = 2;
                     obj.accFacZ      = 2;
-                    obj.fullySampledZ = 0.5;
+                    obj.fullySampledZ = 0.2;
                     obj.doPlayFatSat = false;
                     obj.gradFreeTime = 200e-6;
                 otherwise
