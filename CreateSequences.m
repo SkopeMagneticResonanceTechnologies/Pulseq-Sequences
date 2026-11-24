@@ -46,11 +46,11 @@ end
 gre2d = skope_gre_2d(paramsGre2d);
 
 % Plot sequence diagram for the first 10 s
-timeRange = [0 10];
-gre2d.plot(timeRange);
+% timeRange = [0 10];
+% gre2d.plot(timeRange);
 
 % Test sequence
-gre2d.test();
+% gre2d.test();
 
 %% Create a 2D echo-planar imaging (EPI) sequence with 2-fold in-plane acceleration and 2-fold multi-band excitation
 % Get default sequence parameters

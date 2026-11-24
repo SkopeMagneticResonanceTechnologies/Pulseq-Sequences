@@ -58,7 +58,7 @@ classdef SequenceParams_Cima_X
                     obj.addPhaseCorrLines = true;
                     obj.doPlayFatSat = true;
                     %bvals = [2000 4000 6000 8000 10000];
-                    bvals = [10000 10000 10000 10000 10000 10000];
+                    bvals = [10000];
                     dirs = [
                         1,0,0;                  % x 
                         0,1,0;                  % y
