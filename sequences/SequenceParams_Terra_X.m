@@ -40,61 +40,87 @@ classdef SequenceParams_Terra_X
                     obj.accFacPE = 2;
                     obj.multiBandFactor = 2;
                 case 'se_epi2d_diff'
-                    obj.TE           = 65e-3;
-                    obj.TR           = 140e-3;
+                    obj.TE           = 70e-3;
+                    obj.TR           = 105e-3;
                     obj.alpha        = 90;
                     obj.fov          = 220e-3;
-                    obj.Nx           = 120;
-                    obj.Ny           = 120;
-                    obj.thickness    = 3e-3;
-                    obj.nSlices      = 12;
-                    obj.nDummy       = 5;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
+                    obj.Nx           = 146;
+                    obj.Ny           = 146;
+                    obj.thickness    = 1.5e-3;
+                    obj.nSlices      = 30;
+                    obj.nDummy       = 1;   % totalNofDummy=nDummy*nSlices*bEncoding (without FM trigger)
                     obj.nRep         = 1;
-                    obj.accFacPE     = 3;
+                    obj.accFacPE     = 2;
                     obj.addPhaseCorrLines = true;
                     obj.partFourierFactor = 7/8;
                     obj.doPlayFatSat = 0;
-                    obj.bFactor      = [0, 2000, 2000, 2000, 2000./sqrt(2), 2000./sqrt(2), 2000./sqrt(2)];
-                    obj.bDir         = [0,0,0;... % b0
-                                        1,0,0;... % x
-                                        0,1,0;... % y
-                                        0,0,1;... % z
-                                        1,1,0;... % xy
-                                        0,1,1;... % yz
-                                        1,0,1;];  % xz
+                    bvals = [2000];
+                    dirs = [
+                        1,0,0;                  % x 
+                        0,1,0;                  % y
+                        0,0,1;                  % z
+                        [1,1,0]/sqrt(2);        % xy
+                        [0,1,1]/sqrt(2);        % yz
+                        [1,0,1]/sqrt(2)];       % xz
+                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
-                    obj.readoutTime  = 500e-6;
+                    obj.readoutTime  = 700e-6;
                     obj.maxGrad      = 130;
-                    obj.maxSlew      = 190;
-                    obj.maxDiffSlew  = 15;
+                    obj.maxSlew      = 170;
+                    obj.maxDiffSlew  = 100; 
+                    obj.maxDiffGrad  = 130;
                     obj.distanceFactorPercentage = 150;
+                    obj.gradFreeTime = 300e-6;
+                case 'se_spiral_2d_diff'
+                    obj.TE           = 35e-3;
+                    obj.TR           = 75e-3;
+                    obj.alpha        = 90;
+                    obj.thickness    = 1.5e-3;
+                    obj.nSlices      = 30;
+                    obj.mode         = 'MS';
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 190;
+                    obj.distanceFactorPercentage = 150;
+                    obj.nDummy       = 1;
+                    obj.accFac       = 3;
+                    obj.doPlayFatSat = true;
+                    bvals = [2000];
+                    dirs = [
+                        1,0,0;                  % x 
+                        0,1,0;                  % y
+                        0,0,1;                  % z
+                        [1,1,0]/sqrt(2);        % xy
+                        [0,1,1]/sqrt(2);        % yz
+                        [1,0,1]/sqrt(2)];       % xz
+                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
+                    obj.nbValues     = size(obj.bDir,1);
+                    obj.maxGrad      = 130;
+                    obj.maxSlew      = 160;
+                    obj.maxDiffSlew  = 100;
+                    obj.maxDiffGrad  = 130;
+                    obj.gradFreeTime = 300e-6;
+                    obj.seqSpecName = '';
                 case 'gre3d'
-                    obj.fov          = [0.56 0.56 0.56]*1e-2*40053000/42577481;
-                    obj.Nx           = 56;
-                    obj.Ny           = 56;
-                    obj.Nz           = 56;
-                    obj.alpha        = 1;
-                    obj.TE           = [12.3 28.16]*1e-3 + 1e-3;
-                    obj.TR           = 100e-3;
-                    obj.readoutTime  = 7.84e-3;
-                    obj.maxGrad      = 130;
-                    obj.maxSlew      = 190;
-                    obj.nDummy       = 50;
-                case 'spiral2d'
-                    obj.fov          = 192e-3;
-                    obj.Nx           = 192;
-                    obj.Ny           = 16;
+                    obj.fov          = [0.256 0.224 0.176];
+                    obj.Nx           = 256;
+                    obj.Ny           = 224;
+                    obj.Nz           = 160;
                     obj.alpha        = 15;
-                    obj.thickness    = 3e-3;
-                    obj.nSlices      = 15;
-                    obj.TE           = 2.5e-3;
-                    obj.TR           = 140e-3;
-                    obj.readoutTime  = 8e-3;
-                    obj.mode         = 'multiShot';
+                    obj.TE           = [6.7 11.9 17.2 22.4 27.6 32.9]*1e-3;
+                    obj.TR           = 43e-3;
+                    obj.readoutTime  = 12.5e-6 * obj.Nx;
                     obj.maxGrad      = 130;
                     obj.maxSlew      = 190;
+                    obj.nDummy       = 1;               %Total number of readout dummies = nDummy*Ny
                     obj.distanceFactorPercentage = 200;
+                    obj.accFacPE     = 2;
+                    obj.accFacZ      = 2;
+                    obj.fullySampledZ = 0.2;
+                    obj.doPlayFatSat = false;
+                    obj.gradFreeTime = 200e-6;
                 otherwise
                     error('SequenceParams_Terra_X: unknown sequence "%s".', seqName)
             end
