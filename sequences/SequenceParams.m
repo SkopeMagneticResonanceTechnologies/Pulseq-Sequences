@@ -50,6 +50,10 @@ classdef SequenceParams
 
         triggerOutput = 'ext1'; % Default optical output (other ouputs: 'osc0', 'osc1')
         TriggerDuration = 10e-6;% Default Trigger duration
+
+        % RF Shim for 7T+ scanners
+        rfShimMode = 0; % 0 for no RF Shim, 1 for RF Shim with CP mode (45° increments), 2 for Gradient mode (90° increments)
+        n_channels = 8; % Number of Tx channels 
     end
 
     methods

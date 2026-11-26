@@ -1,5 +1,6 @@
 %% Pulseq example sequences 
-% including triggers and synchronization pre-scans for field-monitoring
+% including triggers, synchronization pre-scans for field-monitoring
+% and RF shim modes
 
 % (c) 2026 Skope Magnetic Resonance Technologies AG
 
@@ -26,7 +27,7 @@ addpath('safe_pns_prediction')
 %% Define scanner type
 % ../methods/GetMRSystemSpecs.m
 % 'Siemens 3T Cima.X', 'Siemens 3T Connectom', 'Siemens 7T Terra SC72CD', 'Siemens 9.4T SC72CD'
-scannerType = 'Siemens 3T Cima.X';
+scannerType = 'Siemens 7T Terra.X';
 
 %% Acquire more and closer slices for in vivo scans and activate fat saturation
 invivo = false;
@@ -34,6 +35,7 @@ invivo = false;
 %% Create a 2D mono-polar dual-echo gradient-echo (GRE) sequence 
 % Get default sequence parameters
 paramsGre2d = SequenceParams('gre2d',scannerType);
+paramsGre2d.rfShimMode = 2;
 
 if invivo
     paramsGre2d.nSlices = 75;
@@ -76,6 +78,7 @@ epi2d.test();
 %% Create a 2D spin-echo EPI sequence with diffusion encoding and 2-fold in-plane acceleration
 % Get default sequence parameters
 paramsSeEpi2dDiff = SequenceParams('se_epi2d_diff',scannerType); 
+paramsSeEpi2dDiff.rfShimMode = 2;
 
 if invivo
     paramsSeEpi2dDiff.nSlices = 96;
@@ -123,8 +126,8 @@ r = 0;                      % rv/riv Indicates type of solution
 res	= 1.5;                  % Resolution (in mm)
 fov	= [22 22];              % Vector of fov (in cm)
 radius = [0 1];             % Vector of radius corresponding to the fov
-Gmax = 8;                   % Max gradient (default 3 G/CM = 30 mT/m)
-Smax = 10.5;                % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
+Gmax = 12;                   % Max gradient (default 3 G/CM = 30 mT/m)
+Smax = 15;                % Max slew (default 10 G/cm/ms = 100 mT/m/ms)
 T = 10e-3;                  % Sampling rate (in ms) - 10 us on Siemens systems
 ds = [];                    % Step size for integration
 interpType = 'linear';      % Type of interpolation used to interpolate the fov accept: linear, cubic, spline % cubic for variable density
@@ -143,6 +146,7 @@ paramsSpiral2d.Ny = Nitlv;
 paramsSpiral2d.Nx = ceil(fov(1)./res);
 paramsSpiral2d.fov = fov(1)*1e-2; 
 paramsSpiral2d.readoutTime = time_rv;
+paramsSpiral2d.rfShimMode = 2;
 
 if invivo
     paramsSpiral2d.nSlices = 96;
@@ -178,6 +182,7 @@ spiral2d = skope_se_spiral_2d_diff(paramsSpiral2d,g_rv);
 
 %% Create a 3D mono-polar dual-echo gradient-echo sequence with 2-fold in-plane acceleration and 2-fold partition acceleration
 paramsGre3d = SequenceParams('gre3d',scannerType);
+paramsGre3d.rfShimMode = 2;
 
 if invivo
     paramsSeEpi2dDiff.nSlices = 44;

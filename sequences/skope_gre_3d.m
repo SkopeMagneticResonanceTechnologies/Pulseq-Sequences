@@ -94,6 +94,13 @@ classdef skope_gre_3d < PulseqBase
         accFacZ
         fullySampledZ
 
+        %RF shim mode: 0 for no RF shim, 1 for CP mode, 2 for gradient mode
+        rfShimMode
+
+        n_channels
+
+        shim_vector
+
     end
 
     methods
@@ -211,6 +218,23 @@ classdef skope_gre_3d < PulseqBase
                 'use','excitation');
             obj.rf_phase = 0;
             obj.rf_inc = 0;
+
+            %% RF Shim
+            chan_select = 1:obj.n_channels;
+            if obj.rfShimMode == 1 % CP mode
+                shim = exp(-1j*2*pi/obj.n_channels*[0:obj.n_channels-1]);
+                shim = shim / norm(shim);
+                obj.shim_vector = zeros(1,obj.n_channels);
+                obj.shim_vector(chan_select) = shim(chan_select);
+            elseif obj.rfShimMode == 2 % Gradient mode
+                shim = exp(-1j*4*pi/obj.n_channels*[0:obj.n_channels-1]);
+                shim = shim / norm(shim);
+                obj.shim_vector = zeros(1,obj.n_channels);
+                obj.shim_vector(chan_select) = shim(chan_select);
+            elseif obj.rfShimMode == 0 % No RF Shim
+            else 
+                error('RF shim mode not valid. Please use 0 for no RF Shim, 1 for CP mode, 2 for Gradient mode.')
+            end
 
             %% Time for probe excitation
             obj.gradFreeTime = obj.roundUpToGRT(obj.gradFreeTime);
@@ -452,6 +476,10 @@ classdef skope_gre_3d < PulseqBase
                 filename = strcat(filename, '_RZ', num2str(obj.accFacZ));  
             end
 
+            if obj.rfShimMode > 0   
+                filename = strcat(filename, '_RFShim', num2str(obj.rfShimMode));
+            end
+
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
@@ -483,7 +511,11 @@ classdef skope_gre_3d < PulseqBase
                 end
                 obj.rf.phaseOffset = obj.rf_phase * pi/180;
                 obj.adc.phaseOffset = obj.rf.phaseOffset;
-                obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)), mr.makeLabel('SET','PMC', false), mr.makeLabel('SET','AVG',avg-1));
+                if obj.rfShimMode == 0
+                    obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)), mr.makeLabel('SET','PMC', false), mr.makeLabel('SET','AVG',avg-1));
+                elseif obj.rfShimMode == 1 || obj.rfShimMode == 2
+                    obj.addBlock(obj.rf, mr.makeDelay(obj.fillTE(1) + mr.calcDuration(obj.rf)), mr.makeLabel('SET','PMC', false), mr.makeLabel('SET','AVG',avg-1), mr.makeRfShim(obj.shim_vector));
+                end
                 obj.rf_inc = mod(obj.rf_inc + obj.rfSpoilingInc, 360);
                 obj.rf_phase = mod(obj.rf_phase + obj.rf_inc, 360);
             elseif mode == KernelMode.Sync

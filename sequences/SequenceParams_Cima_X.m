@@ -57,7 +57,6 @@ classdef SequenceParams_Cima_X
                     obj.partFourierFactor = 7/8;
                     obj.addPhaseCorrLines = true;
                     obj.doPlayFatSat = true;
-                    %bvals = [2000 4000 6000 8000 10000];
                     bvals = [10000];
                     dirs = [
                         1,0,0;                  % x 
@@ -66,10 +65,10 @@ classdef SequenceParams_Cima_X
                         [1,1,0]/sqrt(2);        % xy
                         [0,1,1]/sqrt(2);        % yz
                         [1,0,1]/sqrt(2)];       % xz
-                    %obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
-                    obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
-                    %obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
-                    obj.bDir = [repmat(dirs,numel(bvals),1)];
+                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    %obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
+                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
+                    %obj.bDir = [repmat(dirs,numel(bvals),1)];
                     obj.nbValues     = size(obj.bDir,1);
                     obj.seqSpecName  = '';
                     obj.readoutTime  = 0.600e-3;
@@ -92,8 +91,7 @@ classdef SequenceParams_Cima_X
                     obj.nDummy       = 1;
                     obj.accFac       = 3;
                     obj.doPlayFatSat = true;
-                    %bvals = [2000 4000 6000 8000 10000];
-                    bvals = [10000 10000 10000 10000 10000 10000];
+                    bvals = [2000];
                     dirs = [
                         1,0,0;                  % x 
                         0,1,0;                  % y
@@ -101,10 +99,10 @@ classdef SequenceParams_Cima_X
                         [1,1,0]/sqrt(2);        % xy
                         [0,1,1]/sqrt(2);        % yz
                         [1,0,1]/sqrt(2)];       % xz
-                    %obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
-                    obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
-                    %obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
-                    obj.bDir = [repmat(dirs,numel(bvals),1)];
+                    obj.bFactor = [0; repelem(bvals(:), size(dirs,1), 1)]; % b = 0 and the other values
+                    %obj.bFactor = [repelem(bvals(:), size(dirs,1), 1)];
+                    obj.bDir = [0,0,0; repmat(dirs,numel(bvals),1)]; % b = 0 direction and the others
+                    %obj.bDir = [repmat(dirs,numel(bvals),1)];
                     obj.nbValues     = size(obj.bDir,1);
                     obj.maxDiffSlew  = 63;
                     obj.maxDiffGrad  = 172;

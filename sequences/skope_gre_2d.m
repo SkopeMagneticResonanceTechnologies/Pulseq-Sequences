@@ -69,6 +69,12 @@ classdef skope_gre_2d < PulseqBase
         
         TriggerDuration
 
+        %RF shim mode: 0 for no RF shim, 1 for CP mode, 2 for gradient mode
+        rfShimMode
+
+        n_channels
+
+        shim_vector
     end
 
     methods
@@ -142,7 +148,24 @@ classdef skope_gre_2d < PulseqBase
                                                 'system',obj.sys, ...
                                                 'use', 'excitation');
             % Set correct axis
-            obj.gz.channel =  obj.axesOrder{3};   
+            obj.gz.channel =  obj.axesOrder{3};  
+
+            %% RF Shim
+            chan_select = 1:obj.n_channels;
+            if obj.rfShimMode == 1 % CP mode
+                shim = exp(-1j*2*pi/obj.n_channels*[0:obj.n_channels-1]);
+                shim = shim / norm(shim);
+                obj.shim_vector = zeros(1,obj.n_channels);
+                obj.shim_vector(chan_select) = shim(chan_select);
+            elseif obj.rfShimMode == 2 % Gradient mode
+                shim = exp(-1j*4*pi/obj.n_channels*[0:obj.n_channels-1]);
+                shim = shim / norm(shim);
+                obj.shim_vector = zeros(1,obj.n_channels);
+                obj.shim_vector(chan_select) = shim(chan_select);
+            elseif obj.rfShimMode == 0 % No RF Shim
+            else 
+                error('RF shim mode not valid. Please use 0 for no RF Shim, 1 for CP mode, 2 for Gradient mode.')
+            end
 
             %% Define other gradients and ADC events (Not that X gradient has been flipped here)
             deltak = 1/obj.fov;
@@ -367,6 +390,10 @@ classdef skope_gre_2d < PulseqBase
             
             filename = strcat('exports/',string(seqParams.scannerType),'/skope_gre_2d','_',string(obj.sliceOrientation),'_',string(obj.phaseEncDir));  
 
+            if obj.rfShimMode > 0   
+                filename = strcat(filename, '_RFShim', num2str(obj.rfShimMode));
+            end
+
             if isprop(seqParams, 'seqSpecName') && ~isempty(seqParams.seqSpecName)
                 filename = strcat(filename, '_', seqParams.seqSpecName);																				
             end
@@ -395,15 +422,27 @@ classdef skope_gre_2d < PulseqBase
                 obj.rf.freqOffset = obj.gz.amplitude  * obj.slicePositionChronological(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf);  % compensate for slice-offset induced phase
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
-                obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                if obj.rfShimMode == 0
+                    obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                elseif obj.rfShimMode == 1 || obj.rfShimMode == 2
+                    obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1), mr.makeRfShim(obj.shim_vector));
+                end
             elseif mode==KernelMode.Imaging
                 obj.rf.freqOffset = obj.gz.amplitude * obj.slicePositionChronological(slc);
                 obj.rf.phaseOffset = obj.rf_phase/180*pi - 2*pi*obj.rf.freqOffset * mr.calcRfCenter(obj.rf);  % compensate for slice-offset induced phase
                 obj.adc.phaseOffset = obj.rf_phase/180*pi;
                 if obj.doMonitoringDuringRF
-                    obj.addBlock(obj.rf, obj.extTrigger, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                    if obj.rfShimMode == 0
+                        obj.addBlock(obj.rf, obj.extTrigger, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                    elseif obj.rfShimMode == 1 || obj.rfShimMode == 2
+                        obj.addBlock(obj.rf, obj.extTrigger, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1), mr.makeRfShim(obj.shim_vector));
+                    end
                 else
-                    obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                    if obj.rfShimMode == 0
+                        obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1));
+                    elseif obj.rfShimMode == 1 || obj.rfShimMode == 2
+                        obj.addBlock(obj.rf, obj.gz, mr.makeLabel('SET','PMC',false), mr.makeLabel('SET','AVG',avg-1), mr.makeRfShim(obj.shim_vector));
+                    end
                 end
             elseif mode==KernelMode.Sync
                 if obj.doMonitoringDuringRF
